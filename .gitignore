@@ -49,4 +49,3 @@ google-services.json
 # not ignore
 !.idea/codeStyleSettings.xml
 !.idea/findbugs-idea.xml
-rxlocation/.cxx/

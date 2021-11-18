@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">sample</string>
+
+    <string name="provisioning">provisioning</string>
+    <string name="subscribe_shadow">subscribe shadow</string>
+    <string name="get_shadow">get shadow</string>
+    <string name="update_shadow">update shadow</string>
+    <string name="delete_shadow">delete shadow</string>
+
+    <string name="aws_region">ap-northeast-1</string>
+    <string name="aws_endpoint">xxxxxxxxxx.iot.ap-northeast-1.amazonaws.com</string>
+    <string name="aws_template_name">xxxxxxxxxxxx</string>
+</resources>
