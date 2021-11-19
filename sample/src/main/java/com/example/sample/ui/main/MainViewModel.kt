@@ -10,10 +10,7 @@ import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import com.amazonaws.regions.Region
 import com.example.sample.R
-import io.github.crow_misia.aws_sdk_android_iot_ktx.AWSIoTMqttShadowClient
-import io.github.crow_misia.aws_sdk_android_iot_ktx.asShadowClient
-import io.github.crow_misia.aws_sdk_android_iot_ktx.connect
-import io.github.crow_misia.aws_sdk_android_iot_ktx.provisioningThing
+import io.github.crow_misia.aws_sdk_android_iot_ktx.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.json.JSONObject
@@ -26,16 +23,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val resources = application.resources
 
     private val region = Region.getRegion(resources.getString(R.string.aws_region))
-    private val clientId = sharedPreferences.getString("thingName", null)?.let {
-        AWSIotMqttManager.ClientId.fromString(it)
-    } ?: run {
-        // temporary client id
-        UUID.randomUUID().toString().let {
-            AWSIotMqttManager.ClientId.fromString(it)
-        }
-    }
     private val endpoint =
         AWSIotMqttManager.Endpoint.fromString(resources.getString(R.string.aws_endpoint))
+
+    private val provider = AWSIotMqttManagerProvider.create(region, endpoint)
+
+    private var thingName = sharedPreferences.getString("thingName", null).orEmpty()
 
     private var shadowClient: AWSIoTMqttShadowClient? = null
 
@@ -43,16 +36,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         shadowClient?.disconnect()
         shadowClient = null
 
+        provider.allDisconnect()
+
         super.onCleared()
     }
 
+    private fun createMqttManagerForProvisioning(): AWSIotMqttManager {
+        // temporary client id
+        val clientId = UUID.randomUUID().toString().let {
+            AWSIotMqttManager.ClientId.fromString(it)
+        }
+        return provider.provide(clientId)
+    }
+
     private fun createMqttManager(): AWSIotMqttManager {
-        return AWSIotMqttManager.from(region, clientId, endpoint)
+        return provider.provide(thingName)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     fun onClickProvisioning() {
-        val manager = createMqttManager()
+        val manager = createMqttManagerForProvisioning()
         val provisioningKeystoreName = "provisioning"
         val keystoreName = "iot"
         val keystorePath = getApplication<Application>().filesDir
@@ -101,6 +104,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             sharedPreferences.edit {
                                 putString("certificateId", it.certificateId)
                                 putString("thingName", it.thingName)
+                                this@MainViewModel.thingName = it.thingName
                             }
                             Timber.i("Registered things.\n%s", it)
                         }
