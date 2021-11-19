@@ -2,6 +2,8 @@ build:
   maxIssues: 0
 
 complexity:
+  LongParameterList:
+    functionThreshold: 7
   TooManyFunctions:
     active: false
 

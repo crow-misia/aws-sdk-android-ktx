@@ -13,79 +13,170 @@ import java.security.KeyStore
 
 @ExperimentalCoroutinesApi
 @FlowPreview
-suspend fun AWSIotMqttManager.provisioningThingUsingALPN(keyStore: KeyStore, templateName: String, parameters: Map<String, String>): Flow<AWSIoTProvisioningResponse> {
+suspend fun AWSIotMqttManager.provisioningThingUsingALPN(
+    keyStore: KeyStore,
+    templateName: String,
+    parameters: Map<String, String>,
+): Flow<AWSIoTProvisioningResponse> {
     return provisioningThingUsingALPN(keyStore, templateName, JSONObject(parameters))
 }
 
 @ExperimentalCoroutinesApi
 @FlowPreview
-suspend fun AWSIotMqttManager.provisioningThingUsingALPN(keyStore: KeyStore, templateName: String, parameters: JSONObject): Flow<AWSIoTProvisioningResponse> {
+suspend fun AWSIotMqttManager.provisioningThingUsingALPN(
+    keyStore: KeyStore,
+    templateName: String,
+    parameters: JSONObject,
+): Flow<AWSIoTProvisioningResponse> {
     return provisioningThing(templateName, parameters) { connectUsingALPN(keyStore) }
 }
 
 @ExperimentalCoroutinesApi
 @FlowPreview
-suspend fun AWSIotMqttManager.provisioningThingWithProxy(keyStore: KeyStore, proxyHost: String, proxyPort: Int, templateName: String, parameters: Map<String, String>): Flow<AWSIoTProvisioningResponse> {
-    return provisioningThingWithProxy(keyStore, proxyHost, proxyPort, templateName, JSONObject(parameters))
+suspend fun AWSIotMqttManager.provisioningThingWithProxy(
+    keyStore: KeyStore,
+    proxyHost: String,
+    proxyPort: Int,
+    templateName: String,
+    parameters: Map<String, String>,
+): Flow<AWSIoTProvisioningResponse> {
+    return provisioningThingWithProxy(
+        keyStore,
+        proxyHost,
+        proxyPort,
+        templateName,
+        JSONObject(parameters)
+    )
 }
 
 @ExperimentalCoroutinesApi
 @FlowPreview
-suspend fun AWSIotMqttManager.provisioningThingWithProxy(keyStore: KeyStore, proxyHost: String, proxyPort: Int, templateName: String, parameters: JSONObject): Flow<AWSIoTProvisioningResponse> {
-    return provisioningThing(templateName, parameters) { connectWithProxy(keyStore, proxyHost, proxyPort) }
+suspend fun AWSIotMqttManager.provisioningThingWithProxy(
+    keyStore: KeyStore,
+    proxyHost: String,
+    proxyPort: Int,
+    templateName: String,
+    parameters: JSONObject,
+): Flow<AWSIoTProvisioningResponse> {
+    return provisioningThing(templateName, parameters) {
+        connectWithProxy(
+            keyStore,
+            proxyHost,
+            proxyPort
+        )
+    }
 }
 
 @ExperimentalCoroutinesApi
 @FlowPreview
-suspend fun AWSIotMqttManager.provisioningThing(keyStore: KeyStore, templateName: String, parameters: Map<String, String>): Flow<AWSIoTProvisioningResponse> {
+suspend fun AWSIotMqttManager.provisioningThing(
+    keyStore: KeyStore,
+    templateName: String,
+    parameters: Map<String, String>,
+): Flow<AWSIoTProvisioningResponse> {
     return provisioningThing(keyStore, templateName, JSONObject(parameters))
 }
 
 @ExperimentalCoroutinesApi
 @FlowPreview
-suspend fun AWSIotMqttManager.provisioningThing(keyStore: KeyStore, templateName: String, parameters: JSONObject): Flow<AWSIoTProvisioningResponse> {
+suspend fun AWSIotMqttManager.provisioningThing(
+    keyStore: KeyStore,
+    templateName: String,
+    parameters: JSONObject,
+): Flow<AWSIoTProvisioningResponse> {
     return provisioningThing(templateName, parameters) { connect(keyStore) }
 }
 
 @ExperimentalCoroutinesApi
 @FlowPreview
-suspend fun AWSIotMqttManager.provisioningThing(credentialsProvider: AWSCredentialsProvider, templateName: String, parameters: Map<String, String>): Flow<AWSIoTProvisioningResponse> {
+suspend fun AWSIotMqttManager.provisioningThing(
+    credentialsProvider: AWSCredentialsProvider,
+    templateName: String,
+    parameters: Map<String, String>,
+): Flow<AWSIoTProvisioningResponse> {
     return provisioningThing(credentialsProvider, templateName, JSONObject(parameters))
 }
 
 @ExperimentalCoroutinesApi
 @FlowPreview
-suspend fun AWSIotMqttManager.provisioningThing(credentialsProvider: AWSCredentialsProvider, templateName: String, parameters: JSONObject): Flow<AWSIoTProvisioningResponse> {
+suspend fun AWSIotMqttManager.provisioningThing(
+    credentialsProvider: AWSCredentialsProvider,
+    templateName: String,
+    parameters: JSONObject,
+): Flow<AWSIoTProvisioningResponse> {
     return provisioningThing(templateName, parameters) { connect(credentialsProvider) }
 }
 
 @ExperimentalCoroutinesApi
 @FlowPreview
-suspend fun AWSIotMqttManager.provisioningThing(tokenKeyName: String, token: String, tokenSignature: String, customAuthorizer: String, templateName: String, parameters: Map<String, String>): Flow<AWSIoTProvisioningResponse> {
-    return provisioningThing(tokenKeyName, token, tokenSignature, customAuthorizer, templateName, JSONObject(parameters))
+suspend fun AWSIotMqttManager.provisioningThing(
+    tokenKeyName: String,
+    token: String,
+    tokenSignature: String,
+    customAuthorizer: String,
+    templateName: String,
+    parameters: Map<String, String>,
+): Flow<AWSIoTProvisioningResponse> {
+    return provisioningThing(
+        tokenKeyName = tokenKeyName,
+        token = token,
+        tokenSignature = tokenSignature,
+        customAuthorizer = customAuthorizer,
+        templateName = templateName,
+        parameters = JSONObject(parameters),
+    )
 }
 
 @ExperimentalCoroutinesApi
 @FlowPreview
-suspend fun AWSIotMqttManager.provisioningThing(tokenKeyName: String, token: String, tokenSignature: String, customAuthorizer: String, templateName: String, parameters: JSONObject): Flow<AWSIoTProvisioningResponse> {
-    return provisioningThing(templateName, parameters) { connect(tokenKeyName, token, tokenSignature, customAuthorizer) }
+suspend fun AWSIotMqttManager.provisioningThing(
+    tokenKeyName: String,
+    token: String,
+    tokenSignature: String,
+    customAuthorizer: String,
+    templateName: String,
+    parameters: JSONObject,
+): Flow<AWSIoTProvisioningResponse> {
+    return provisioningThing(
+        templateName = templateName,
+        parameters = parameters,
+    ) { connect(tokenKeyName, token, tokenSignature, customAuthorizer) }
 }
 
 @ExperimentalCoroutinesApi
 @FlowPreview
-suspend fun AWSIotMqttManager.provisioningThing(username: String, password: String, templateName: String, parameters: Map<String, String>): Flow<AWSIoTProvisioningResponse> {
-    return provisioningThing(username, password, templateName, JSONObject(parameters))
+suspend fun AWSIotMqttManager.provisioningThing(
+    username: String,
+    password: String,
+    templateName: String,
+    parameters: Map<String, String>,
+): Flow<AWSIoTProvisioningResponse> {
+    return provisioningThing(
+        username = username,
+        password = password,
+        templateName = templateName,
+        parameters = JSONObject(parameters),
+    )
 }
 
 @ExperimentalCoroutinesApi
 @FlowPreview
-suspend fun AWSIotMqttManager.provisioningThing(username: String, password: String, templateName: String, parameters: JSONObject): Flow<AWSIoTProvisioningResponse> {
+suspend fun AWSIotMqttManager.provisioningThing(
+    username: String,
+    password: String,
+    templateName: String,
+    parameters: JSONObject,
+): Flow<AWSIoTProvisioningResponse> {
     return provisioningThing(templateName, parameters) { connect(username, password) }
 }
 
 @ExperimentalCoroutinesApi
 @FlowPreview
-private suspend inline fun AWSIotMqttManager.provisioningThing(templateName: String, parameters: JSONObject, connect: () -> Flow<AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus>): Flow<AWSIoTProvisioningResponse> {
+private suspend inline fun AWSIotMqttManager.provisioningThing(
+    templateName: String,
+    parameters: JSONObject,
+    connect: () -> Flow<AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus>,
+): Flow<AWSIoTProvisioningResponse> {
     return connect()
         // 接続まで待機
         .filter { it == AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus.Connected }
@@ -100,17 +191,19 @@ private suspend inline fun AWSIotMqttManager.provisioningThing(templateName: Str
                 put("certificateOwnershipToken", certificateOwnershipToken)
                 put("parameters", parameters)
             }
-            publishWithReply(request.toString(), "\$aws/provisioning-templates/$templateName/provision/json", AWSIotMqttQos.QOS1)
-                .map { JSONObject(String(it)) }
-                .map {
-                    AWSIoTProvisioningResponse(
-                        deviceConfiguration = it.getJSONObject("deviceConfiguration"),
-                        thingName = it.getString("thingName"),
-                        certificateId = response.getString("certificateId"),
-                        certificatePem = response.getString("certificatePem"),
-                        privateKey = response.getString("privateKey"),
-                    )
-                }
+            publishWithReply(
+                str = request.toString(),
+                topic = "\$aws/provisioning-templates/$templateName/provision/json",
+                qos = AWSIotMqttQos.QOS1
+            ).map { JSONObject(String(it)) }.map {
+                AWSIoTProvisioningResponse(
+                    deviceConfiguration = it.getJSONObject("deviceConfiguration"),
+                    thingName = it.getString("thingName"),
+                    certificateId = response.getString("certificateId"),
+                    certificatePem = response.getString("certificatePem"),
+                    privateKey = response.getString("privateKey"),
+                )
+            }
         }
         .onCompletion { disconnect() }
 }
@@ -125,7 +218,18 @@ data class AWSIoTProvisioningResponse(
     val certificatePem: String,
     val privateKey: String,
 ) {
-    fun saveCertificateAndPrivateKey(keystorePath: String, keystoreName: String, keystorePassword: String) {
-        AWSIotKeystoreHelper.saveCertificateAndPrivateKey(certificateId, certificatePem, privateKey, keystorePath, keystoreName, keystorePassword)
+    fun saveCertificateAndPrivateKey(
+        keystorePath: String,
+        keystoreName: String,
+        keystorePassword: String,
+    ) {
+        AWSIotKeystoreHelper.saveCertificateAndPrivateKey(
+            certificateId,
+            certificatePem,
+            privateKey,
+            keystorePath,
+            keystoreName,
+            keystorePassword
+        )
     }
 }
