@@ -21,6 +21,7 @@ class MainFragment : Fragment() {
     }
 
     private fun bindingToViewModel(binding: MainFragmentBinding) {
+        lifecycle.addObserver(viewModel)
         binding.viewModel = viewModel
         binding.lifecycleOwner = viewLifecycleOwner
     }

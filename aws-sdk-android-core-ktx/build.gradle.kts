@@ -12,8 +12,8 @@ plugins {
 
 object Maven {
     const val groupId = "io.github.crow-misia.aws-sdk-android-ktx"
-    const val artifactId = "aws-sdk-android-iot-ktx"
-    const val name = "aws-sdk-android-iot-ktx"
+    const val artifactId = "aws-sdk-android-core-ktx"
+    const val name = "aws-sdk-android-core-ktx"
     const val version = "0.0.2"
     const val desc = "AWS SDK for Android with Kotlin"
     const val siteUrl = "https://github.com/crow-misia/aws-sdk-android-ktx"
@@ -67,10 +67,10 @@ dependencies {
     api(KotlinX.coroutines.core)
 
     // aws sdk android
-    api("com.amazonaws:aws-android-sdk-iot:_@aar") { isTransitive = true }
+    api("com.amazonaws:aws-android-sdk-core:_@aar") { isTransitive = true }
 
-    // conscrypt
-    api("org.conscrypt:conscrypt-android:_")
+    // okhttp3
+    api(Square.okHttp3)
 }
 
 val sourcesJar by tasks.creating(Jar::class) {

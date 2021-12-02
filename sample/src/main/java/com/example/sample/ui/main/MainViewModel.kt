@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.viewModelScope
 import com.amazonaws.mobileconnectors.iot.AWSIotKeystoreHelper
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback
@@ -18,7 +19,7 @@ import timber.log.Timber
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
-class MainViewModel(application: Application) : AndroidViewModel(application) {
+class MainViewModel(application: Application) : AndroidViewModel(application), DefaultLifecycleObserver {
     private val sharedPreferences = application.getSharedPreferences("app", Context.MODE_PRIVATE)
     private val resources = application.resources
 
@@ -160,7 +161,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun onClickGetShadow() {
         viewModelScope.launch {
             val shadowClient = shadowClient ?: return@launch
@@ -178,7 +179,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val counter = AtomicInteger(0)
 
-    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun onClickUpdateShadow() {
         viewModelScope.launch {
             val shadowClient = shadowClient ?: return@launch
@@ -197,7 +198,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun onClickDeleteShadow() {
         viewModelScope.launch {
             val shadowClient = shadowClient ?: return@launch

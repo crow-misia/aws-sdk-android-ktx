@@ -41,6 +41,9 @@ android {
 }
 
 dependencies {
+    implementation(KotlinX.coroutines.android)
+
+    implementation(project(":aws-sdk-android-core-ktx"))
     implementation(project(":aws-sdk-android-iot-ktx"))
 
     implementation(Kotlin.stdlib)
