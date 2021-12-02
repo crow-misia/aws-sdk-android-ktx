@@ -10,18 +10,7 @@ plugins {
     id("maven-publish")
 }
 
-object Maven {
-    const val groupId = "io.github.crow-misia.aws-sdk-android-ktx"
-    const val artifactId = "aws-sdk-android-core-ktx"
-    const val name = "aws-sdk-android-core-ktx"
-    const val version = "0.0.2"
-    const val desc = "AWS SDK for Android with Kotlin"
-    const val siteUrl = "https://github.com/crow-misia/aws-sdk-android-ktx"
-    const val gitUrl = "https://github.com/crow-misia/aws-sdk-android-ktx.git"
-    const val licenseName = "The Apache Software License, Version 2.0"
-    const val licenseUrl = "http://www.apache.org/licenses/LICENSE-2.0.txt"
-    const val licenseDist = "repo"
-}
+val mavenName = "aws-sdk-android-core-ktx"
 
 group = Maven.groupId
 version = Maven.version
@@ -106,12 +95,12 @@ afterEvaluate {
                 from(components["release"])
 
                 groupId = Maven.groupId
-                artifactId = Maven.artifactId
+                artifactId = mavenName
 
                 println("""
                     |Creating maven publication
                     |    Group: $groupId
-                    |    Artifact: $artifactId
+                    |    Artifact: $mavenName
                     |    Version: $version
                 """.trimMargin())
 
@@ -119,7 +108,7 @@ afterEvaluate {
                 artifact(javadocJar)
 
                 pom {
-                    name.set(Maven.name)
+                    name.set(mavenName)
                     description.set(Maven.desc)
                     url.set(Maven.siteUrl)
 
