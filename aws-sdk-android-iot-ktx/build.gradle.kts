@@ -91,7 +91,7 @@ val javadocJar by tasks.creating(Jar::class) {
 afterEvaluate {
     publishing {
         publications {
-            create<MavenPublication>("maven") {
+            create<MavenPublication>(mavenName) {
                 from(components["release"])
 
                 groupId = Maven.groupId
@@ -156,7 +156,7 @@ afterEvaluate {
     }
 
     signing {
-        sign(publishing.publications.getByName("maven"))
+        sign(publishing.publications.getByName(mavenName))
     }
 }
 
