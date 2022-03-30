@@ -16,8 +16,8 @@ group = Maven.groupId
 version = Maven.version
 
 android {
-    buildToolsVersion = "31.0.0"
-    compileSdk = 31
+    buildToolsVersion = "32.0.0"
+    compileSdk = 32
 
     defaultConfig {
         minSdk = 23
@@ -26,8 +26,7 @@ android {
 
     lint {
         textReport = true
-        textOutput("stdout")
-        isCheckDependencies = true
+        checkDependencies = true
     }
 
     libraryVariants.all {
@@ -45,8 +44,8 @@ android {
         kotlinOptions {
             freeCompilerArgs = listOf("-Xjsr305=strict")
             jvmTarget = "11"
-            apiVersion = "1.5"
-            languageVersion = "1.5"
+            apiVersion = "1.6"
+            languageVersion = "1.6"
         }
     }
 }
@@ -164,19 +163,19 @@ detekt {
     buildUponDefaultConfig = true // preconfigure defaults
     allRules = false // activate all available (even unstable) rules.
     config = files("$rootDir/config/detekt.yml")
-
-    reports {
-        html.required.set(true)
-        xml.required.set(true)
-        txt.required.set(true)
-        sarif.required.set(true)
-    }
 }
 
 tasks {
     withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
         // Target version of the generated JVM bytecode. It is used for type resolution.
-        jvmTarget = "1.8"
+        jvmTarget = "11"
+
+        reports {
+            html.required.set(true)
+            xml.required.set(true)
+            txt.required.set(true)
+            sarif.required.set(true)
+        }
     }
     withType<Test> {
         useJUnitPlatform()
