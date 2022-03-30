@@ -8,6 +8,8 @@ complexity:
     active: false
 
 style:
+  MaxLineLength:
+    maxLineLength: 150
   WildcardImport:
     active: false
 

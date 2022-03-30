@@ -5,7 +5,10 @@ import com.amazonaws.regions.Region
 import java.util.concurrent.ConcurrentHashMap
 
 interface AWSIotMqttManagerProvider {
-    fun provide(clientId: AWSIotMqttManager.ClientId, isDisconnectPreviousConnection: Boolean = true): AWSIotMqttManager {
+    fun provide(
+        clientId: AWSIotMqttManager.ClientId,
+        isDisconnectPreviousConnection: Boolean = true,
+    ): AWSIotMqttManager {
         return provide(clientId = clientId.value, isDisconnectPreviousConnection)
     }
 
@@ -55,7 +58,7 @@ class AWSIotMqttManagerProviderImpl(
         cache.values.removeAll {
             try {
                 it.disconnect()
-            } catch (e: Throwable) {
+            } catch (_: Throwable) {
                 true
             }
         }
