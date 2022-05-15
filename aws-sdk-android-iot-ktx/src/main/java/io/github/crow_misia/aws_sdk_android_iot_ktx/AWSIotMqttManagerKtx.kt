@@ -122,7 +122,7 @@ private suspend fun AWSIotMqttManager.subscribe(
         qos,
         createSubscriptionStatusCallback()
     ) { _, data -> newMessageCallback(data) }
-    awaitClose()
+    awaitClose { unsubscribeTopic(topic) }
 }
 
 @ExperimentalCoroutinesApi

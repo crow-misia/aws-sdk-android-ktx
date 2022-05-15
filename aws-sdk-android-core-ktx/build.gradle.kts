@@ -3,7 +3,7 @@ import java.net.URI
 
 plugins {
     id("com.android.library")
-    kotlin("android")
+    id("kotlin-android")
     id("io.gitlab.arturbosch.detekt")
     id("org.jetbrains.dokka")
     id("signing")
@@ -55,10 +55,13 @@ dependencies {
     api(KotlinX.coroutines.core)
 
     // aws sdk android
-    api("com.amazonaws:aws-android-sdk-core:_@aar") { isTransitive = true }
+    api("com.amazonaws:aws-android-sdk-core:_")
 
     // okhttp3
     api(Square.okHttp3)
+
+    // gson
+    implementation("com.google.code.gson:gson:_")
 }
 
 val sourcesJar by tasks.creating(Jar::class) {

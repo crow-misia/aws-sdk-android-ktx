@@ -18,6 +18,13 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    lint {
+        abortOnError = false
+        textReport = true
+        checkDependencies = true
+        lintConfig = file("lint.xml")
+    }
+
     buildFeatures {
         dataBinding = true
     }
@@ -33,7 +40,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        freeCompilerArgs = listOf("-Xjsr305=strict", "-Xopt-in=kotlin.RequiresOptIn")
+        freeCompilerArgs = listOf("-Xjsr305=strict", "-opt-in=kotlin.RequiresOptIn")
         jvmTarget = "11"
         apiVersion = "1.6"
         languageVersion = "1.6"

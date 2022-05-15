@@ -3,7 +3,7 @@ import java.net.URI
 
 plugins {
     id("com.android.library")
-    kotlin("android")
+    id("kotlin-android")
     id("io.gitlab.arturbosch.detekt")
     id("org.jetbrains.dokka")
     id("signing")
@@ -55,7 +55,7 @@ dependencies {
     api(KotlinX.coroutines.core)
 
     // aws sdk android
-    api("com.amazonaws:aws-android-sdk-iot:_@aar") { isTransitive = true }
+    api("com.amazonaws:aws-android-sdk-iot:_")
 
     // conscrypt
     api("org.conscrypt:conscrypt-android:_")

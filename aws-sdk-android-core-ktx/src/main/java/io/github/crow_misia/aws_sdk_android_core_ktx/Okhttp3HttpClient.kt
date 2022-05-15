@@ -107,7 +107,7 @@ class Okhttp3HttpClient(
             response.headers.forEach { (key, value) ->
                 it.header(key, value)
             }
-            response.body?.also { body ->
+            response.body.also { body ->
                 it.content(body.byteStream())
             }
             it.statusCode(response.code)
