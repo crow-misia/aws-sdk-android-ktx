@@ -51,14 +51,14 @@ android {
 }
 
 dependencies {
-    api(Kotlin.stdlib)
-    api(KotlinX.coroutines.core)
+    implementation(Kotlin.stdlib)
+    implementation(KotlinX.coroutines.core)
 
     // aws sdk android
     api("com.amazonaws:aws-android-sdk-core:_")
 
     // okhttp3
-    api(Square.okHttp3)
+    implementation(Square.okHttp3)
 
     // gson
     implementation("com.google.code.gson:gson:_")

@@ -51,14 +51,16 @@ android {
 }
 
 dependencies {
-    api(Kotlin.stdlib)
-    api(KotlinX.coroutines.core)
+    api(project(":aws-sdk-android-core-ktx"))
+
+    implementation(Kotlin.stdlib)
+    implementation(KotlinX.coroutines.core)
 
     // aws sdk android
     api("com.amazonaws:aws-android-sdk-iot:_")
 
     // conscrypt
-    api("org.conscrypt:conscrypt-android:_")
+    implementation("org.conscrypt:conscrypt-android:_")
 }
 
 val sourcesJar by tasks.creating(Jar::class) {

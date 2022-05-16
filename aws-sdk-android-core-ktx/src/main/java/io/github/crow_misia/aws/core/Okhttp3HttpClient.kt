@@ -1,4 +1,4 @@
-package io.github.crow_misia.aws_sdk_android_core_ktx
+package io.github.crow_misia.aws.core
 
 import com.amazonaws.ClientConfiguration
 import com.amazonaws.http.HttpClient

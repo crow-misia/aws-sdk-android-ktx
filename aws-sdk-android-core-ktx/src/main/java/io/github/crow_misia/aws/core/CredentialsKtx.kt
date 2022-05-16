@@ -1,4 +1,4 @@
-package io.github.crow_misia.aws_sdk_android_core_ktx
+package io.github.crow_misia.aws.core
 
 import com.amazonaws.auth.BasicSessionCredentials
 import com.amazonaws.services.securitytoken.model.Credentials

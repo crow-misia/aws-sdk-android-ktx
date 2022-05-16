@@ -1,4 +1,4 @@
-package io.github.crow_misia.aws_sdk_android_iot_ktx
+package io.github.crow_misia.aws.iot
 
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.mobileconnectors.iot.AWSIotKeystoreHelper

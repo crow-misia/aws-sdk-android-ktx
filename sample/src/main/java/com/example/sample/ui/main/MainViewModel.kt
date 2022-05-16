@@ -7,11 +7,12 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.viewModelScope
 import com.amazonaws.mobileconnectors.iot.AWSIotKeystoreHelper
+import com.amazonaws.mobileconnectors.iot.AWSIotKeystoreHelper.saveCertificateAndPrivateKey
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import com.amazonaws.regions.Region
 import com.example.sample.R
-import io.github.crow_misia.aws_sdk_android_iot_ktx.*
+import io.github.crow_misia.aws.iot.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.json.JSONObject
@@ -62,14 +63,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         val keystorePath = getApplication<Application>().filesDir
         val keystorePathStr = keystorePath.absolutePath
 
+        // delete keystore for provisioning
         keystorePath.resolve(provisioningKeystoreName).delete()
+
         if (AWSIotKeystoreHelper.isKeystorePresent(keystorePathStr, keystoreName)) {
             Timber.i("Already exists device keystore.")
             return
         }
-
-        // delete keystore for provisioning
-        keystorePath.resolve(provisioningKeystoreName).delete()
 
         AWSIotKeystoreHelper.saveCertificateAndPrivateKey(
             "provisioning",
@@ -88,30 +88,28 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
             provisioningKeystoreName,
             AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD
         )
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                try {
-                    manager.provisioningThing(
-                        keyStore,
-                        templateName,
-                        mapOf("SerialNumber" to serialNumber)
-                    )
-                        .collect {
-                            it.saveCertificateAndPrivateKey(
-                                keystorePathStr,
-                                keystoreName,
-                                AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD
-                            )
-                            sharedPreferences.edit {
-                                putString("certificateId", it.certificateId)
-                                putString("thingName", it.thingName)
-                                this@MainViewModel.thingName = it.thingName
-                            }
-                            Timber.i("Registered things.\n%s", it)
+        viewModelScope.launch(context = Dispatchers.IO) {
+            try {
+                manager.provisioningThing(
+                    keyStore,
+                    templateName,
+                    mapOf("SerialNumber" to serialNumber)
+                )
+                    .collect {
+                        it.saveCertificateAndPrivateKey(
+                            keystorePathStr,
+                            keystoreName,
+                            AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD
+                        )
+                        sharedPreferences.edit {
+                            putString("certificateId", it.certificateId)
+                            putString("thingName", it.thingName)
+                            this@MainViewModel.thingName = it.thingName
                         }
-                } catch (e: Throwable) {
-                    Timber.e(e, "Error provisioning.")
-                }
+                        Timber.i("Registered things.\n%s", it)
+                    }
+            } catch (e: Throwable) {
+                Timber.e(e, "Error provisioning.")
             }
         }
     }

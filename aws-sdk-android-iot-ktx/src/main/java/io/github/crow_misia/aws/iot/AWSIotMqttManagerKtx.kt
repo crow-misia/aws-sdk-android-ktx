@@ -1,4 +1,4 @@
-package io.github.crow_misia.aws_sdk_android_iot_ktx
+package io.github.crow_misia.aws.iot
 
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.mobileconnectors.iot.*
@@ -108,7 +108,7 @@ suspend fun AWSIotMqttManager.subscribe(
     qos: AWSIotMqttQos,
 ): Flow<ByteArray> = callbackFlow {
     subscribe(topic, qos) { trySend(it) }.collect()
-    awaitClose { unsubscribeTopic(topic) }
+    awaitClose()
 }
 
 @ExperimentalCoroutinesApi
@@ -122,7 +122,7 @@ private suspend fun AWSIotMqttManager.subscribe(
         qos,
         createSubscriptionStatusCallback()
     ) { _, data -> newMessageCallback(data) }
-    awaitClose { unsubscribeTopic(topic) }
+    awaitClose()
 }
 
 @ExperimentalCoroutinesApi

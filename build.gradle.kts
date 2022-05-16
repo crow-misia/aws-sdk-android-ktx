@@ -4,20 +4,9 @@ plugins {
 }
 
 buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
     dependencies {
         classpath(Android.tools.build.gradlePlugin)
         classpath("org.jetbrains.dokka:dokka-gradle-plugin:_")
-    }
-}
-
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
     }
 }
 
