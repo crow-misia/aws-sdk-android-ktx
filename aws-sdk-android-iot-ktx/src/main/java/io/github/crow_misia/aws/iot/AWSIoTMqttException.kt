@@ -15,6 +15,7 @@ class AWSIoTMqttDeliveryException(
 
 class AWSIoTMqttPublishWithReplyException(
     message: String,
+    topic: String,
     response: ByteArray,
     val userData: Any?,
-) : AWSIoTMqttException("$message:\nResponse:${String(response)}")
+) : AWSIoTMqttException("$message:\ntopic:$topic\nResponse:${String(response)}")

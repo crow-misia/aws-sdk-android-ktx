@@ -7,8 +7,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.viewModelScope
 import com.amazonaws.mobileconnectors.iot.AWSIotKeystoreHelper
-import com.amazonaws.mobileconnectors.iot.AWSIotKeystoreHelper.saveCertificateAndPrivateKey
-import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import com.amazonaws.regions.Region
 import com.example.sample.R
@@ -91,23 +89,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         viewModelScope.launch(context = Dispatchers.IO) {
             try {
                 manager.provisioningThing(
-                    keyStore,
-                    templateName,
-                    mapOf("SerialNumber" to serialNumber)
-                )
-                    .collect {
-                        it.saveCertificateAndPrivateKey(
-                            keystorePathStr,
-                            keystoreName,
-                            AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD
-                        )
-                        sharedPreferences.edit {
-                            putString("certificateId", it.certificateId)
-                            putString("thingName", it.thingName)
-                            this@MainViewModel.thingName = it.thingName
-                        }
-                        Timber.i("Registered things.\n%s", it)
+                    keyStore = keyStore,
+                    templateName = templateName,
+                    parameters = mapOf("SerialNumber" to serialNumber),
+                ).collect {
+                    it.saveCertificateAndPrivateKey(
+                        keystorePath = keystorePathStr,
+                        keystoreName = keystoreName,
+                        keystorePassword = AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD
+                    )
+                    sharedPreferences.edit {
+                        putString("certificateId", it.certificateId)
+                        putString("thingName", it.thingName)
+                        this@MainViewModel.thingName = it.thingName
                     }
+                    Timber.i("Registered things.\n%s", it)
+                }
             } catch (e: Throwable) {
                 Timber.e(e, "Error provisioning.")
             }
@@ -123,10 +120,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         val certId = sharedPreferences.getString("certificateId", null)
         val thingName = sharedPreferences.getString("thingName", null)
 
-        if (certId.isNullOrBlank() || thingName.isNullOrBlank() || !AWSIotKeystoreHelper.isKeystorePresent(
-                keystorePathStr,
-                keystoreName
-            )
+        if (certId.isNullOrBlank() ||
+            thingName.isNullOrBlank() ||
+            !AWSIotKeystoreHelper.isKeystorePresent(keystorePathStr, keystoreName)
         ) {
             return
         }
@@ -148,7 +144,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
                 manager.connect(keyStore)
                     // waiting until connected.
                     .filter { it == AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus.Connected }
-                    .take(1)
                     .flatMapConcat {
                         shadowClient.subscribeDocuments()
                     }
