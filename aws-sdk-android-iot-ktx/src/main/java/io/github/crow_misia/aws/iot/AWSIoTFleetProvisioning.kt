@@ -7,10 +7,7 @@ import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttQos
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.flatMapConcat
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import org.json.JSONObject
 import java.security.KeyStore
 
@@ -20,7 +17,7 @@ suspend fun AWSIotMqttManager.provisioningThingUsingALPN(
     keyStore: KeyStore,
     templateName: String,
     parameters: Map<String, String>,
-): Flow<AWSIoTProvisioningResponse> {
+): AWSIoTProvisioningResponse {
     return provisioningThingUsingALPN(
         keyStore = keyStore,
         templateName = templateName,
@@ -34,7 +31,7 @@ suspend fun AWSIotMqttManager.provisioningThingUsingALPN(
     keyStore: KeyStore,
     templateName: String,
     parameters: JSONObject,
-): Flow<AWSIoTProvisioningResponse> {
+): AWSIoTProvisioningResponse {
     return provisioningThing(
         templateName = templateName,
         parameters = parameters,
@@ -51,7 +48,7 @@ suspend fun AWSIotMqttManager.provisioningThingWithProxy(
     proxyPort: Int,
     templateName: String,
     parameters: Map<String, String>,
-): Flow<AWSIoTProvisioningResponse> {
+): AWSIoTProvisioningResponse {
     return provisioningThingWithProxy(
         keyStore = keyStore,
         proxyHost = proxyHost,
@@ -69,7 +66,7 @@ suspend fun AWSIotMqttManager.provisioningThingWithProxy(
     proxyPort: Int,
     templateName: String,
     parameters: JSONObject,
-): Flow<AWSIoTProvisioningResponse> {
+): AWSIoTProvisioningResponse {
     return provisioningThing(
         templateName = templateName,
         parameters = parameters,
@@ -84,7 +81,7 @@ suspend fun AWSIotMqttManager.provisioningThing(
     keyStore: KeyStore,
     templateName: String,
     parameters: Map<String, String>,
-): Flow<AWSIoTProvisioningResponse> {
+): AWSIoTProvisioningResponse {
     return provisioningThing(
         keyStore = keyStore,
         templateName = templateName,
@@ -98,7 +95,7 @@ suspend fun AWSIotMqttManager.provisioningThing(
     keyStore: KeyStore,
     templateName: String,
     parameters: JSONObject,
-): Flow<AWSIoTProvisioningResponse> {
+): AWSIoTProvisioningResponse {
     return provisioningThing(
         templateName = templateName,
         parameters = parameters,
@@ -113,7 +110,7 @@ suspend fun AWSIotMqttManager.provisioningThing(
     credentialsProvider: AWSCredentialsProvider,
     templateName: String,
     parameters: Map<String, String>,
-): Flow<AWSIoTProvisioningResponse> {
+): AWSIoTProvisioningResponse {
     return provisioningThing(
         credentialsProvider = credentialsProvider,
         templateName = templateName,
@@ -127,7 +124,7 @@ suspend fun AWSIotMqttManager.provisioningThing(
     credentialsProvider: AWSCredentialsProvider,
     templateName: String,
     parameters: JSONObject,
-): Flow<AWSIoTProvisioningResponse> {
+): AWSIoTProvisioningResponse {
     return provisioningThing(
         templateName = templateName,
         parameters = parameters,
@@ -145,7 +142,7 @@ suspend fun AWSIotMqttManager.provisioningThing(
     customAuthorizer: String,
     templateName: String,
     parameters: Map<String, String>,
-): Flow<AWSIoTProvisioningResponse> {
+): AWSIoTProvisioningResponse {
     return provisioningThing(
         tokenKeyName = tokenKeyName,
         token = token,
@@ -165,7 +162,7 @@ suspend fun AWSIotMqttManager.provisioningThing(
     customAuthorizer: String,
     templateName: String,
     parameters: JSONObject,
-): Flow<AWSIoTProvisioningResponse> {
+): AWSIoTProvisioningResponse {
     return provisioningThing(
         templateName = templateName,
         parameters = parameters,
@@ -186,7 +183,7 @@ suspend fun AWSIotMqttManager.provisioningThing(
     password: String,
     templateName: String,
     parameters: Map<String, String>,
-): Flow<AWSIoTProvisioningResponse> {
+): AWSIoTProvisioningResponse {
     return provisioningThing(
         username = username,
         password = password,
@@ -202,7 +199,7 @@ suspend fun AWSIotMqttManager.provisioningThing(
     password: String,
     templateName: String,
     parameters: JSONObject,
-): Flow<AWSIoTProvisioningResponse> {
+): AWSIoTProvisioningResponse {
     return provisioningThing(
         templateName = templateName,
         parameters = parameters,
@@ -220,7 +217,7 @@ private suspend inline fun AWSIotMqttManager.provisioningThing(
     templateName: String,
     parameters: JSONObject,
     crossinline connect: suspend () -> Flow<AWSIotMqttClientStatus>,
-): Flow<AWSIoTProvisioningResponse> {
+): AWSIoTProvisioningResponse {
     return connect()
         // Wait until connected.
         .filter { it == AWSIotMqttClientStatus.Connected }
@@ -250,6 +247,7 @@ private suspend inline fun AWSIotMqttManager.provisioningThing(
                 )
             }
         }
+        .first()
 }
 
 /**

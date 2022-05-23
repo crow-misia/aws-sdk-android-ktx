@@ -93,18 +93,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
                     keyStore = keyStore,
                     templateName = templateName,
                     parameters = mapOf("SerialNumber" to serialNumber),
-                ).collect {
-                    it.saveCertificateAndPrivateKey(
+                ).apply {
+                    saveCertificateAndPrivateKey(
                         keystorePath = keystorePathStr,
                         keystoreName = keystoreName,
                         keystorePassword = AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD
                     )
                     sharedPreferences.edit {
-                        putString("certificateId", it.certificateId)
-                        putString("thingName", it.thingName)
-                        this@MainViewModel.thingName = it.thingName
+                        putString("certificateId", certificateId)
+                        putString("thingName", thingName)
+                        this@MainViewModel.thingName = thingName
                     }
-                    Timber.i("Registered things.\n%s", it)
+                    Timber.i("Registered things.\n%s", this)
                 }
             } catch (e: Throwable) {
                 Timber.e(e, "Error provisioning.")
