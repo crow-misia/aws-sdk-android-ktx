@@ -22,9 +22,9 @@ class AWSIoTMqttShadowClient internal constructor(
             str = "",
             topic = getTopicName(shadowName, "get"),
             qos = AWSIotMqttQos.QOS1,
-        ).map { (_, data) ->
+        ).let { (_, data) ->
             JSONObject(String(data))
-        }.first()
+        }
     }
 
     @ExperimentalCoroutinesApi
@@ -38,9 +38,9 @@ class AWSIoTMqttShadowClient internal constructor(
             str = state.toString(),
             topic = getTopicName(shadowName, "update"),
             qos = AWSIotMqttQos.QOS1,
-        ).map { (_, data) ->
+        ).let { (_, data) ->
             JSONObject(String(data))
-        }.first()
+        }
     }
 
     @ExperimentalCoroutinesApi
@@ -69,9 +69,9 @@ class AWSIoTMqttShadowClient internal constructor(
             str = "",
             topic = getTopicName(shadowName, "delete"),
             qos = AWSIotMqttQos.QOS1,
-        ).map { (_, data) ->
+        ).let { (_, data) ->
             JSONObject(String(data))
-        }.first()
+        }
     }
 
     private fun getTopicName(shadowName: String?, method: String): String {

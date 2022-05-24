@@ -3,6 +3,8 @@ package io.github.crow_misia.aws.iot
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.mobileconnectors.iot.*
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
@@ -11,13 +13,20 @@ import kotlinx.coroutines.launch
 import java.security.KeyStore
 
 @ExperimentalCoroutinesApi
-private fun ProducerScope<AWSIotMqttClientStatus>.createConnectCallback(isAutoReconnect: Boolean): AWSIotMqttClientStatusCallback {
+private fun ProducerScope<AWSIotMqttClientStatus>.createConnectCallback(
+    isAutoReconnect: Boolean,
+    resetReconnect: () -> Unit,
+): AWSIotMqttClientStatusCallback {
     return if (isAutoReconnect) {
         AWSIotMqttClientStatusCallback { status, _ ->
             trySend(status)
             // Give up reconnect.
-            if (status == AWSIotMqttClientStatus.ConnectionLost) {
-                close()
+            when (status) {
+                AWSIotMqttClientStatus.ConnectionLost -> close()
+                AWSIotMqttClientStatus.Connected -> resetReconnect()
+                else -> {
+                    // ignore.
+                }
             }
         }
     } else {
@@ -33,10 +42,13 @@ private fun ProducerScope<AWSIotMqttClientStatus>.createConnectCallback(isAutoRe
 
 @ExperimentalCoroutinesApi
 private inline fun ProducerScope<*>.createSubscriptionStatusCallback(
-    crossinline onSuccess: () -> Unit,
+    defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    crossinline onSuccess: suspend () -> Unit,
 ) = object : AWSIotMqttSubscriptionStatusCallback {
     override fun onSuccess() {
-        onSuccess()
+        launch(defaultDispatcher) {
+            onSuccess()
+        }
     }
 
     override fun onFailure(exception: Throwable) {
@@ -64,8 +76,8 @@ private inline fun ProducerScope<*>.createMessageDeliveryCallback(
 suspend fun AWSIotMqttManager.connectUsingALPN(
     keyStore: KeyStore,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
-    connectUsingALPN(keyStore, createConnectCallback(isAutoReconnect))
-    awaitClose { disconnect() }
+    connectUsingALPN(keyStore, createConnectCallback(isAutoReconnect, ::resetReconnect))
+    awaitClose { disconnectQuite() }
 }
 
 @ExperimentalCoroutinesApi
@@ -74,24 +86,24 @@ suspend fun AWSIotMqttManager.connectWithProxy(
     proxyHost: String,
     proxyPort: Int,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
-    connectWithProxy(keyStore, proxyHost, proxyPort, createConnectCallback(isAutoReconnect))
-    awaitClose { disconnect() }
+    connectWithProxy(keyStore, proxyHost, proxyPort, createConnectCallback(isAutoReconnect, ::resetReconnect))
+    awaitClose { disconnectQuite() }
 }
 
 @ExperimentalCoroutinesApi
 suspend fun AWSIotMqttManager.connect(
     keyStore: KeyStore,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
-    connect(keyStore, createConnectCallback(isAutoReconnect))
-    awaitClose { disconnect() }
+    connect(keyStore, createConnectCallback(isAutoReconnect, ::resetReconnect))
+    awaitClose { disconnectQuite() }
 }
 
 @ExperimentalCoroutinesApi
 suspend fun AWSIotMqttManager.connect(
     credentialsProvider: AWSCredentialsProvider,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
-    connect(credentialsProvider, createConnectCallback(isAutoReconnect))
-    awaitClose { disconnect() }
+    connect(credentialsProvider, createConnectCallback(isAutoReconnect, ::resetReconnect))
+    awaitClose { disconnectQuite() }
 }
 
 @ExperimentalCoroutinesApi
@@ -101,8 +113,8 @@ suspend fun AWSIotMqttManager.connect(
     tokenSignature: String,
     customAuthorizer: String,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
-    connect(tokenKeyName, token, tokenSignature, customAuthorizer, createConnectCallback(isAutoReconnect))
-    awaitClose { disconnect() }
+    connect(tokenKeyName, token, tokenSignature, customAuthorizer, createConnectCallback(isAutoReconnect, ::resetReconnect))
+    awaitClose { disconnectQuite() }
 }
 
 @ExperimentalCoroutinesApi
@@ -110,21 +122,34 @@ suspend fun AWSIotMqttManager.connect(
     username: String,
     password: String,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
-    connect(username, password, createConnectCallback(isAutoReconnect))
-    awaitClose { disconnect() }
+    connect(username, password, createConnectCallback(isAutoReconnect, ::resetReconnect))
+    awaitClose { disconnectQuite() }
+}
+
+private fun AWSIotMqttManager.disconnectQuite() {
+    try {
+        disconnect()
+    } catch (e: Throwable) {
+        // ignore.
+    }
 }
 
 @ExperimentalCoroutinesApi
 suspend fun AWSIotMqttManager.subscribe(
     topic: String,
     qos: AWSIotMqttQos,
+    onDeliveried: suspend () -> Unit = { },
 ): Flow<SubscribeData> = callbackFlow {
-    subscribeToTopic(
-        topic,
-        qos,
-        createSubscriptionStatusCallback { },
-    ) { topic, data -> trySend(SubscribeData(topic, data)) }
-    awaitClose { unsubscribeTopic(topic) }
+    subscribeToTopic(topic, qos, createSubscriptionStatusCallback { onDeliveried() }) { topic, data ->
+        trySend(SubscribeData(topic, data))
+    }
+    awaitClose {
+        try {
+            unsubscribeTopic(topic)
+        } catch (e: Throwable) {
+            // ignore.
+        }
+    }
 }
 
 @ExperimentalCoroutinesApi
@@ -134,10 +159,10 @@ suspend fun AWSIotMqttManager.publish(
     qos: AWSIotMqttQos,
     userData: Any? = null,
     isRetained: Boolean = false,
-): Flow<Unit> = callbackFlow {
+) = callbackFlow<Unit> {
     publishString(str, topic, qos, createMessageDeliveryCallback { close() }, userData, isRetained)
     awaitClose()
-}
+}.first()
 
 @ExperimentalCoroutinesApi
 suspend fun AWSIotMqttManager.publish(
@@ -146,10 +171,10 @@ suspend fun AWSIotMqttManager.publish(
     qos: AWSIotMqttQos,
     userData: Any? = null,
     isRetained: Boolean = false,
-): Flow<Unit> = callbackFlow {
+) = callbackFlow<Unit> {
     publishData(data, topic, qos, createMessageDeliveryCallback { close() }, userData, isRetained)
     awaitClose()
-}
+}.first()
 
 @ExperimentalCoroutinesApi
 suspend fun AWSIotMqttManager.publishWithReply(
@@ -158,33 +183,37 @@ suspend fun AWSIotMqttManager.publishWithReply(
     qos: AWSIotMqttQos,
     userData: Any? = null,
     isRetained: Boolean = false,
-): Flow<SubscribeData> = callbackFlow {
+): SubscribeData = callbackFlow<SubscribeData> {
     val acceptedTopic = "$topic/accepted"
     val rejectedTopic = "$topic/rejected"
 
-    val acceptedFlow = subscribe(acceptedTopic, qos)
-    val rejectedFlow = subscribe(rejectedTopic, qos)
+    // for wait subscribe accepted/rejected topic
+    val publisher = MutableSharedFlow<Unit>()
+    val acceptedFlow = subscribe(acceptedTopic, qos) { publisher.emit(Unit) }
+    val rejectedFlow = subscribe(rejectedTopic, qos) { publisher.emit(Unit) }
 
-    val job = launch {
-        merge(acceptedFlow, rejectedFlow)
-            .onStart {
+    val jobPublish = launch {
+        publisher
+            .drop(1)
+            .collect {
                 publishString(str, topic, qos, createMessageDeliveryCallback { }, userData, isRetained)
             }
-            .take(1)
-            .collect {
-                when (it.topic) {
-                    acceptedTopic -> {
-                        trySend(it)
-                        close()
-                    }
-                    rejectedTopic -> {
-                        close(AWSIoTMqttPublishWithReplyException("Rejected", it.topic, it.data, userData))
-                    }
-                }
+    }
+    val jobResponse = launch {
+        val res = merge(acceptedFlow, rejectedFlow).first()
+        when (res.topic) {
+            acceptedTopic -> {
+                trySend(res)
+                close()
             }
+            rejectedTopic -> {
+                close(AWSIoTMqttPublishWithReplyException("Rejected", res.topic, res.data, userData))
+            }
+        }
     }
 
     awaitClose {
-        job.cancel()
+        jobResponse.cancel()
+        jobPublish.cancel()
     }
-}
+}.first()

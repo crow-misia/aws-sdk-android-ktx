@@ -221,31 +221,28 @@ private suspend inline fun AWSIotMqttManager.provisioningThing(
     return connect()
         // Wait until connected.
         .filter { it == AWSIotMqttClientStatus.Connected }
-        .flatMapConcat {
-            publishWithReply(str = "{}", topic = "\$aws/certificates/create/json", qos = AWSIotMqttQos.QOS1)
-        }
-        .map { (_, data) -> JSONObject(String(data)) }
-        .flatMapConcat { response ->
+        .map {
+            val (_, data) = publishWithReply(str = "{}", topic = "\$aws/certificates/create/json", qos = AWSIotMqttQos.QOS1)
+            val response = JSONObject(String(data))
             val certificateOwnershipToken = response.getString("certificateOwnershipToken")
             val request = JSONObject().apply {
                 put("certificateOwnershipToken", certificateOwnershipToken)
                 put("parameters", parameters)
             }
-            publishWithReply(
+            val json = publishWithReply(
                 str = request.toString(),
                 topic = "\$aws/provisioning-templates/$templateName/provision/json",
                 qos = AWSIotMqttQos.QOS1
-            ).map { (_, data) ->
+            ).let { (_, data) ->
                 JSONObject(String(data))
-            }.map {
-                AWSIoTProvisioningResponse(
-                    deviceConfiguration = it.getJSONObject("deviceConfiguration"),
-                    thingName = it.getString("thingName"),
-                    certificateId = response.getString("certificateId"),
-                    certificatePem = response.getString("certificatePem"),
-                    privateKey = response.getString("privateKey"),
-                )
             }
+            AWSIoTProvisioningResponse(
+                deviceConfiguration = json.getJSONObject("deviceConfiguration"),
+                thingName = json.getString("thingName"),
+                certificateId = response.getString("certificateId"),
+                certificatePem = response.getString("certificatePem"),
+                privateKey = response.getString("privateKey"),
+            )
         }
         .first()
 }
