@@ -58,12 +58,13 @@ private inline fun ProducerScope<*>.createSubscriptionStatusCallback(
 
 
 @ExperimentalCoroutinesApi
-private inline fun ProducerScope<*>.createMessageDeliveryCallback(
-    crossinline onSuccess: () -> Unit,
+private inline fun <T> ProducerScope<T>.createMessageDeliveryCallback(
+    crossinline sendElement: () -> T,
 ) = AWSIotMqttMessageDeliveryCallback { status, userData ->
     when (status) {
         AWSIotMqttMessageDeliveryCallback.MessageDeliveryStatus.Success -> {
-            onSuccess()
+            trySend(sendElement())
+            close()
         }
         AWSIotMqttMessageDeliveryCallback.MessageDeliveryStatus.Fail -> {
             close(AWSIoTMqttDeliveryException("Error message delivery.", userData))
@@ -160,7 +161,7 @@ suspend fun AWSIotMqttManager.publish(
     userData: Any? = null,
     isRetained: Boolean = false,
 ) = callbackFlow<Unit> {
-    publishString(str, topic, qos, createMessageDeliveryCallback { close() }, userData, isRetained)
+    publishString(str, topic, qos, createMessageDeliveryCallback { Unit }, userData, isRetained)
     awaitClose()
 }.first()
 
@@ -172,7 +173,7 @@ suspend fun AWSIotMqttManager.publish(
     userData: Any? = null,
     isRetained: Boolean = false,
 ) = callbackFlow<Unit> {
-    publishData(data, topic, qos, createMessageDeliveryCallback { close() }, userData, isRetained)
+    publishData(data, topic, qos, createMessageDeliveryCallback { Unit }, userData, isRetained)
     awaitClose()
 }.first()
 
@@ -196,7 +197,7 @@ suspend fun AWSIotMqttManager.publishWithReply(
         publisher
             .drop(1)
             .collect {
-                publishString(str, topic, qos, createMessageDeliveryCallback { }, userData, isRetained)
+                publish(str, topic, qos, userData, isRetained)
             }
     }
     val jobResponse = launch {
