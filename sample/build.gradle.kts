@@ -62,6 +62,6 @@ dependencies {
     implementation(AndroidX.lifecycle.viewModelKtx)
     implementation(JakeWharton.timber)
     testImplementation(Testing.junit4)
-    androidTestImplementation(AndroidX.test.ext.junitKtx)
+    androidTestImplementation(AndroidX.test.ext.junit.ktx)
     androidTestImplementation(AndroidX.test.espresso.core)
 }
