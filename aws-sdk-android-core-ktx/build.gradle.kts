@@ -16,8 +16,8 @@ group = Maven.groupId
 version = Maven.version
 
 android {
-    buildToolsVersion = "32.0.0"
-    compileSdk = 32
+    buildToolsVersion = "33.0.0"
+    compileSdk = 33
 
     defaultConfig {
         minSdk = 23
@@ -44,8 +44,8 @@ android {
         kotlinOptions {
             freeCompilerArgs = listOf("-Xjsr305=strict")
             jvmTarget = "11"
-            apiVersion = "1.6"
-            languageVersion = "1.6"
+            apiVersion = "1.7"
+            languageVersion = "1.7"
         }
     }
 }
@@ -55,13 +55,13 @@ dependencies {
     implementation(KotlinX.coroutines.core)
 
     // aws sdk android
-    api("com.amazonaws:aws-android-sdk-core:_")
+    api(libs.aws.android.sdk.core)
 
     // okhttp3
     implementation(Square.okHttp3)
 
     // gson
-    implementation("com.google.code.gson:gson:_")
+    implementation(libs.gson)
 }
 
 val sourcesJar by tasks.creating(Jar::class) {
@@ -76,7 +76,7 @@ val customDokkaTask by tasks.creating(DokkaTask::class) {
         noAndroidSdkLink.set(false)
     }
     dependencies {
-        plugins("org.jetbrains.dokka:javadoc-plugin:_")
+        plugins(libs.javadoc.plugin)
     }
     inputs.dir("src/main/java")
     outputDirectory.set(buildDir.resolve("javadoc"))

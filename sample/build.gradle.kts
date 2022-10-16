@@ -5,13 +5,14 @@ plugins {
 }
 
 android {
-    buildToolsVersion = "32.0.0"
-    compileSdk = 32
+    buildToolsVersion = "33.0.0"
+    compileSdk = 33
 
     defaultConfig {
+        namespace = "com.example.sample"
         applicationId = "com.example.sample"
         minSdk = 23
-        targetSdk = 32
+        targetSdk = 33
         versionCode = 1
         versionName = "1.0"
 
@@ -42,8 +43,8 @@ android {
     kotlinOptions {
         freeCompilerArgs = listOf("-Xjsr305=strict", "-opt-in=kotlin.RequiresOptIn")
         jvmTarget = "11"
-        apiVersion = "1.6"
-        languageVersion = "1.6"
+        apiVersion = "1.7"
+        languageVersion = "1.7"
     }
 }
 

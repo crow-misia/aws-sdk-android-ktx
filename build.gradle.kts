@@ -6,7 +6,7 @@ plugins {
 buildscript {
     dependencies {
         classpath(Android.tools.build.gradlePlugin)
-        classpath("org.jetbrains.dokka:dokka-gradle-plugin:_")
+        classpath(libs.dokka.gradle.plugin)
     }
 }
 
