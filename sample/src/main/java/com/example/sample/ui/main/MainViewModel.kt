@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class MainViewModel(application: Application) : AndroidViewModel(application), DefaultLifecycleObserver {
     private val sharedPreferences = application.getSharedPreferences("app", Context.MODE_PRIVATE)
     private val resources = application.resources
+    private val assetManager = application.assets
 
     private val region = Region.getRegion(resources.getString(R.string.aws_region))
     private val endpoint =
@@ -72,8 +73,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
 
         AWSIotKeystoreHelper.saveCertificateAndPrivateKey(
             "provisioning",
-            resources.openRawResource(R.raw.certificate).bufferedReader().readText(),
-            resources.openRawResource(R.raw.privatekey).bufferedReader().readText(),
+            assetManager.open("certificate.crt").bufferedReader().readText(),
+            assetManager.open("private.key").bufferedReader().readText(),
             keystorePath.absolutePath,
             provisioningKeystoreName,
             AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD

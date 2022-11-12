@@ -1,3 +1,3 @@
 /build
-/src/main/res/raw/certificate.crt
-/src/main/res/raw/privatekey.key
+/src/main/assets/certificate.crt
+/src/main/assets/private.key
