@@ -20,6 +20,7 @@ android {
     compileSdk = 33
 
     defaultConfig {
+        namespace = "io.github.crow_misia.aws.core"
         minSdk = 23
         consumerProguardFiles("consumer-proguard-rules.pro")
     }
