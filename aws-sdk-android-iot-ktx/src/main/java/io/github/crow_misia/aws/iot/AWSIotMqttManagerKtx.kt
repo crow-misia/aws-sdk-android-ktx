@@ -1,5 +1,6 @@
 package io.github.crow_misia.aws.iot
 
+import com.amazonaws.AmazonClientException
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.mobileconnectors.iot.*
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus
@@ -127,6 +128,7 @@ suspend fun AWSIotMqttManager.connect(
     awaitClose { disconnectQuite() }
 }
 
+@Suppress("TooGenericExceptionCaught", "SwallowedException")
 private fun AWSIotMqttManager.disconnectQuite() {
     try {
         disconnect()
@@ -145,9 +147,10 @@ suspend fun AWSIotMqttManager.subscribe(
         trySend(SubscribeData(topic, data))
     }
     awaitClose {
+        @Suppress("SwallowedException")
         try {
             unsubscribeTopic(topic)
-        } catch (e: Throwable) {
+        } catch (e: AmazonClientException) {
             // ignore.
         }
     }
