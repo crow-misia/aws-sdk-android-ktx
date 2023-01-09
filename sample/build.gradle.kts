@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    buildToolsVersion = "33.0.0"
+    buildToolsVersion = "33.0.1"
     compileSdk = 33
 
     defaultConfig {
@@ -40,11 +40,15 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        freeCompilerArgs = listOf("-Xjsr305=strict", "-opt-in=kotlin.RequiresOptIn")
-        jvmTarget = "11"
-        apiVersion = "1.7"
-        languageVersion = "1.7"
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>().all {
+    compilerOptions {
+        freeCompilerArgs.addAll("-Xjsr305=strict")
+        javaParameters.set(true)
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_8)
+        languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_8)
     }
 }
 
