@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")
-    id("kotlin-android")
-    id("kotlin-kapt")
+    kotlin("android")
+    kotlin("kapt")
 }
 
 android {
@@ -23,7 +23,7 @@ android {
         abortOnError = false
         textReport = true
         checkDependencies = true
-        lintConfig = file("lint.xml")
+        baseline = file("lint-baseline.xml")
     }
 
     buildFeatures {

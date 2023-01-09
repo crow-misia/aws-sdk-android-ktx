@@ -3,11 +3,11 @@ import java.net.URI
 
 plugins {
     id("com.android.library")
-    id("kotlin-android")
     id("io.gitlab.arturbosch.detekt")
     id("org.jetbrains.dokka")
     id("signing")
     id("maven-publish")
+    kotlin("android")
 }
 
 val mavenName = "aws-sdk-android-core-ktx"
@@ -28,6 +28,7 @@ android {
     lint {
         textReport = true
         checkDependencies = true
+        baseline = file("lint-baseline.xml")
     }
 
     libraryVariants.all {

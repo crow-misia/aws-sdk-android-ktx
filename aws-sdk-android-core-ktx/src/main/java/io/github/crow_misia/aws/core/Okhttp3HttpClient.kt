@@ -86,13 +86,12 @@ class Okhttp3HttpClient(
             .url(request.uri.toString())
 
         // add headers
-        if (request.headers != null && !request.headers.isEmpty()) {
-            request.headers.forEach { (key, value) ->
+        if (!request.headers.isNullOrEmpty()) {
+            for ((key, value) in request.headers) {
                 // Skip reserved headers for HttpURLConnection
-                if (key == HttpHeader.CONTENT_LENGTH || key == HttpHeader.HOST) {
-                    return@forEach
+                if (key != HttpHeader.CONTENT_LENGTH && key != HttpHeader.HOST) {
+                    builder.addHeader(key, value)
                 }
-                builder.addHeader(key, value)
             }
         }
 
@@ -104,7 +103,7 @@ class Okhttp3HttpClient(
 
     private fun createHttpResponse(response: Response): HttpResponse {
         return HttpResponse.builder().also {
-            response.headers.forEach { (key, value) ->
+            for ((key, value) in response.headers) {
                 it.header(key, value)
             }
             response.body.also { body ->
