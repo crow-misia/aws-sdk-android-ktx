@@ -9,6 +9,4 @@ class AssumeRoleWithCredentialsRequest(
     companion object {
         const val serialVersionUID = 1L
     }
-
-    var durationSeconds: Int? = null
 }

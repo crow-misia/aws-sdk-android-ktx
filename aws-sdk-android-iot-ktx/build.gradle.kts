@@ -62,6 +62,9 @@ dependencies {
     // aws sdk android
     api(libs.aws.android.sdk.iot)
 
+    // okhttp3
+    implementation(Square.okHttp3)
+
     // conscrypt
     implementation(libs.conscrypt.android)
 }

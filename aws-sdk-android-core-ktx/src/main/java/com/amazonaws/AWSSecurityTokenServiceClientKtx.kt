@@ -19,7 +19,7 @@ fun AWSSecurityTokenServiceClient.assumeRoleWithCredentials(assumeRoleRequest: A
     val response = invoke(
         request,
         AssumeRoleWithCredentialsResponseJsonMarshaller,
-        executionContext
+        executionContext,
     )
     return response.awsResponse
 }
