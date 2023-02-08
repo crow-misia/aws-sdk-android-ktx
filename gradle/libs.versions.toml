@@ -2,17 +2,17 @@
 
 [plugins]
 
-org-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version = "1.8.0" }
+org-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version = "1.8.10" }
 
-gradle = { id = "gradle", version = "7.3.1" }
+gradle = { id = "gradle", version = "7.4.1" }
 
 io-gitlab-arturbosch-detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.22.0" }
 
 [versions]
 
-kotlin = "1.8.0"
+kotlin = "1.8.10"
 
-androidx-databinding = "7.3.1"
+androidx-databinding = "7.4.1"
 
 [libraries]
 
@@ -20,9 +20,9 @@ dokka-gradle-plugin = "org.jetbrains.dokka:dokka-gradle-plugin:1.7.20"
 
 org-jacoco-ant = "org.jacoco:org.jacoco.ant:0.8.8"
 
-aws-android-sdk-core = "com.amazonaws:aws-android-sdk-core:2.61.0"
+aws-android-sdk-core = "com.amazonaws:aws-android-sdk-core:2.63.0"
 
-aws-android-sdk-iot = "com.amazonaws:aws-android-sdk-iot:2.61.0"
+aws-android-sdk-iot = "com.amazonaws:aws-android-sdk-iot:2.63.0"
 
 gson = "com.google.code.gson:gson:2.10.1"
 
