@@ -22,9 +22,6 @@ open class AWSIoTSTSAssumeRoleSessionCredentialsProvider private constructor(
     private val securityTokenService: AWSSecurityTokenServiceClient,
 ) : AWSCredentialsProvider {
     companion object {
-        /** Default duration for started sessions. */
-        const val DEFAULT_DURATION_SECONDS = 900
-
         /** Time before expiry within which credentials will be renewed. */
         const val EXPIRY_TIME_MILLIS = 60 * 1000
 
@@ -49,7 +46,7 @@ open class AWSIoTSTSAssumeRoleSessionCredentialsProvider private constructor(
     /**
      * The expiration time for the current session credentials.
      */
-    private var sessionCredentialsExpiration: Date? = null
+    private var sessionCredentialsExpiration: Long? = null
 
     @JvmOverloads
     constructor(
@@ -125,14 +122,14 @@ open class AWSIoTSTSAssumeRoleSessionCredentialsProvider private constructor(
         )
         val stsCredentials = assumeRoleResult.credentials
         sessionCredentials = stsCredentials?.asBasicSessionCredentials()
-        sessionCredentialsExpiration = stsCredentials?.expiration
+        sessionCredentialsExpiration = (stsCredentials?.expiration?.time ?: 0L) + System.currentTimeMillis()
     }
 
     private fun neededNewSession(): Boolean {
         sessionCredentials ?: return true
         val expiration = sessionCredentialsExpiration ?: return true
 
-        val timeRemaining = expiration.time - System.currentTimeMillis()
+        val timeRemaining = expiration - System.currentTimeMillis()
         return timeRemaining < EXPIRY_TIME_MILLIS
     }
 }
