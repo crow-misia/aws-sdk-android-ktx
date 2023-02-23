@@ -7,14 +7,13 @@ import com.amazonaws.mobileconnectors.iot.AWSIotKeystoreHelper
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttQos
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import org.json.JSONObject
 import java.security.KeyStore
 
-@ExperimentalCoroutinesApi
-@FlowPreview
 suspend fun AWSIotMqttManager.provisioningThingUsingALPN(
     keyStore: KeyStore,
     templateName: String,
@@ -27,7 +26,6 @@ suspend fun AWSIotMqttManager.provisioningThingUsingALPN(
     )
 }
 
-@FlowPreview
 suspend fun AWSIotMqttManager.provisioningThingUsingALPN(
     keyStore: KeyStore,
     templateName: String,
@@ -41,8 +39,6 @@ suspend fun AWSIotMqttManager.provisioningThingUsingALPN(
     }
 }
 
-@ExperimentalCoroutinesApi
-@FlowPreview
 suspend fun AWSIotMqttManager.provisioningThingWithProxy(
     keyStore: KeyStore,
     proxyHost: String,
@@ -59,8 +55,6 @@ suspend fun AWSIotMqttManager.provisioningThingWithProxy(
     )
 }
 
-@ExperimentalCoroutinesApi
-@FlowPreview
 suspend fun AWSIotMqttManager.provisioningThingWithProxy(
     keyStore: KeyStore,
     proxyHost: String,
@@ -76,8 +70,6 @@ suspend fun AWSIotMqttManager.provisioningThingWithProxy(
     }
 }
 
-@ExperimentalCoroutinesApi
-@FlowPreview
 suspend fun AWSIotMqttManager.provisioningThing(
     keyStore: KeyStore,
     templateName: String,
@@ -90,8 +82,6 @@ suspend fun AWSIotMqttManager.provisioningThing(
     )
 }
 
-@ExperimentalCoroutinesApi
-@FlowPreview
 suspend fun AWSIotMqttManager.provisioningThing(
     keyStore: KeyStore,
     templateName: String,
@@ -105,8 +95,6 @@ suspend fun AWSIotMqttManager.provisioningThing(
     }
 }
 
-@ExperimentalCoroutinesApi
-@FlowPreview
 suspend fun AWSIotMqttManager.provisioningThing(
     credentialsProvider: AWSCredentialsProvider,
     templateName: String,
@@ -119,8 +107,6 @@ suspend fun AWSIotMqttManager.provisioningThing(
     )
 }
 
-@ExperimentalCoroutinesApi
-@FlowPreview
 suspend fun AWSIotMqttManager.provisioningThing(
     credentialsProvider: AWSCredentialsProvider,
     templateName: String,
@@ -134,7 +120,6 @@ suspend fun AWSIotMqttManager.provisioningThing(
     }
 }
 
-@FlowPreview
 suspend fun AWSIotMqttManager.provisioningThing(
     tokenKeyName: String,
     token: String,
@@ -153,7 +138,6 @@ suspend fun AWSIotMqttManager.provisioningThing(
     )
 }
 
-@FlowPreview
 suspend fun AWSIotMqttManager.provisioningThing(
     tokenKeyName: String,
     token: String,
@@ -175,7 +159,6 @@ suspend fun AWSIotMqttManager.provisioningThing(
     }
 }
 
-@FlowPreview
 suspend fun AWSIotMqttManager.provisioningThing(
     username: String,
     password: String,
@@ -190,7 +173,6 @@ suspend fun AWSIotMqttManager.provisioningThing(
     )
 }
 
-@FlowPreview
 suspend fun AWSIotMqttManager.provisioningThing(
     username: String,
     password: String,
@@ -208,7 +190,6 @@ suspend fun AWSIotMqttManager.provisioningThing(
     }
 }
 
-@FlowPreview
 private suspend inline fun AWSIotMqttManager.provisioningThing(
     templateName: String,
     parameters: JSONObject,

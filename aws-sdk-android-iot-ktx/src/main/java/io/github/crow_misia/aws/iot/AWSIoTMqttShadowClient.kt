@@ -4,7 +4,6 @@ package io.github.crow_misia.aws.iot
 
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttQos
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.json.JSONObject
@@ -17,7 +16,6 @@ class AWSIoTMqttShadowClient internal constructor(
         manager.disconnect()
     }
 
-    @ExperimentalCoroutinesApi
     suspend fun get(shadowName: String? = null): JSONObject {
         return manager.publishWithReply(
             str = "",
@@ -28,7 +26,6 @@ class AWSIoTMqttShadowClient internal constructor(
         }
     }
 
-    @ExperimentalCoroutinesApi
     suspend fun update(reported: JSONObject, shadowName: String? = null): JSONObject {
         val state = JSONObject().apply {
             put("state", JSONObject().apply {
@@ -44,7 +41,6 @@ class AWSIoTMqttShadowClient internal constructor(
         }
     }
 
-    @ExperimentalCoroutinesApi
     suspend fun subscribeDelta(shadowName: String? = null): Flow<JSONObject> {
         return manager.subscribe(
             topic = getTopicName(shadowName, "update/delta"),
@@ -54,7 +50,6 @@ class AWSIoTMqttShadowClient internal constructor(
         }
     }
 
-    @ExperimentalCoroutinesApi
     suspend fun subscribeDocuments(shadowName: String? = null): Flow<JSONObject> {
         return manager.subscribe(
             topic = getTopicName(shadowName, "update/documents"),
@@ -64,7 +59,6 @@ class AWSIoTMqttShadowClient internal constructor(
         }
     }
 
-    @ExperimentalCoroutinesApi
     suspend fun delete(shadowName: String? = null) {
         manager.publishWithReply(
             str = "",
