@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package io.github.crow_misia.aws.iot
 
 import com.amazonaws.auth.AWSCredentialsProvider

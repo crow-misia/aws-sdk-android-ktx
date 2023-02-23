@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package io.github.crow_misia.aws.iot
 
 import com.amazonaws.ClientConfiguration
@@ -15,7 +17,6 @@ import io.github.crow_misia.aws.core.asBasicSessionCredentials
 import okhttp3.OkHttpClient
 import java.security.KeyStore
 import java.security.cert.X509Certificate
-import java.util.Date
 
 open class AWSIoTSTSAssumeRoleSessionCredentialsProvider private constructor(
     private var thingName: String,
