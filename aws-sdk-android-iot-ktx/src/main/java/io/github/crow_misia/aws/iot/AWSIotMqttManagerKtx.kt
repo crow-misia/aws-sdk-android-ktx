@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.security.KeyStore
 
-@ExperimentalCoroutinesApi
 private fun ProducerScope<AWSIotMqttClientStatus>.createConnectCallback(
     isAutoReconnect: Boolean,
     resetReconnect: () -> Unit,
@@ -41,7 +40,6 @@ private fun ProducerScope<AWSIotMqttClientStatus>.createConnectCallback(
     }
 }
 
-@ExperimentalCoroutinesApi
 private inline fun ProducerScope<*>.createSubscriptionStatusCallback(
     defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
     crossinline onSuccess: suspend () -> Unit,
@@ -58,7 +56,6 @@ private inline fun ProducerScope<*>.createSubscriptionStatusCallback(
 }
 
 
-@ExperimentalCoroutinesApi
 private inline fun <T> ProducerScope<T>.createMessageDeliveryCallback(
     crossinline sendElement: () -> T,
 ) = AWSIotMqttMessageDeliveryCallback { status, userData ->
@@ -74,7 +71,6 @@ private inline fun <T> ProducerScope<T>.createMessageDeliveryCallback(
     }
 }
 
-@ExperimentalCoroutinesApi
 suspend fun AWSIotMqttManager.connectUsingALPN(
     keyStore: KeyStore,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
@@ -82,7 +78,6 @@ suspend fun AWSIotMqttManager.connectUsingALPN(
     awaitClose { disconnectQuite() }
 }
 
-@ExperimentalCoroutinesApi
 suspend fun AWSIotMqttManager.connectWithProxy(
     keyStore: KeyStore,
     proxyHost: String,
@@ -92,7 +87,6 @@ suspend fun AWSIotMqttManager.connectWithProxy(
     awaitClose { disconnectQuite() }
 }
 
-@ExperimentalCoroutinesApi
 suspend fun AWSIotMqttManager.connect(
     keyStore: KeyStore,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
@@ -100,7 +94,6 @@ suspend fun AWSIotMqttManager.connect(
     awaitClose { disconnectQuite() }
 }
 
-@ExperimentalCoroutinesApi
 suspend fun AWSIotMqttManager.connect(
     credentialsProvider: AWSCredentialsProvider,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
@@ -108,7 +101,6 @@ suspend fun AWSIotMqttManager.connect(
     awaitClose { disconnectQuite() }
 }
 
-@ExperimentalCoroutinesApi
 suspend fun AWSIotMqttManager.connect(
     tokenKeyName: String,
     token: String,
@@ -119,7 +111,6 @@ suspend fun AWSIotMqttManager.connect(
     awaitClose { disconnectQuite() }
 }
 
-@ExperimentalCoroutinesApi
 suspend fun AWSIotMqttManager.connect(
     username: String,
     password: String,
@@ -137,13 +128,12 @@ private fun AWSIotMqttManager.disconnectQuite() {
     }
 }
 
-@ExperimentalCoroutinesApi
 suspend fun AWSIotMqttManager.subscribe(
     topic: String,
     qos: AWSIotMqttQos,
-    onDeliveried: suspend () -> Unit = { },
+    onDelivered: suspend () -> Unit = { },
 ): Flow<SubscribeData> = callbackFlow {
-    subscribeToTopic(topic, qos, createSubscriptionStatusCallback { onDeliveried() }) { topic, data ->
+    subscribeToTopic(topic, qos, createSubscriptionStatusCallback { onDelivered() }) { topic, data ->
         trySend(SubscribeData(topic, data))
     }
     awaitClose {
@@ -156,38 +146,35 @@ suspend fun AWSIotMqttManager.subscribe(
     }
 }
 
-@ExperimentalCoroutinesApi
 suspend fun AWSIotMqttManager.publish(
     str: String,
     topic: String,
     qos: AWSIotMqttQos,
     userData: Any? = null,
     isRetained: Boolean = false,
-) = callbackFlow<Unit> {
-    publishString(str, topic, qos, createMessageDeliveryCallback { Unit }, userData, isRetained)
+) = callbackFlow {
+    publishString(str, topic, qos, createMessageDeliveryCallback { }, userData, isRetained)
     awaitClose()
 }.first()
 
-@ExperimentalCoroutinesApi
 suspend fun AWSIotMqttManager.publish(
     data: ByteArray,
     topic: String,
     qos: AWSIotMqttQos,
     userData: Any? = null,
     isRetained: Boolean = false,
-) = callbackFlow<Unit> {
-    publishData(data, topic, qos, createMessageDeliveryCallback { Unit }, userData, isRetained)
+) = callbackFlow {
+    publishData(data, topic, qos, createMessageDeliveryCallback { }, userData, isRetained)
     awaitClose()
 }.first()
 
-@ExperimentalCoroutinesApi
 suspend fun AWSIotMqttManager.publishWithReply(
     str: String,
     topic: String,
     qos: AWSIotMqttQos,
     userData: Any? = null,
     isRetained: Boolean = false,
-): SubscribeData = callbackFlow<SubscribeData> {
+): SubscribeData = callbackFlow {
     val acceptedTopic = "$topic/accepted"
     val rejectedTopic = "$topic/rejected"
 

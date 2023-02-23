@@ -25,7 +25,6 @@ suspend fun AWSIotMqttManager.provisioningThingUsingALPN(
     )
 }
 
-@ExperimentalCoroutinesApi
 @FlowPreview
 suspend fun AWSIotMqttManager.provisioningThingUsingALPN(
     keyStore: KeyStore,
@@ -133,7 +132,6 @@ suspend fun AWSIotMqttManager.provisioningThing(
     }
 }
 
-@ExperimentalCoroutinesApi
 @FlowPreview
 suspend fun AWSIotMqttManager.provisioningThing(
     tokenKeyName: String,
@@ -153,7 +151,6 @@ suspend fun AWSIotMqttManager.provisioningThing(
     )
 }
 
-@ExperimentalCoroutinesApi
 @FlowPreview
 suspend fun AWSIotMqttManager.provisioningThing(
     tokenKeyName: String,
@@ -176,7 +173,6 @@ suspend fun AWSIotMqttManager.provisioningThing(
     }
 }
 
-@ExperimentalCoroutinesApi
 @FlowPreview
 suspend fun AWSIotMqttManager.provisioningThing(
     username: String,
@@ -192,7 +188,6 @@ suspend fun AWSIotMqttManager.provisioningThing(
     )
 }
 
-@ExperimentalCoroutinesApi
 @FlowPreview
 suspend fun AWSIotMqttManager.provisioningThing(
     username: String,
@@ -211,7 +206,6 @@ suspend fun AWSIotMqttManager.provisioningThing(
     }
 }
 
-@ExperimentalCoroutinesApi
 @FlowPreview
 private suspend inline fun AWSIotMqttManager.provisioningThing(
     templateName: String,

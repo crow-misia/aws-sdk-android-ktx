@@ -20,9 +20,9 @@ dokka-gradle-plugin = "org.jetbrains.dokka:dokka-gradle-plugin:1.7.20"
 
 org-jacoco-ant = "org.jacoco:org.jacoco.ant:0.8.8"
 
-aws-android-sdk-core = "com.amazonaws:aws-android-sdk-core:2.63.0"
+aws-android-sdk-core = "com.amazonaws:aws-android-sdk-core:2.64.0"
 
-aws-android-sdk-iot = "com.amazonaws:aws-android-sdk-iot:2.63.0"
+aws-android-sdk-iot = "com.amazonaws:aws-android-sdk-iot:2.64.0"
 
 gson = "com.google.code.gson:gson:2.10.1"
 

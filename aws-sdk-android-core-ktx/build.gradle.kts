@@ -16,7 +16,7 @@ group = Maven.groupId
 version = Maven.version
 
 android {
-    buildToolsVersion = "33.0.1"
+    buildToolsVersion = "33.0.2"
     compileSdk = 33
 
     defaultConfig {
