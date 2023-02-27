@@ -20,28 +20,30 @@ import javax.net.ssl.X509TrustManager
 
 class Okhttp3HttpClient(
     private val config: ClientConfiguration,
-    private val client: OkHttpClient,
+    client: OkHttpClient,
 ) : HttpClient {
     private var keyStore: KeyStore? = null
     private var password: String? = null
     private var caPublicKey: X509Certificate? = null
+    private var client = createClient(client)
 
     fun setKeyStore(keyStore: KeyStore, password: String, caPublicKey: X509Certificate) {
         this.keyStore = keyStore
         this.password = password
         this.caPublicKey = caPublicKey
+
+        client = createClient(client)
     }
 
     override fun execute(request: HttpRequest): HttpResponse {
-        val newClient = createClient()
         val postRequest = createRequest(request)
 
-        val response = newClient.newCall(postRequest).execute()
+        val response = client.newCall(postRequest).execute()
 
         return createHttpResponse(response)
     }
 
-    private fun createClient(): OkHttpClient {
+    private fun createClient(client: OkHttpClient): OkHttpClient {
         return client.newBuilder().also {
             // configure the connection
             it.connectTimeout(config.connectionTimeout.toLong(), TimeUnit.MILLISECONDS)
