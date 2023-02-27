@@ -8,8 +8,10 @@ import com.amazonaws.auth.AWSCredentials
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.auth.AWSSessionCredentials
 import com.amazonaws.auth.AnonymousAWSCredentials
+import com.amazonaws.http.HttpClient
 import com.amazonaws.internal.StaticCredentialsProvider
 import com.amazonaws.mobileconnectors.iot.AWSIotKeystoreHelper
+import com.amazonaws.services.securitytoken.AWSSecurityTokenService
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClient
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithCredentialsRequest
 import io.github.crow_misia.aws.core.Okhttp3HttpClient
@@ -20,7 +22,7 @@ import java.security.cert.X509Certificate
 
 open class AWSIoTSTSAssumeRoleSessionCredentialsProvider private constructor(
     private var thingName: String,
-    private val securityTokenService: AWSSecurityTokenServiceClient,
+    private val securityTokenService: AWSSecurityTokenService,
 ) : AWSCredentialsProvider {
     companion object {
         /** Time before expiry within which credentials will be renewed. */
@@ -32,7 +34,7 @@ open class AWSIoTSTSAssumeRoleSessionCredentialsProvider private constructor(
             rootCa: X509Certificate,
             okHttpClient: OkHttpClient,
             clientConfiguration: ClientConfiguration,
-        ): Okhttp3HttpClient {
+        ): HttpClient {
             return Okhttp3HttpClient(clientConfiguration, okHttpClient).also {
                 it.setKeyStore(keystore, password, rootCa)
             }
@@ -69,7 +71,7 @@ open class AWSIoTSTSAssumeRoleSessionCredentialsProvider private constructor(
 
     constructor(
         thingName: String,
-        client: Okhttp3HttpClient,
+        client: HttpClient,
         stsEndpoint: String,
         roleAliasName: String,
         clientConfiguration: ClientConfiguration,
@@ -86,13 +88,13 @@ open class AWSIoTSTSAssumeRoleSessionCredentialsProvider private constructor(
 
     constructor(
         thingName: String,
-        securityTokenService: AWSSecurityTokenServiceClient,
+        securityTokenService: AWSSecurityTokenService,
         stsEndpoint: String,
         roleAliasName: String,
     ): this(
         thingName = thingName,
         securityTokenService = securityTokenService.also {
-            it.endpoint = "$stsEndpoint/role-aliases/$roleAliasName/"
+            it.setEndpoint("$stsEndpoint/role-aliases/$roleAliasName/")
         }
     )
 
@@ -102,7 +104,7 @@ open class AWSIoTSTSAssumeRoleSessionCredentialsProvider private constructor(
     }
 
     fun setSTSClientEndpoint(endpoint: String) {
-        securityTokenService.endpoint = endpoint
+        securityTokenService.setEndpoint(endpoint)
         sessionCredentials = null
     }
 

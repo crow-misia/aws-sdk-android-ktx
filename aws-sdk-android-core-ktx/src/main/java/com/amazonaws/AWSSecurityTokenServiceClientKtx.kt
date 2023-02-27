@@ -3,6 +3,7 @@ package com.amazonaws
 import com.amazonaws.http.DefaultErrorResponseHandler
 import com.amazonaws.http.ExecutionContext
 import com.amazonaws.http.JsonResponseHandler
+import com.amazonaws.services.securitytoken.AWSSecurityTokenService
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClient
 import com.amazonaws.services.securitytoken.getExceptionUnmarshallers
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithCredentialsRequest
@@ -10,6 +11,13 @@ import com.amazonaws.services.securitytoken.model.AssumeRoleWithCredentialsResul
 import com.amazonaws.services.securitytoken.model.transform.*
 import com.amazonaws.transform.JsonUnmarshallerContext
 import com.amazonaws.transform.Unmarshaller
+
+fun AWSSecurityTokenService.assumeRoleWithCredentials(assumeRoleRequest: AssumeRoleWithCredentialsRequest): AssumeRoleWithCredentialsResult {
+    require(this is AWSSecurityTokenServiceClient) {
+        "this class it not AWSSecurityTokenServiceClient"
+    }
+    return assumeRoleWithCredentials(assumeRoleRequest)
+}
 
 @Throws(AmazonServiceException::class, AmazonClientException::class)
 fun AWSSecurityTokenServiceClient.assumeRoleWithCredentials(assumeRoleRequest: AssumeRoleWithCredentialsRequest): AssumeRoleWithCredentialsResult {
