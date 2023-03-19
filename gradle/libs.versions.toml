@@ -2,9 +2,9 @@
 
 [plugins]
 
-org-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version = "1.8.10" }
+org-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 
-gradle = { id = "gradle", version = "7.4.1" }
+gradle = { id = "gradle", version = "7.4.2" }
 
 io-gitlab-arturbosch-detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.22.0" }
 
@@ -12,25 +12,25 @@ io-gitlab-arturbosch-detekt = { id = "io.gitlab.arturbosch.detekt", version = "1
 
 kotlin = "1.8.10"
 
-androidx-databinding = "7.4.1"
+androidx-databinding = "7.4.2"
 
 [libraries]
 
-dokka-gradle-plugin = "org.jetbrains.dokka:dokka-gradle-plugin:1.7.20"
+dokka-gradle-plugin = "org.jetbrains.dokka:dokka-gradle-plugin:1.8.10"
 
 org-jacoco-ant = "org.jacoco:org.jacoco.ant:0.8.8"
 
-aws-android-sdk-core = "com.amazonaws:aws-android-sdk-core:2.64.0"
+aws-android-sdk-core = "com.amazonaws:aws-android-sdk-core:2.65.0"
 
-aws-android-sdk-iot = "com.amazonaws:aws-android-sdk-iot:2.64.0"
+aws-android-sdk-iot = "com.amazonaws:aws-android-sdk-iot:2.65.0"
 
 gson = "com.google.code.gson:gson:2.10.1"
 
-dokka-analysis = "org.jetbrains.dokka:dokka-analysis:1.7.20"
+dokka-analysis = "org.jetbrains.dokka:dokka-analysis:1.8.10"
 
-dokka-base = "org.jetbrains.dokka:dokka-base:1.7.20"
+dokka-base = "org.jetbrains.dokka:dokka-base:1.8.10"
 
-javadoc-plugin = "org.jetbrains.dokka:javadoc-plugin:1.7.20"
+javadoc-plugin = "org.jetbrains.dokka:javadoc-plugin:1.8.10"
 
 conscrypt-android = "org.conscrypt:conscrypt-android:2.5.2"
 
