@@ -16,11 +16,10 @@ group = Maven.groupId
 version = Maven.version
 
 android {
-    buildToolsVersion = "33.0.2"
+    namespace = "io.github.crow_misia.aws.core"
     compileSdk = 33
 
     defaultConfig {
-        namespace = "io.github.crow_misia.aws.core"
         minSdk = 23
         consumerProguardFiles("consumer-proguard-rules.pro")
     }
@@ -31,15 +30,15 @@ android {
         baseline = file("lint-baseline.xml")
     }
 
-    libraryVariants.all {
-        generateBuildConfigProvider?.configure {
-            enabled = false
-        }
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
     }
 }
 
@@ -67,13 +66,6 @@ dependencies {
     implementation(libs.gson)
 }
 
-val sourcesJar by tasks.creating(Jar::class) {
-    group = JavaBasePlugin.DOCUMENTATION_GROUP
-    description = "Assembles sources JAR"
-    archiveClassifier.set("sources")
-    from(sourceSets.create("main").allSource)
-}
-
 val customDokkaTask by tasks.creating(DokkaTask::class) {
     dokkaSourceSets.getByName("main") {
         noAndroidSdkLink.set(false)
@@ -96,7 +88,7 @@ val javadocJar by tasks.creating(Jar::class) {
 afterEvaluate {
     publishing {
         publications {
-            create<MavenPublication>(mavenName) {
+            register<MavenPublication>(mavenName) {
                 from(components["release"])
 
                 groupId = Maven.groupId
@@ -109,7 +101,6 @@ afterEvaluate {
                     |    Version: $version
                 """.trimMargin())
 
-                artifact(sourcesJar)
                 artifact(javadocJar)
 
                 pom {
@@ -168,7 +159,7 @@ afterEvaluate {
 detekt {
     buildUponDefaultConfig = true // preconfigure defaults
     allRules = false // activate all available (even unstable) rules.
-    config = files("$rootDir/config/detekt.yml")
+    config.setFrom(files("$rootDir/config/detekt.yml"))
 }
 
 tasks {

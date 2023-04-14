@@ -4,21 +4,19 @@
 
 org-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 
-gradle = { id = "gradle", version = "7.4.2" }
-
-io-gitlab-arturbosch-detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.22.0" }
+gradle = { id = "gradle", version = "8.0.0" }
 
 [versions]
 
-kotlin = "1.8.10"
+kotlin = "1.8.20"
 
-androidx-databinding = "7.4.2"
+androidx-databinding = "8.0.0"
 
 [libraries]
 
 dokka-gradle-plugin = "org.jetbrains.dokka:dokka-gradle-plugin:1.8.10"
 
-org-jacoco-ant = "org.jacoco:org.jacoco.ant:0.8.8"
+org-jacoco-ant = "org.jacoco:org.jacoco.ant:0.8.9"
 
 aws-android-sdk-core = "com.amazonaws:aws-android-sdk-core:2.65.0"
 
