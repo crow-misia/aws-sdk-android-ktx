@@ -56,7 +56,7 @@ class AWSIoTMqttShadowClient internal constructor(
         }
     }
 
-    suspend fun subscribeDelta(shadowName: String? = null): Flow<JSONObject> {
+    fun subscribeDelta(shadowName: String? = null): Flow<JSONObject> {
         return manager.subscribe(
             topic = getTopicName(shadowName, "update/delta"),
             qos = AWSIotMqttQos.QOS1,
@@ -65,7 +65,7 @@ class AWSIoTMqttShadowClient internal constructor(
         }
     }
 
-    suspend fun subscribeDocuments(shadowName: String? = null): Flow<JSONObject> {
+    fun subscribeDocuments(shadowName: String? = null): Flow<JSONObject> {
         return manager.subscribe(
             topic = getTopicName(shadowName, "update/documents"),
             qos = AWSIotMqttQos.QOS1,

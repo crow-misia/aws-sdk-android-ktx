@@ -92,14 +92,14 @@ private inline fun <T> ProducerScope<T>.createMessageDeliveryCallback(
     }
 }
 
-suspend fun AWSIotMqttManager.connectUsingALPN(
+fun AWSIotMqttManager.connectUsingALPN(
     keyStore: KeyStore,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
     connectUsingALPN(keyStore, createConnectCallback(isAutoReconnect, ::resetReconnect))
     awaitClose { disconnectQuite() }
 }
 
-suspend fun AWSIotMqttManager.connectWithProxy(
+fun AWSIotMqttManager.connectWithProxy(
     keyStore: KeyStore,
     proxyHost: String,
     proxyPort: Int,
@@ -108,21 +108,21 @@ suspend fun AWSIotMqttManager.connectWithProxy(
     awaitClose { disconnectQuite() }
 }
 
-suspend fun AWSIotMqttManager.connect(
+fun AWSIotMqttManager.connect(
     keyStore: KeyStore,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
     connect(keyStore, createConnectCallback(isAutoReconnect, ::resetReconnect))
     awaitClose { disconnectQuite() }
 }
 
-suspend fun AWSIotMqttManager.connect(
+fun AWSIotMqttManager.connect(
     credentialsProvider: AWSCredentialsProvider,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
     connect(credentialsProvider, createConnectCallback(isAutoReconnect, ::resetReconnect))
     awaitClose { disconnectQuite() }
 }
 
-suspend fun AWSIotMqttManager.connect(
+fun AWSIotMqttManager.connect(
     tokenKeyName: String,
     token: String,
     tokenSignature: String,
@@ -132,7 +132,7 @@ suspend fun AWSIotMqttManager.connect(
     awaitClose { disconnectQuite() }
 }
 
-suspend fun AWSIotMqttManager.connect(
+fun AWSIotMqttManager.connect(
     username: String,
     password: String,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
@@ -149,7 +149,7 @@ private fun AWSIotMqttManager.disconnectQuite() {
     }
 }
 
-suspend fun AWSIotMqttManager.subscribe(
+fun AWSIotMqttManager.subscribe(
     topic: String,
     qos: AWSIotMqttQos,
     onDelivered: suspend () -> Unit = { },

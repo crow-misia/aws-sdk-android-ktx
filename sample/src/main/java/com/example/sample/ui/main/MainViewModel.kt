@@ -55,7 +55,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         return provider.provide(thingName)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     fun onClickProvisioning() {
         val manager = createMqttManagerForProvisioning()
         val provisioningKeystoreName = "provisioning"
@@ -113,7 +112,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
+    @OptIn(FlowPreview::class)
     fun onClickSubscribeShadow() {
         val manager = createMqttManager()
         val keystoreName = "iot"
@@ -156,7 +155,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     fun onClickGetShadow() {
         viewModelScope.launch {
             val shadowClient = shadowClient ?: return@launch
@@ -174,7 +172,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
 
     private val counter = AtomicInteger(0)
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     fun onClickUpdateShadow() {
         viewModelScope.launch {
             val shadowClient = shadowClient ?: return@launch
@@ -193,7 +190,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     fun onClickDeleteShadow() {
         viewModelScope.launch {
             val shadowClient = shadowClient ?: return@launch
