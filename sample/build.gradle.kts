@@ -1,11 +1,10 @@
 plugins {
     id("com.android.application")
-    kotlin("android")
-    kotlin("kapt")
+    id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.kapt")
 }
 
 android {
-    buildToolsVersion = "33.0.2"
     compileSdk = 33
 
     defaultConfig {
@@ -61,6 +60,7 @@ dependencies {
     implementation(Kotlin.stdlib)
     implementation(AndroidX.activity.ktx)
     implementation(AndroidX.appCompat)
+    implementation(AndroidX.core.ktx)
     implementation(AndroidX.constraintLayout)
     implementation(AndroidX.fragment.ktx)
     implementation(AndroidX.lifecycle.liveDataKtx)

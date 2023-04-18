@@ -14,23 +14,19 @@ androidx-databinding = "8.0.0"
 
 [libraries]
 
-dokka-gradle-plugin = "org.jetbrains.dokka:dokka-gradle-plugin:1.8.10"
-
 org-jacoco-ant = "org.jacoco:org.jacoco.ant:0.8.9"
 
 aws-android-sdk-core = "com.amazonaws:aws-android-sdk-core:2.65.0"
 
 aws-android-sdk-iot = "com.amazonaws:aws-android-sdk-iot:2.65.0"
 
-gson = "com.google.code.gson:gson:2.10.1"
+dokka-gradle-plugin = "org.jetbrains.dokka:dokka-gradle-plugin:1.8.10"
 
 dokka-analysis = "org.jetbrains.dokka:dokka-analysis:1.8.10"
 
 dokka-base = "org.jetbrains.dokka:dokka-base:1.8.10"
 
 javadoc-plugin = "org.jetbrains.dokka:javadoc-plugin:1.8.10"
-
-conscrypt-android = "org.conscrypt:conscrypt-android:2.5.2"
 
 databinding-compiler = { group = "androidx.databinding", name = "databinding-compiler", version.ref = "androidx-databinding" }
 

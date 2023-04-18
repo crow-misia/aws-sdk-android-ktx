@@ -63,9 +63,6 @@ dependencies {
 
     // okhttp3
     implementation(Square.okHttp3)
-
-    // conscrypt
-    implementation(libs.conscrypt.android)
 }
 
 val customDokkaTask by tasks.creating(DokkaTask::class) {
