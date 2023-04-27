@@ -8,25 +8,29 @@ gradle = { id = "gradle", version = "8.0.0" }
 
 [versions]
 
-kotlin = "1.8.20"
+kotlin = "1.8.21"
 
 androidx-databinding = "8.0.0"
+
+aws-android-sdk = "2.66.0"
+
+dokka = "1.8.10"
 
 [libraries]
 
 org-jacoco-ant = "org.jacoco:org.jacoco.ant:0.8.9"
 
-aws-android-sdk-core = "com.amazonaws:aws-android-sdk-core:2.65.0"
+aws-android-sdk-core = { group = "com.amazonaws", name = "aws-android-sdk-core", version.ref = "aws-android-sdk" }
 
-aws-android-sdk-iot = "com.amazonaws:aws-android-sdk-iot:2.65.0"
+aws-android-sdk-iot = { group = "com.amazonaws", name = "aws-android-sdk-iot", version.ref = "aws-android-sdk" }
 
-dokka-gradle-plugin = "org.jetbrains.dokka:dokka-gradle-plugin:1.8.10"
+dokka-gradle-plugin = { group = "org.jetbrains.dokka", name = "dokka-gradle-plugin", version.ref = "dokka" }
 
-dokka-analysis = "org.jetbrains.dokka:dokka-analysis:1.8.10"
+dokka-analysis = { group = "org.jetbrains.dokka", name = "dokka-analysis", version.ref = "dokka" }
 
-dokka-base = "org.jetbrains.dokka:dokka-base:1.8.10"
+dokka-base = { group = "org.jetbrains.dokka", name = "dokka-base", version.ref = "dokka" }
 
-javadoc-plugin = "org.jetbrains.dokka:javadoc-plugin:1.8.10"
+javadoc-plugin = { group = "org.jetbrains.dokka", name = "javadoc-plugin", version.ref = "dokka" }
 
 databinding-compiler = { group = "androidx.databinding", name = "databinding-compiler", version.ref = "androidx-databinding" }
 
