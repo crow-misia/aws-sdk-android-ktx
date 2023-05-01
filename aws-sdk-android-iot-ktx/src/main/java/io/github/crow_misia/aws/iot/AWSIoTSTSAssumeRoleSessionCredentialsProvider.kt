@@ -31,6 +31,7 @@ import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClient
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithCredentialsRequest
 import io.github.crow_misia.aws.core.Okhttp3HttpClient
 import io.github.crow_misia.aws.core.asBasicSessionCredentials
+import io.github.crow_misia.aws.core.createNewClient
 import okhttp3.OkHttpClient
 import java.security.KeyStore
 import java.security.cert.X509Certificate
@@ -42,18 +43,6 @@ open class AWSIoTSTSAssumeRoleSessionCredentialsProvider private constructor(
     companion object {
         /** Time before expiry within which credentials will be renewed. */
         const val EXPIRY_TIME_MILLIS = 60 * 1000
-
-        fun createOkhttp3Client(
-            keystore: KeyStore,
-            password: String,
-            rootCa: X509Certificate,
-            okHttpClient: OkHttpClient,
-            clientConfiguration: ClientConfiguration,
-        ): HttpClient {
-            return Okhttp3HttpClient(clientConfiguration, okHttpClient).also {
-                it.setKeyStore(keystore, password, rootCa)
-            }
-        }
     }
 
     /**
@@ -69,7 +58,7 @@ open class AWSIoTSTSAssumeRoleSessionCredentialsProvider private constructor(
     @JvmOverloads
     constructor(
         thingName: String,
-        keystore: KeyStore,
+        keyStore: KeyStore,
         password: String = AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD,
         rootCa: X509Certificate,
         stsEndpoint: String,
@@ -78,7 +67,12 @@ open class AWSIoTSTSAssumeRoleSessionCredentialsProvider private constructor(
         clientConfiguration: ClientConfiguration,
     ): this(
         thingName = thingName,
-        client = createOkhttp3Client(keystore, password, rootCa, okHttpClient, clientConfiguration),
+        client = Okhttp3HttpClient(okHttpClient.createNewClient(
+            config = clientConfiguration,
+            keyStore = keyStore,
+            password = password,
+            caPublicKeyProvider = { rootCa },
+        )),
         stsEndpoint = stsEndpoint,
         roleAliasName = roleAliasName,
         clientConfiguration = clientConfiguration,

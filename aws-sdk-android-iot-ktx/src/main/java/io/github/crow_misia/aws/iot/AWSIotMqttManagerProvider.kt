@@ -18,49 +18,49 @@
 package io.github.crow_misia.aws.iot
 
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
+import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager.ClientId
+import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager.Endpoint
 import com.amazonaws.regions.Region
 import java.util.concurrent.ConcurrentHashMap
 
 interface AWSIotMqttManagerProvider {
-    fun provide(clientId: AWSIotMqttManager.ClientId): AWSIotMqttManager {
-        return provide(clientId = clientId.value)
-    }
+    fun provide(clientId: ClientId): AWSIotMqttManager
 
-    fun provide(clientId: String): AWSIotMqttManager
+    fun provide(clientId: String) = provide(ClientId.fromString(clientId))
 
     fun allDisconnect()
 
     companion object {
         @JvmStatic
-        fun create(region: Region, endpoint: AWSIotMqttManager.Endpoint): AWSIotMqttManagerProvider {
+        fun create(region: Region, endpoint: Endpoint): AWSIotMqttManagerProvider {
             return AWSIotMqttManagerProviderImpl { clientId ->
-                AWSIotMqttManager.from(region, AWSIotMqttManager.ClientId.fromString(clientId), endpoint)
+                AWSIotMqttManager.from(region, clientId, endpoint)
             }
         }
 
         @JvmStatic
-        fun create(endpoint: AWSIotMqttManager.Endpoint): AWSIotMqttManagerProvider {
+        fun create(endpoint: Endpoint): AWSIotMqttManagerProvider {
             return AWSIotMqttManagerProviderImpl { clientId ->
-                AWSIotMqttManager(clientId, endpoint.value)
+                AWSIotMqttManager(clientId.value, endpoint.value)
             }
         }
 
         @JvmStatic
         fun create(region: Region, accountEndpointPrefix: String): AWSIotMqttManagerProvider {
             return AWSIotMqttManagerProviderImpl { clientId ->
-                AWSIotMqttManager(clientId, region, accountEndpointPrefix)
+                AWSIotMqttManager(clientId.value, region, accountEndpointPrefix)
             }
         }
     }
 }
 
 class AWSIotMqttManagerProviderImpl(
-    private val generator: (clientId: String) -> AWSIotMqttManager,
+    private val generator: (clientId: ClientId) -> AWSIotMqttManager,
 ) : AWSIotMqttManagerProvider {
     private val cache: MutableMap<String, AWSIotMqttManager> = ConcurrentHashMap()
 
-    override fun provide(clientId: String): AWSIotMqttManager {
-        return cache.getOrPut(clientId) {
+    override fun provide(clientId: ClientId): AWSIotMqttManager {
+        return cache.getOrPut(clientId.value) {
             generator(clientId)
         }
     }

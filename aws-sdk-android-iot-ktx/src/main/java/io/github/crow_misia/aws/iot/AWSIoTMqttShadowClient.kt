@@ -25,8 +25,10 @@ import org.json.JSONObject
 
 class AWSIoTMqttShadowClient internal constructor(
     private val manager: AWSIotMqttManager,
-    private val thingName: String,
+    private val thingNameProvider: () -> String,
 ) {
+    constructor(manager: AWSIotMqttManager, thinsName: String): this(manager = manager, thingNameProvider = { thinsName })
+
     fun disconnect() {
         manager.disconnect()
     }
@@ -85,6 +87,8 @@ class AWSIoTMqttShadowClient internal constructor(
     }
 
     private fun getTopicName(shadowName: String?, method: String): String {
+        val thingName = thingNameProvider()
+
         return shadowName?.let {
             "\$aws/things/${thingName}/shadow/name/$shadowName/$method"
         } ?: "\$aws/things/${thingName}/shadow/$method"

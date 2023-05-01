@@ -6,6 +6,7 @@ import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.viewModelScope
+import com.amazonaws.mobileconnectors.iot.AWSIoTKeystoreHelperExt
 import com.amazonaws.mobileconnectors.iot.AWSIotKeystoreHelper
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
@@ -24,11 +25,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
     private val resources = application.resources
     private val assetManager = application.assets
 
-    private val region = Region.getRegion(resources.getString(R.string.aws_region))
-    private val endpoint =
-        AWSIotMqttManager.Endpoint.fromString(resources.getString(R.string.aws_endpoint))
+    private val provider = AWSIotMqttManagerProvider.create(
+        region = Region.getRegion(resources.getString(R.string.aws_region)),
+        endpoint = AWSIotMqttManager.Endpoint.fromString(resources.getString(R.string.aws_endpoint)),
+    )
 
-    private val provider = AWSIotMqttManagerProvider.create(region, endpoint)
+    private val provisioningManager = ProvisioningManager(
+        provider = provider,
+        templateName = resources.getString(R.string.aws_template_name),
+        keyStoreProvider = { AWSIoTKeystoreHelperExt.loadKeyStore(
+            "provisioning",
+            assetManager.open("certificate.crt").bufferedReader().readText(),
+            assetManager.open("private.key").bufferedReader().readText(),
+            AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD
+        ) }
+    )
 
     private var thingName = sharedPreferences.getString("thingName", null).orEmpty()
 
@@ -43,57 +54,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         super.onCleared()
     }
 
-    private fun createMqttManagerForProvisioning(): AWSIotMqttManager {
-        // temporary client id
-        val clientId = UUID.randomUUID().toString().let {
-            AWSIotMqttManager.ClientId.fromString(it)
-        }
-        return provider.provide(clientId)
-    }
-
     private fun createMqttManager(): AWSIotMqttManager {
         return provider.provide(thingName)
     }
 
     fun onClickProvisioning() {
-        val manager = createMqttManagerForProvisioning()
-        val provisioningKeystoreName = "provisioning"
         val keystoreName = "iot"
         val keystorePath = getApplication<Application>().filesDir
         val keystorePathStr = keystorePath.absolutePath
-
-        // delete keystore for provisioning
-        keystorePath.resolve(provisioningKeystoreName).delete()
 
         if (AWSIotKeystoreHelper.isKeystorePresent(keystorePathStr, keystoreName)) {
             Timber.i("Already exists device keystore.")
             return
         }
 
-        AWSIotKeystoreHelper.saveCertificateAndPrivateKey(
-            "provisioning",
-            assetManager.open("certificate.crt").bufferedReader().readText(),
-            assetManager.open("private.key").bufferedReader().readText(),
-            keystorePath.absolutePath,
-            provisioningKeystoreName,
-            AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD
-        )
-
-        val templateName = resources.getString(R.string.aws_template_name)
         val serialNumber = UUID.randomUUID().toString()
-        val keyStore = AWSIotKeystoreHelper.getIotKeystore(
-            "provisioning",
-            keystorePathStr,
-            provisioningKeystoreName,
-            AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD
-        )
         viewModelScope.launch(context = Dispatchers.IO) {
             try {
-                manager.provisioningThing(
-                    keyStore = keyStore,
-                    templateName = templateName,
-                    parameters = mapOf("SerialNumber" to serialNumber),
-                ).apply {
+                provisioningManager.provisioning(serialNumber).apply {
                     saveCertificateAndPrivateKey(
                         keystorePath = keystorePathStr,
                         keystoreName = keystoreName,

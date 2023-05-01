@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <SmellBaseline>
   <ManuallySuppressedIssues>
-    <ID>LongParameterList:AWSIoTSTSAssumeRoleSessionCredentialsProvider.kt$AWSIoTSTSAssumeRoleSessionCredentialsProvider$( thingName: String, keystore: KeyStore, password: String = AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD, rootCa: X509Certificate, stsEndpoint: String, roleAliasName: String, okHttpClient: OkHttpClient, clientConfiguration: ClientConfiguration, )</ID>
+    <ID>LongParameterList:AWSIoTSTSAssumeRoleSessionCredentialsProvider.kt$AWSIoTSTSAssumeRoleSessionCredentialsProvider$( thingName: String, keyStore: KeyStore, password: String = AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD, rootCa: X509Certificate, stsEndpoint: String, roleAliasName: String, okHttpClient: OkHttpClient, clientConfiguration: ClientConfiguration, )</ID>
     <ID>ReturnCount:AWSIoTSTSAssumeRoleSessionCredentialsProvider.kt$AWSIoTSTSAssumeRoleSessionCredentialsProvider$private fun neededNewSession(): Boolean</ID>
   </ManuallySuppressedIssues>
   <CurrentIssues>
-    <ID>LongParameterList:AWSIoTSTSAssumeRoleSessionCredentialsProvider.kt$AWSIoTSTSAssumeRoleSessionCredentialsProvider$( thingName: String, keystore: KeyStore, password: String = AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD, rootCa: X509Certificate, stsEndpoint: String, roleAliasName: String, okHttpClient: OkHttpClient, clientConfiguration: ClientConfiguration, )</ID>
+    <ID>LongParameterList:AWSIoTSTSAssumeRoleSessionCredentialsProvider.kt$AWSIoTSTSAssumeRoleSessionCredentialsProvider$( thingName: String, keyStore: KeyStore, password: String = AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD, rootCa: X509Certificate, stsEndpoint: String, roleAliasName: String, okHttpClient: OkHttpClient, clientConfiguration: ClientConfiguration, )</ID>
     <ID>ReturnCount:AWSIoTSTSAssumeRoleSessionCredentialsProvider.kt$AWSIoTSTSAssumeRoleSessionCredentialsProvider$private fun neededNewSession(): Boolean</ID>
   </CurrentIssues>
 </SmellBaseline>
