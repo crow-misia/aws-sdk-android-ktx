@@ -96,5 +96,9 @@ class AWSIoTMqttShadowClient internal constructor(
 }
 
 fun AWSIotMqttManager.asShadowClient(thingName: String): AWSIoTMqttShadowClient {
-    return AWSIoTMqttShadowClient(this, thingName)
+    return AWSIoTMqttShadowClient(this) { thingName }
+}
+
+fun AWSIotMqttManager.asShadowClient(thingNameProvider: () -> String): AWSIoTMqttShadowClient {
+    return AWSIoTMqttShadowClient(this, thingNameProvider)
 }

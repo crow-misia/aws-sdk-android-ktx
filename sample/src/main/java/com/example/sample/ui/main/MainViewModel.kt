@@ -13,6 +13,7 @@ import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import com.amazonaws.regions.Region
 import com.example.sample.R
 import io.github.crow_misia.aws.iot.*
+import io.github.crow_misia.aws.iot.keystore.BasicKeyStoreProvisioningManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.json.JSONObject
@@ -30,7 +31,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         endpoint = AWSIotMqttManager.Endpoint.fromString(resources.getString(R.string.aws_endpoint)),
     )
 
-    private val provisioningManager = ProvisioningManager(
+    private val provisioningManager = BasicKeyStoreProvisioningManager(
         provider = provider,
         templateName = resources.getString(R.string.aws_template_name),
         keyStoreProvider = { AWSIoTKeystoreHelperExt.loadKeyStore(

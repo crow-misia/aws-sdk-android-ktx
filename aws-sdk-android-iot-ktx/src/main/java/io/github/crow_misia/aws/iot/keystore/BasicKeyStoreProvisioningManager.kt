@@ -24,7 +24,7 @@ import io.github.crow_misia.aws.iot.provisioningThing
 import org.json.JSONObject
 import java.util.UUID
 
-abstract class AbstractKeyStoreProvisioningManager(
+open class BasicKeyStoreProvisioningManager(
     provider: AWSIotMqttManagerProvider,
     private val templateName: String,
     private val keyStoreProvider: KeyStoreProvider,

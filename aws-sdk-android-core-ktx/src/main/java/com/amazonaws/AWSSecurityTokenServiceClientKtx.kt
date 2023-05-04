@@ -23,7 +23,8 @@ import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClient
 import com.amazonaws.services.securitytoken.getExceptionUnmarshallers
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithCredentialsRequest
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithCredentialsResult
-import com.amazonaws.services.securitytoken.model.transform.*
+import com.amazonaws.services.securitytoken.model.transform.AssumeRoleWithCredentialsRequestMarshaller
+import com.amazonaws.services.securitytoken.model.transform.AssumeRoleWithCredentialsResponseJsonMarshaller
 import com.amazonaws.transform.JsonUnmarshallerContext
 import com.amazonaws.transform.Unmarshaller
 

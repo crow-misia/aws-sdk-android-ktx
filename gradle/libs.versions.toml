@@ -4,13 +4,13 @@
 
 org-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 
-gradle = { id = "gradle", version = "8.0.0" }
+gradle = { id = "gradle", version = "8.0.1" }
 
 [versions]
 
 kotlin = "1.8.21"
 
-androidx-databinding = "8.0.0"
+androidx-databinding = "8.0.1"
 
 aws-android-sdk = "2.67.0"
 

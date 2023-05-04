@@ -45,7 +45,7 @@ abstract class AbstractProvisioningManager(
      *
      * @return ClientID
      */
-    abstract fun generateTemporaryClientID(): ClientId
+    protected abstract fun generateTemporaryClientID(): ClientId
 
     /**
      * Generate Parameters for Provisioning.

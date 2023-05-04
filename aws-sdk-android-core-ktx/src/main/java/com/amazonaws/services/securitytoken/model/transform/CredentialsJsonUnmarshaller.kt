@@ -20,6 +20,7 @@ import com.amazonaws.transform.Unmarshaller
 import com.amazonaws.transform.JsonUnmarshallerContext
 import com.amazonaws.transform.SimpleTypeJsonUnmarshallers.StringJsonUnmarshaller
 import com.amazonaws.transform.SimpleTypeJsonUnmarshallers.DateJsonUnmarshaller
+import com.amazonaws.transform.TimestampFormat
 
 object CredentialsJsonUnmarshaller : Unmarshaller<Credentials, JsonUnmarshallerContext> {
     override fun unmarshall(context: JsonUnmarshallerContext): Credentials? {
@@ -36,7 +37,7 @@ object CredentialsJsonUnmarshaller : Unmarshaller<Credentials, JsonUnmarshallerC
                 "accessKeyId" -> credentials.accessKeyId = StringJsonUnmarshaller.getInstance().unmarshall(context)
                 "secretAccessKey" -> credentials.secretAccessKey = StringJsonUnmarshaller.getInstance().unmarshall(context)
                 "sessionToken" -> credentials.sessionToken = StringJsonUnmarshaller.getInstance().unmarshall(context)
-                "expiration" -> credentials.expiration = DateJsonUnmarshaller.getInstance().unmarshall(context)
+                "expiration" -> credentials.expiration = DateJsonUnmarshaller.getInstance(TimestampFormat.ISO_8601).unmarshall(context)
                 else -> reader.skipValue()
             }
         }
