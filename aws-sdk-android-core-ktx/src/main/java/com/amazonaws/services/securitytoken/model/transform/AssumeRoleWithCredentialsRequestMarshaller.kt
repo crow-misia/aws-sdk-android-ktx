@@ -22,7 +22,7 @@ import com.amazonaws.http.HttpMethodName
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithCredentialsRequest
 import com.amazonaws.transform.Marshaller
 
-class AssumeRoleWithCredentialsRequestMarshaller : Marshaller<Request<AssumeRoleWithCredentialsRequest>, AssumeRoleWithCredentialsRequest> {
+object AssumeRoleWithCredentialsRequestMarshaller : Marshaller<Request<AssumeRoleWithCredentialsRequest>, AssumeRoleWithCredentialsRequest> {
     override fun marshall(assumeRoleRequest: AssumeRoleWithCredentialsRequest?): Request<AssumeRoleWithCredentialsRequest> {
         assumeRoleRequest ?: run {
             throw AmazonClientException("Invalid argument passed to marshall(AssumeRoleWithCredentialsRequest)")

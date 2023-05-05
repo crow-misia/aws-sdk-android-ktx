@@ -59,8 +59,8 @@ open class AWSIoTSTSAssumeRoleSessionCredentialsProvider(
             AssumeRoleWithCredentialsRequest(thingName)
         )
         val stsCredentials = assumeRoleResult.credentials
-        sessionCredentials = stsCredentials?.asBasicSessionCredentials()
-        sessionCredentialsExpiration = stsCredentials?.expiration?.time
+        sessionCredentials = stsCredentials.asBasicSessionCredentials()
+        sessionCredentialsExpiration = stsCredentials.expiration.time
     }
 
     private fun neededNewSession(): Boolean {

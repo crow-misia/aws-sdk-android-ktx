@@ -21,7 +21,6 @@ import com.amazonaws.http.HttpRequest
 import com.amazonaws.http.HttpResponse
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 
 class Okhttp3HttpClient(private var client: OkHttpClient) : HttpClient {
@@ -38,8 +37,9 @@ class Okhttp3HttpClient(private var client: OkHttpClient) : HttpClient {
             .url(request.uri.toString())
 
         // add headers
-        if (!request.headers.isNullOrEmpty()) {
-            for ((key, value) in request.headers) {
+        val headers = request.headers
+        if (!headers.isNullOrEmpty()) {
+            headers.forEach { (key, value) ->
                 // Skip reserved headers for HttpURLConnection
                 if (key != HttpHeader.CONTENT_LENGTH && key != HttpHeader.HOST) {
                     builder.addHeader(key, value)
@@ -47,20 +47,17 @@ class Okhttp3HttpClient(private var client: OkHttpClient) : HttpClient {
             }
         }
 
-        val data = request.content?.readBytes()
-        builder.method(request.method, data?.toRequestBody())
+        builder.method(request.method, request.content?.toRequestBody())
 
         return builder.build()
     }
 
     private fun createHttpResponse(response: Response): HttpResponse {
         return HttpResponse.builder().also {
-            for ((key, value) in response.headers) {
+            response.headers.forEach { (key, value) ->
                 it.header(key, value)
             }
-            response.body.also { body ->
-                it.content(body.byteStream())
-            }
+            it.content(response.body.byteStream())
             it.statusCode(response.code)
             it.statusText(response.message)
         }.build()

@@ -17,11 +17,7 @@ package io.github.crow_misia.aws.iot
 
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager.ClientId
-import io.github.crow_misia.aws.core.KeyStoreProvider
-import io.github.crow_misia.aws.iot.AWSIotMqttManagerProvider
-import io.github.crow_misia.aws.iot.provisioningThing
 import org.json.JSONObject
-import java.util.UUID
 
 /**
  * Abstract Provisioning Manager.

@@ -13,14 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.amazonaws.services.securitytoken.model
+package io.github.crow_misia.aws.core
 
-import java.io.Serializable
+import okhttp3.MediaType
+import okhttp3.RequestBody
+import okio.BufferedSink
+import okio.source
+import java.io.InputStream
 
-class AssumeRoleWithCredentialsResult(
-    val credentials: Credentials,
-) : Serializable {
-    companion object {
-        const val serialVersionUID = 1L
+fun InputStream.toRequestBody(contentType: MediaType? = null): RequestBody {
+    return object : RequestBody() {
+        override fun isOneShot() = false
+
+        override fun contentType() = contentType
+
+        override fun writeTo(sink: BufferedSink) {
+            source().use {
+                sink.writeAll(it)
+            }
+        }
     }
 }

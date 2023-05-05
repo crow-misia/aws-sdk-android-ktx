@@ -39,7 +39,7 @@ fun AWSSecurityTokenService.assumeRoleWithCredentials(assumeRoleRequest: AssumeR
 fun AWSSecurityTokenServiceClient.assumeRoleWithCredentials(assumeRoleRequest: AssumeRoleWithCredentialsRequest): AssumeRoleWithCredentialsResult {
     val executionContext = createExecutionContext(assumeRoleRequest)
 
-    val request = AssumeRoleWithCredentialsRequestMarshaller().marshall(assumeRoleRequest)
+    val request = AssumeRoleWithCredentialsRequestMarshaller.marshall(assumeRoleRequest)
     val response = invoke(
         request,
         AssumeRoleWithCredentialsResponseJsonMarshaller,
