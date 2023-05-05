@@ -41,7 +41,6 @@ object AssumeRoleWithCredentialsResponseJsonMarshaller : Unmarshaller<AssumeRole
         }
         reader.endObject()
 
-        credentials ?: return null
-        return AssumeRoleWithCredentialsResult(credentials)
+        return credentials?.let { AssumeRoleWithCredentialsResult(it) }
     }
 }
