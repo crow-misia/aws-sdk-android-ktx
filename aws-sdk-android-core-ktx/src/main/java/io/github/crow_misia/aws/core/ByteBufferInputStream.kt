@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.github.crow_misia.aws.appsync.signv4
+package io.github.crow_misia.aws.core
 
 import java.io.InputStream
 import java.nio.ByteBuffer
@@ -62,3 +62,5 @@ internal class ByteBufferInputStream(private val buffer: ByteBuffer) : InputStre
         } else 0
     }
 }
+
+fun ByteBuffer.asInputStream(): InputStream = ByteBufferInputStream(this)

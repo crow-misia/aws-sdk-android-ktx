@@ -15,6 +15,7 @@
  */
 package io.github.crow_misia.aws.core
 
+import com.amazonaws.ClientConfiguration
 import com.amazonaws.http.HttpClient
 import com.amazonaws.http.HttpHeader
 import com.amazonaws.http.HttpRequest
@@ -22,8 +23,28 @@ import com.amazonaws.http.HttpResponse
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import java.util.concurrent.TimeUnit
 
-class Okhttp3HttpClient(private var client: OkHttpClient) : HttpClient {
+/**
+ * OkHttp3 using HttpClient.
+ *
+ * @property client [OkHttpClient]
+ */
+class Okhttp3HttpClient @JvmOverloads constructor(
+    client: OkHttpClient,
+    clientConfiguration: ClientConfiguration = ClientConfiguration(),
+) : HttpClient {
+    private val client: OkHttpClient by lazy {
+        // configure the connection
+        client.newBuilder()
+            .connectTimeout(clientConfiguration.connectionTimeout.toLong(), TimeUnit.MILLISECONDS)
+            .readTimeout(clientConfiguration.socketTimeout.toLong(), TimeUnit.MILLISECONDS)
+            // disable redirect and cache
+            .cache(null)
+            .followRedirects(false)
+            .followSslRedirects(false)
+            .build()
+    }
     override fun execute(request: HttpRequest): HttpResponse {
         val postRequest = createRequest(request)
 
@@ -37,13 +58,10 @@ class Okhttp3HttpClient(private var client: OkHttpClient) : HttpClient {
             .url(request.uri.toString())
 
         // add headers
-        val headers = request.headers
-        if (!headers.isNullOrEmpty()) {
-            headers.forEach { (key, value) ->
-                // Skip reserved headers for HttpURLConnection
-                if (key != HttpHeader.CONTENT_LENGTH && key != HttpHeader.HOST) {
-                    builder.addHeader(key, value)
-                }
+        request.headers?.forEach { (key, value) ->
+            // Skip reserved headers for HttpURLConnection
+            if (key != HttpHeader.CONTENT_LENGTH && key != HttpHeader.HOST) {
+                builder.addHeader(key, value)
             }
         }
 

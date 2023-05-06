@@ -19,34 +19,33 @@ import com.amazonaws.regions.Region
 import com.apollographql.apollo3.ApolloCall
 import com.apollographql.apollo3.api.Mutation
 import com.apollographql.apollo3.api.Query
-import com.apollographql.apollo3.api.Subscription
 
 /**
  * Interface of Amazon AppSync Service.
  */
 interface AWSAppSync {
     /**
-     * 接続先エンドポイントをセットする.
+     * set endpoint.
      */
     fun setEndpoint(endpoint: String)
 
     /**
-     * 接続リージョンをセットする.
+     * set region.
      */
     fun setRegion(region: Region)
 
     /**
-     * GraphQLのQueryを実行する.
+     * Shutdown.
+     */
+    fun shutdown()
+
+    /**
+     * execute GraphQL Query.
      */
     fun <D : Query.Data> query(query: Query<D>): ApolloCall<D>
 
     /**
-     * GraphQLのMutationを実行する.
+     * execute GraphQL Mutation.
      */
     fun <D : Mutation.Data> mutation(mutation: Mutation<D>): ApolloCall<D>
-
-    /**
-     * GraphQLのQueryを実行する.
-     */
-    fun <D : Subscription.Data> subscription(subscription: Subscription<D>): ApolloCall<D>
 }

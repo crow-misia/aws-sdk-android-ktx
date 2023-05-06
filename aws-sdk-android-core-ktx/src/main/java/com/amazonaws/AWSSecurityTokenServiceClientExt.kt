@@ -60,4 +60,3 @@ internal fun <X, Y : AmazonWebServiceRequest> AWSSecurityTokenServiceClient.invo
     val errorResponseHandler = DefaultErrorResponseHandler(getExceptionUnmarshallers())
     return client.execute(request, responseHandler, errorResponseHandler, executionContext)
 }
-

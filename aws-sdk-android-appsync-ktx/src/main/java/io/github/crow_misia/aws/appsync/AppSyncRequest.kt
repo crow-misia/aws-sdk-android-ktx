@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.github.crow_misia.aws.appsync.signv4
+package io.github.crow_misia.aws.appsync
+
+import com.amazonaws.AmazonWebServiceRequest
+import com.apollographql.apollo3.api.ApolloRequest
+import com.apollographql.apollo3.api.Operation
 
 /**
- * Authorization Token Provider.
+ * AppSync Request.
  */
-fun interface AuthProvider {
-    fun getLatestAuthToken(): String?
-}
+data class AppSyncRequest<D : Operation.Data>(
+    val originalRequest: ApolloRequest<D>
+) : AmazonWebServiceRequest()

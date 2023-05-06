@@ -45,7 +45,7 @@ class AWSIoTSecurityTokenServiceClient @JvmOverloads constructor(
         stsEndpoint = stsEndpoint,
         roleAliasName = roleAliasName,
         clientConfiguration = clientConfiguration,
-        httpClient = Okhttp3HttpClient(okHttpClient),
+        httpClient = Okhttp3HttpClient(okHttpClient, clientConfiguration),
     )
 
     @JvmOverloads
@@ -62,7 +62,6 @@ class AWSIoTSecurityTokenServiceClient @JvmOverloads constructor(
         roleAliasName = roleAliasName,
         clientConfiguration = clientConfiguration,
         okHttpClient = okHttpClient.createNewClient(
-            config = clientConfiguration,
             keyStore = keyStore,
             password = password,
             caPublicKeyProvider = { rootCa },

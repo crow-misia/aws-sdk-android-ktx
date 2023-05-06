@@ -17,65 +17,78 @@ package io.github.crow_misia.aws.appsync
 
 import com.amazonaws.AmazonWebServiceClient
 import com.amazonaws.ClientConfiguration
+import com.amazonaws.Request
+import com.amazonaws.Response
+import com.amazonaws.auth.AWSCredentials
 import com.amazonaws.auth.AWSCredentialsProvider
-import com.amazonaws.regions.Region
+import com.amazonaws.http.CaseIgnoreJsonErrorResponseHandler
+import com.amazonaws.http.HttpClient
+import com.amazonaws.http.UrlHttpClient
+import com.amazonaws.internal.StaticCredentialsProvider
+import com.amazonaws.transform.JsonErrorUnmarshaller
 import com.apollographql.apollo3.ApolloCall
 import com.apollographql.apollo3.ApolloClient
+import com.apollographql.apollo3.api.ApolloRequest
+import com.apollographql.apollo3.api.ApolloResponse
+import com.apollographql.apollo3.api.CustomScalarAdapters
 import com.apollographql.apollo3.api.Mutation
+import com.apollographql.apollo3.api.Operation
 import com.apollographql.apollo3.api.Query
-import com.apollographql.apollo3.api.Subscription
-import com.apollographql.apollo3.network.okHttpClient
-import io.github.crow_misia.aws.appsync.signv4.AppSyncAuthorizationInterceptor
-import io.github.crow_misia.aws.appsync.signv4.CredentialsHeaderProcessor
-import okhttp3.OkHttpClient
+import com.apollographql.apollo3.network.NetworkTransport
+import io.github.crow_misia.aws.appsync.model.transform.AccessDeniedExceptionUnmarshaller
+import io.github.crow_misia.aws.appsync.model.transform.ApiKeyLimitExceededExceptionUnmarshaller
+import io.github.crow_misia.aws.appsync.model.transform.ApiKeyValidityOutOfBoundsExceptionUnmarshaller
+import io.github.crow_misia.aws.appsync.model.transform.ApiLimitExceededExceptionUnmarshaller
+import io.github.crow_misia.aws.appsync.model.transform.AppSyncRequestMarshaller
+import io.github.crow_misia.aws.appsync.model.transform.AppSyncServiceExceptionUnmarshaller
+import io.github.crow_misia.aws.appsync.model.transform.BadRequestExceptionUnmarshaller
+import io.github.crow_misia.aws.appsync.model.transform.ConcurrentModificationExceptionUnmarshaller
+import io.github.crow_misia.aws.appsync.model.transform.GraphQLSchemaExceptionUnmarshaller
+import io.github.crow_misia.aws.appsync.model.transform.InternalFailureExceptionUnmarshaller
+import io.github.crow_misia.aws.appsync.model.transform.LimitExceededExceptionUnmarshaller
+import io.github.crow_misia.aws.appsync.model.transform.NotFoundExceptionUnmarshaller
+import io.github.crow_misia.aws.appsync.model.transform.UnauthorizedExceptionUnmarshaller
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 /**
  * Amazon AppSync Service Client.
  */
 class AWSAppSyncClient @JvmOverloads constructor(
-    endpoint: String = "appsync.amazonaws.com/graphql",
-    apolloClient: ApolloClient,
-    credentialsProvider: AWSCredentialsProvider,
+    private val credentialsProvider: AWSCredentialsProvider,
     clientConfiguration: ClientConfiguration = ClientConfiguration(),
-) : AmazonWebServiceClient(clientConfiguration), AWSAppSync {
-    @Volatile
-    private var delegated: ApolloClient
+    httpClient: HttpClient = UrlHttpClient(clientConfiguration),
+) : AmazonWebServiceClient(clientConfiguration, httpClient), AWSAppSync {
+    private val delegated: ApolloClient
+
+    private val jsonErrorUnmarshallers: List<JsonErrorUnmarshaller> = listOf(
+        AccessDeniedExceptionUnmarshaller,
+        ApiKeyLimitExceededExceptionUnmarshaller,
+        ApiKeyValidityOutOfBoundsExceptionUnmarshaller,
+        ApiLimitExceededExceptionUnmarshaller,
+        BadRequestExceptionUnmarshaller,
+        InternalFailureExceptionUnmarshaller,
+        NotFoundExceptionUnmarshaller,
+        ConcurrentModificationExceptionUnmarshaller,
+        UnauthorizedExceptionUnmarshaller,
+        LimitExceededExceptionUnmarshaller,
+        GraphQLSchemaExceptionUnmarshaller,
+        AppSyncServiceExceptionUnmarshaller,
+    )
 
     init {
-        serviceNameIntern = "appsync"
-        super.setEndpoint(endpoint)
+        serviceNameIntern = SERVICE_NAME
 
-        delegated = apolloClient.newBuilder()
-            .serverUrl(getEndpoint())
-            .addHttpInterceptor(AppSyncAuthorizationInterceptor(
-                headerProcessor = CredentialsHeaderProcessor({ signer }, credentialsProvider),
-            ))
+        delegated = ApolloClient.Builder()
+            .networkTransport(HttpClientNetworkTransport(this))
             .build()
     }
 
-    @JvmOverloads
     constructor(
-        endpoint: String = "https://appsync.amazonaws.com/graphql",
-        okHttpClient: OkHttpClient,
-        credentialsProvider: AWSCredentialsProvider,
+        credentials: AWSCredentials,
         clientConfiguration: ClientConfiguration = ClientConfiguration(),
-    ) : this(
-        apolloClient = ApolloClient.Builder().serverUrl(endpoint).okHttpClient(okHttpClient).build(),
-        credentialsProvider = credentialsProvider,
-        clientConfiguration = clientConfiguration,
-    )
-
-    override fun setEndpoint(endpoint: String) {
-        super.setEndpoint(endpoint)
-
-        rebuildClient()
-    }
-
-    override fun setRegion(region: Region) {
-        super.setRegion(region)
-
-        rebuildClient()
-    }
+        httpClient: HttpClient = UrlHttpClient(clientConfiguration),
+    ) : this(StaticCredentialsProvider(credentials), clientConfiguration, httpClient)
 
     override fun <D : Query.Data> query(query: Query<D>): ApolloCall<D> {
         return delegated.query(query)
@@ -85,13 +98,46 @@ class AWSAppSyncClient @JvmOverloads constructor(
         return delegated.mutation(mutation)
     }
 
-    override fun <D : Subscription.Data> subscription(subscription: Subscription<D>): ApolloCall<D> {
-        return delegated.subscription(subscription)
+    internal fun <D : Operation.Data> execute(request: ApolloRequest<D>): ApolloResponse<D> {
+        val customScalarAdapters = checkNotNull(request.executionContext[CustomScalarAdapters])
+        val wrappedRequest = AppSyncRequest(request)
+        val operation = request.operation
+        val dr = AppSyncRequestMarshaller(operation, customScalarAdapters).marshall(wrappedRequest)
+        return invoke(dr, operation, customScalarAdapters).awsResponse
     }
 
-    private fun rebuildClient() {
-        delegated = delegated.newBuilder()
-            .serverUrl(getEndpoint())
-            .build()
+    private operator fun <D : Operation.Data> invoke(
+        request: Request<AppSyncRequest<D>>,
+        operation: Operation<D>,
+        customScalarAdapters: CustomScalarAdapters,
+    ): Response<ApolloResponse<D>> {
+        request.endpoint = endpoint
+        request.timeOffset = timeOffset
+        val executionContext = createExecutionContext(request).also {
+            it.credentials = credentialsProvider.credentials
+        }
+        val responseHandler = AppSyncResponseHandler(operation, customScalarAdapters)
+        val errorResponseHandler = CaseIgnoreJsonErrorResponseHandler(
+            jsonErrorUnmarshallers
+        )
+        return client.execute(request, responseHandler, errorResponseHandler, executionContext)
+    }
+
+    companion object {
+        private const val SERVICE_NAME = "appsync"
+    }
+}
+
+class HttpClientNetworkTransport(
+    private val client: AWSAppSyncClient,
+) : NetworkTransport {
+    override fun dispose() {
+        // nop.
+    }
+
+    override fun <D : Operation.Data> execute(request: ApolloRequest<D>): Flow<ApolloResponse<D>> {
+        return flow {
+            emit(client.execute(request))
+        }
     }
 }

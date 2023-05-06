@@ -21,13 +21,18 @@ import okio.BufferedSink
 import okio.source
 import java.io.InputStream
 
-fun InputStream.toRequestBody(contentType: MediaType? = null): RequestBody {
+internal fun InputStream.toRequestBody(contentType: MediaType? = null): RequestBody {
+    val markSupported = markSupported()
+
     return object : RequestBody() {
-        override fun isOneShot() = false
+        override fun isOneShot() = !markSupported
 
         override fun contentType() = contentType
 
         override fun writeTo(sink: BufferedSink) {
+            if (markSupported) {
+                reset()
+            }
             source().use {
                 sink.writeAll(it)
             }

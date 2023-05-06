@@ -15,32 +15,21 @@
  */
 package io.github.crow_misia.aws.core
 
-import com.amazonaws.ClientConfiguration
 import okhttp3.OkHttpClient
 import java.security.KeyStore
 import java.security.cert.X509Certificate
 import java.util.Arrays
-import java.util.concurrent.TimeUnit
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 
 fun OkHttpClient.createNewClient(
-    config: ClientConfiguration,
     keyStore: KeyStore,
     password: String?,
     caPublicKeyProvider: () -> X509Certificate,
 ): OkHttpClient {
     return newBuilder().also {
-        // configure the connection
-        it.connectTimeout(config.connectionTimeout.toLong(), TimeUnit.MILLISECONDS)
-        it.readTimeout(config.socketTimeout.toLong(), TimeUnit.MILLISECONDS)
-        // disable redirect and cache
-        it.cache(null)
-        it.followRedirects(false)
-        it.followSslRedirects(false)
-
         // client certificate
         it.sslSocketFactory(keyStore, password, caPublicKeyProvider())
     }.build()
