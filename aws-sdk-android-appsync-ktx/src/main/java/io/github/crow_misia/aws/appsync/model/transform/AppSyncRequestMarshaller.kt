@@ -19,7 +19,6 @@ import com.amazonaws.DefaultRequest
 import com.amazonaws.Request
 import com.amazonaws.http.HttpMethodName
 import com.amazonaws.transform.Marshaller
-import com.amazonaws.util.StringInputStream
 import com.apollographql.apollo3.api.CustomScalarAdapters
 import com.apollographql.apollo3.api.Operation
 import com.apollographql.apollo3.api.composeJsonRequest

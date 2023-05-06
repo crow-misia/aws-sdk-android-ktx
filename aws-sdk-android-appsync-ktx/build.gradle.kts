@@ -58,14 +58,8 @@ dependencies {
     implementation(Kotlin.stdlib)
     implementation(KotlinX.coroutines.core)
 
-    // aws sdk android
-    api(libs.aws.android.sdk.iot)
-
     // GraphQL
     implementation(ApolloGraphQL.runtime)
-
-    // okhttp3
-    implementation(Square.okHttp3)
 }
 
 val customDokkaTask by tasks.creating(DokkaTask::class) {
