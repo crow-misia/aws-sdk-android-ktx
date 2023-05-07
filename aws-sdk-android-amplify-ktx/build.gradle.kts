@@ -10,13 +10,13 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
-val mavenName = "aws-sdk-android-core-ktx"
+val mavenName = "aws-sdk-android-amplify-ktx"
 
 group = Maven.groupId
 version = Maven.version
 
 android {
-    namespace = "io.github.crow_misia.aws.core"
+    namespace = "io.github.crow_misia.aws.amplify"
     compileSdk = 33
 
     defaultConfig {
@@ -56,14 +56,16 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>().all {
 dependencies {
     coreLibraryDesugaring(Android.tools.desugarJdkLibs)
 
+    api(project(":aws-sdk-android-core-ktx"))
+
     implementation(Kotlin.stdlib)
     implementation(KotlinX.coroutines.core)
 
     // aws sdk android
-    api(libs.aws.android.sdk.core)
+    implementation(libs.aws.android.sdk.core)
 
-    // okhttp3
-    implementation(Square.okHttp3)
+    // amplify sdk android
+    implementation(libs.amplifyframework.aws.core)
 }
 
 val customDokkaTask by tasks.creating(DokkaTask::class) {
@@ -101,12 +103,12 @@ afterEvaluate {
                     |    Version: $version
                 """.trimMargin())
 
-                artifact(javadocJar)
+                    artifact(javadocJar)
 
-                pom {
-                    name.set(mavenName)
-                    description.set(Maven.desc)
-                    url.set(Maven.siteUrl)
+                    pom {
+                        name.set(mavenName)
+                        description.set(Maven.desc)
+                        url.set(Maven.siteUrl)
 
                     scm {
                         val scmUrl = "scm:git:${Maven.gitUrl}"

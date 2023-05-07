@@ -31,6 +31,7 @@ android {
     }
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -53,6 +54,8 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>().all {
 }
 
 dependencies {
+    coreLibraryDesugaring(Android.tools.desugarJdkLibs)
+
     api(project(":aws-sdk-android-core-ktx"))
 
     implementation(Kotlin.stdlib)

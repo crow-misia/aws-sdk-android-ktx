@@ -20,9 +20,9 @@ package io.github.crow_misia.aws.iot
 import com.amazonaws.assumeRoleWithCredentials
 import com.amazonaws.auth.AWSCredentials
 import com.amazonaws.auth.AWSCredentialsProvider
-import com.amazonaws.auth.AWSSessionCredentials
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithCredentialsRequest
-import io.github.crow_misia.aws.core.asBasicSessionCredentials
+import io.github.crow_misia.aws.core.AWSTemporaryCredentials
+import io.github.crow_misia.aws.core.asAWSCredentials
 
 open class AWSIoTSTSAssumeRoleSessionCredentialsProvider(
     private var thingName: String,
@@ -34,20 +34,15 @@ open class AWSIoTSTSAssumeRoleSessionCredentialsProvider(
     }
 
     /**
-     * The current session credentials.
+     * The current temporary credentials.
      */
-    private var sessionCredentials: AWSSessionCredentials? = null
-
-    /**
-     * The expiration time for the current session credentials.
-     */
-    private var sessionCredentialsExpiration: Long? = null
+    private var temporaryCredentials: AWSTemporaryCredentials? = null
 
     override fun getCredentials(): AWSCredentials {
         if (neededNewSession()) {
             startSession()
         }
-        return checkNotNull(sessionCredentials)
+        return checkNotNull(temporaryCredentials)
     }
 
     override fun refresh() {
@@ -59,15 +54,14 @@ open class AWSIoTSTSAssumeRoleSessionCredentialsProvider(
             AssumeRoleWithCredentialsRequest(thingName)
         )
         val stsCredentials = assumeRoleResult.credentials
-        sessionCredentials = stsCredentials.asBasicSessionCredentials()
-        sessionCredentialsExpiration = stsCredentials.expiration.time
+        temporaryCredentials = stsCredentials.asAWSCredentials()
     }
 
     private fun neededNewSession(): Boolean {
-        sessionCredentials ?: return true
-        val expiration = sessionCredentialsExpiration ?: return true
+        val credentials = temporaryCredentials ?: return true
+        val expiration = credentials.expiration
 
-        val timeRemaining = expiration - System.currentTimeMillis()
+        val timeRemaining = expiration.toEpochMilli() - System.currentTimeMillis()
         return timeRemaining < EXPIRY_TIME_MILLIS
     }
 }

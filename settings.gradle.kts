@@ -20,6 +20,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "aws-sdk-android-ktx"
 include(":aws-sdk-android-core-ktx")
+include(":aws-sdk-android-amplify-ktx")
 include(":aws-sdk-android-appsync-ktx")
 include(":aws-sdk-android-iot-ktx")
 include(":sample")
