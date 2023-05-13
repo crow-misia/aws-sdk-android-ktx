@@ -20,6 +20,8 @@ import io.github.crow_misia.aws.core.KeyStoreProvider
 import io.github.crow_misia.aws.iot.AWSIoTProvisioningResponse
 import io.github.crow_misia.aws.iot.AWSIotMqttManagerProvider
 import io.github.crow_misia.aws.iot.AbstractProvisioningManager
+import io.github.crow_misia.aws.iot.ClientIdProvider
+import io.github.crow_misia.aws.iot.clientid.UUIDClientIDProvider
 import io.github.crow_misia.aws.iot.provisioningThing
 import org.json.JSONObject
 import java.util.UUID
@@ -28,11 +30,8 @@ open class BasicKeyStoreProvisioningManager(
     provider: AWSIotMqttManagerProvider,
     private val templateName: String,
     private val keyStoreProvider: KeyStoreProvider,
-) : AbstractProvisioningManager(provider) {
-    override fun generateTemporaryClientID(): AWSIotMqttManager.ClientId {
-        return AWSIotMqttManager.ClientId.fromString(UUID.randomUUID().toString())
-    }
-
+    clientIdProvider: ClientIdProvider = UUIDClientIDProvider(),
+) : AbstractProvisioningManager(provider, clientIdProvider) {
     override suspend fun provisioningThing(
         manager: AWSIotMqttManager,
         parameters: JSONObject

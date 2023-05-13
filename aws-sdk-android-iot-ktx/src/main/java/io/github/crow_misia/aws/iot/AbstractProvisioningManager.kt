@@ -16,17 +16,18 @@
 package io.github.crow_misia.aws.iot
 
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
-import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager.ClientId
 import org.json.JSONObject
 
 /**
  * Abstract Provisioning Manager.
  *
  * @property provider AWS IoT Core MQTT Manager Provider
+ * @property clientIdProvider Client ID Provider for Provisioning
  */
 abstract class AbstractProvisioningManager(
     private val provider: AWSIotMqttManagerProvider,
-) {
+    private val clientIdProvider: ClientIdProvider,
+) : ProvisioningManager {
     /**
      * Provisioning.
      *
@@ -37,37 +38,23 @@ abstract class AbstractProvisioningManager(
     protected abstract suspend fun provisioningThing(manager: AWSIotMqttManager, parameters: JSONObject): AWSIoTProvisioningResponse
 
     /**
-     * Generate Temporary ClientID
-     *
-     * @return ClientID
-     */
-    protected abstract fun generateTemporaryClientID(): ClientId
-
-    /**
      * Generate Parameters for Provisioning.
      *
      * @param base Base Parameters
      * @return Parameters for Provisioning
      */
-    open fun generateParameters(base: JSONObject): JSONObject = base
+    protected open fun generateParameters(base: JSONObject): JSONObject = base
 
     /**
      * create MQTT Manager.
      */
     private fun createMqttManager(): AWSIotMqttManager {
-        // generate temporary ClientID
-        val clientId = generateTemporaryClientID()
+        val clientId = clientIdProvider.provide()
         return provider.provide(clientId)
     }
 
-    /**
-     * doing provisioning.
-     *
-     * @param serialNumber Device unique ID
-     */
-    suspend fun provisioning(serialNumber: String): AWSIoTProvisioningResponse {
+    override suspend fun provisioning(parameters: JSONObject): AWSIoTProvisioningResponse {
         val manager = createMqttManager()
-        val parameters = generateParameters(JSONObject().put("SerialNumber", serialNumber))
-        return provisioningThing(manager, parameters)
+        return provisioningThing(manager, generateParameters(parameters))
     }
 }
