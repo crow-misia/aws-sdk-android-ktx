@@ -91,7 +91,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         }
     }
 
-    @OptIn(FlowPreview::class)
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun onClickSubscribeShadow() {
         val manager = createMqttManager()
         val keystoreName = "iot"
@@ -113,38 +113,34 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
             keystoreName,
             AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD
         )
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             Timber.i("certId = %s, thingName = %s", certId, thingName)
             val shadowClient = shadowClient ?: run {
                 manager.asShadowClient(thingName).also {
                     this@MainViewModel.shadowClient = it
                 }
             }
-            withContext(Dispatchers.IO) {
-                manager.connect(keyStore)
-                    // waiting until connected.
-                    .filter { it == AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus.Connected }
-                    .flatMapConcat {
-                        shadowClient.subscribeDocuments()
-                    }
-                    .onEach { Timber.i("Received shadow data = %s", it) }
-                    .catch { e -> Timber.e(e, "Error subscribe shadow.") }
-                    .launchIn(this)
-            }
+            manager.connect(keyStore)
+                // waiting until connected.
+                .filter { it == AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus.Connected }
+                .flatMapConcat {
+                    shadowClient.subscribeDocuments()
+                }
+                .onEach { Timber.i("Received shadow data = %s", it) }
+                .catch { e -> Timber.e(e, "Error subscribe shadow.") }
+                .launchIn(this)
         }
     }
 
     fun onClickGetShadow() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val shadowClient = shadowClient ?: return@launch
 
-            withContext(Dispatchers.IO) {
-                try {
-                    val data = shadowClient.get()
-                    Timber.i("Get shadow data = %s", data)
-                } catch (e: Throwable) {
-                    Timber.e(e, "Error get shadow.")
-                }
+            try {
+                val data = shadowClient.get()
+                Timber.i("Get shadow data = %s", data)
+            } catch (e: Throwable) {
+                Timber.e(e, "Error get shadow.")
             }
         }
     }
@@ -152,34 +148,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
     private val counter = AtomicInteger(0)
 
     fun onClickUpdateShadow() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val shadowClient = shadowClient ?: return@launch
 
-            withContext(Dispatchers.IO) {
-                try {
-                    val count = counter.incrementAndGet()
-                    val data = shadowClient.update(JSONObject().apply {
-                        put("count", count)
-                    })
-                    Timber.i("Updated shadow data = %s", data)
-                } catch (e: Throwable) {
-                    Timber.e(e, "Error update shadow.")
-                }
+            try {
+                val count = counter.incrementAndGet()
+                val data = shadowClient.update(JSONObject().apply {
+                    put("count", count)
+                })
+                Timber.i("Updated shadow data = %s", data)
+            } catch (e: Throwable) {
+                Timber.e(e, "Error update shadow.")
             }
         }
     }
 
     fun onClickDeleteShadow() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val shadowClient = shadowClient ?: return@launch
 
-            withContext(Dispatchers.IO) {
-                try {
-                    shadowClient.delete()
-                    Timber.i("Deleted shadow data")
-                } catch (e: Throwable) {
-                    Timber.e(e, "Error delete shadow.")
-                }
+            try {
+                shadowClient.delete()
+                Timber.i("Deleted shadow data")
+            } catch (e: Throwable) {
+                Timber.e(e, "Error delete shadow.")
             }
         }
     }
