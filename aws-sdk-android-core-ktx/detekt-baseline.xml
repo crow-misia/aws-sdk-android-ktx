@@ -1,8 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <SmellBaseline>
   <ManuallySuppressedIssues/>
-  <CurrentIssues>
-    <ID>SerialVersionUIDInSerializableClass:AssumeRoleWithCredentialsRequest.kt$AssumeRoleWithCredentialsRequest : AmazonWebServiceRequestSerializable</ID>
-    <ID>SerialVersionUIDInSerializableClass:AssumeRoleWithCredentialsResult.kt$AssumeRoleWithCredentialsResult : Serializable</ID>
-  </CurrentIssues>
+  <CurrentIssues/>
 </SmellBaseline>

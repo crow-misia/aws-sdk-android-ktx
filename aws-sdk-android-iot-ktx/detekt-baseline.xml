@@ -2,11 +2,8 @@
 <SmellBaseline>
   <ManuallySuppressedIssues>
     <ID>LongParameterList:AWSIoTSTSAssumeRoleSessionCredentialsProvider.kt$AWSIoTSTSAssumeRoleSessionCredentialsProvider$( thingName: String, keyStore: KeyStore, password: String = AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD, rootCa: X509Certificate, stsEndpoint: String, roleAliasName: String, okHttpClient: OkHttpClient, clientConfiguration: ClientConfiguration, )</ID>
-    <ID>ReturnCount:AWSIoTSTSAssumeRoleSessionCredentialsProvider.kt$AWSIoTSTSAssumeRoleSessionCredentialsProvider$private fun neededNewSession(): Boolean</ID>
   </ManuallySuppressedIssues>
   <CurrentIssues>
     <ID>LongParameterList:AWSIoTSecurityTokenServiceClient.kt$AWSIoTSecurityTokenServiceClient$( keyStore: KeyStore, password: String = AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD, rootCa: X509Certificate, stsEndpoint: String, roleAliasName: String, okHttpClient: OkHttpClient, clientConfiguration: ClientConfiguration = ClientConfiguration(), )</ID>
-    <ID>ReturnCount:AWSIoTSTSAssumeRoleSessionCredentialsProvider.kt$AWSIoTSTSAssumeRoleSessionCredentialsProvider$private fun neededNewSession(): Boolean</ID>
-    <ID>ThrowsCount:AWSIoTKeystoreHelperExt.kt$AWSIoTKeystoreHelperExt$fun createTempKeystore( certId: String, keyStore: KeyStore, keyStorePassword: String, ): KeyStore</ID>
   </CurrentIssues>
 </SmellBaseline>

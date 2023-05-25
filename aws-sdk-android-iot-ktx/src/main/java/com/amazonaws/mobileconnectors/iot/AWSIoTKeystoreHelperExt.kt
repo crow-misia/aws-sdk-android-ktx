@@ -17,6 +17,7 @@ package com.amazonaws.mobileconnectors.iot
 
 import com.amazonaws.AmazonClientException
 import java.io.IOException
+import java.security.GeneralSecurityException
 import java.security.KeyStore
 import java.security.KeyStoreException
 import java.security.NoSuchAlgorithmException
@@ -44,20 +45,19 @@ object AWSIoTKeystoreHelperExt {
         keystorePassword: String = AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD,
     ): KeyStore {
         val privateKeyReader = PrivateKeyReader(keyPem)
-        val privateKey = try {
-            privateKeyReader.privateKey
+        return try {
+            val privateKey = privateKeyReader.privateKey
+            val certs = loadX509(certPem)
+            KeyStore.getInstance(KeyStore.getDefaultType()).also {
+                it.load(null)
+                it.setCertificateEntry(certId, certs[0])
+                it.setKeyEntry(certId, privateKey, keystorePassword.toCharArray(), certs)
+            }
         } catch (e: IOException) {
-            throw AmazonClientException("An error occurred saving the certificate and key.", e)
-        } catch (e: InvalidKeySpecException) {
-            throw AWSIotCertificateException("An error occurred saving the certificate and key.", e)
+            throw AmazonClientException("Error retrieving certificate and key.", e)
+        } catch (e: GeneralSecurityException) {
+            throw AWSIotCertificateException("Error retrieving certificate and key.", e)
         }
-
-        val certs = loadX509(certPem)
-        val keyStore = KeyStore.getInstance(KeyStore.getDefaultType())
-        keyStore.load(null)
-        keyStore.setCertificateEntry(certId, certs[0])
-        keyStore.setKeyEntry(certId, privateKey, keystorePassword.toCharArray(), certs)
-        return keyStore
     }
 
     fun createTempKeystore(
@@ -73,13 +73,7 @@ object AWSIoTKeystoreHelperExt {
                 it.setCertificateEntry("cert-alias", certs[0])
                 it.setKeyEntry("key-alias", key, AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD.toCharArray(), certs)
             }
-        } catch (e: CertificateException) {
-            throw AWSIotCertificateException("Error retrieving certificate and key.", e)
-        } catch (e: KeyStoreException) {
-            throw AWSIotCertificateException("Error retrieving certificate and key.", e)
-        } catch (e: UnrecoverableKeyException) {
-            throw AWSIotCertificateException("Error retrieving certificate and key.", e)
-        } catch (e: NoSuchAlgorithmException) {
+        } catch (e: GeneralSecurityException) {
             throw AWSIotCertificateException("Error retrieving certificate and key.", e)
         } catch (e: IOException) {
             throw AmazonClientException("Error retrieving certificate and key.", e)
