@@ -7,6 +7,7 @@ plugins {
 
 buildscript {
     dependencies {
+        classpath(Android.tools.build.gradlePlugin)
         classpath(Google.android.versionMatcherPlugin)
         classpath(libs.dokka.gradle.plugin)
     }
