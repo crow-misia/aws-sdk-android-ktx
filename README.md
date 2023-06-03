@@ -28,6 +28,20 @@ repository {
 }
 ```
 
+### Create certification and key
+
+```shell
+$ aws iot create-keys-and-certificate --set-as-active --certificate-pem-outfile certificate.pem --public-key-outfile public.key --private-key-outfile private.key
+```
+
+### endpoint
+
+```shell
+$ aws iot describe-endpoint --endpoint-type iot:Data-ATS
+```
+
+### 
+
 ## License
 
 ```

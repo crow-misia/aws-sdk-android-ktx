@@ -26,6 +26,7 @@ interface ProvisioningManager {
      *
      * @param serialNumber Device unique ID
      */
+    @Deprecated(message = "remove in v0.18.0", replaceWith = ReplaceWith("this.provisioning(JSONObject().put(\"SerialNumber\", serialNumber))"))
     suspend fun provisioning(serialNumber: String): AWSIoTProvisioningResponse = provisioning(JSONObject().put("SerialNumber", serialNumber))
 
     /**

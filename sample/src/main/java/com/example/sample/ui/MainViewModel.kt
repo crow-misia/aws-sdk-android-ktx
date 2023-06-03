@@ -36,7 +36,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         templateName = resources.getString(R.string.aws_template_name),
         keyStoreProvider = { AWSIoTKeystoreHelperExt.loadKeyStore(
             "provisioning",
-            assetManager.open("certificate.crt").bufferedReader().readText(),
+            assetManager.open("certificate.pem").bufferedReader().readText(),
             assetManager.open("private.key").bufferedReader().readText(),
             AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD
         ) }
@@ -72,7 +72,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         val serialNumber = UUID.randomUUID().toString()
         viewModelScope.launch(context = Dispatchers.IO) {
             try {
-                provisioningManager.provisioning(serialNumber).apply {
+                provisioningManager.provisioning(JSONObject().apply {
+                    put("SerialNumber", serialNumber)
+                }).apply {
                     saveCertificateAndPrivateKey(
                         keystorePath = keystorePathStr,
                         keystoreName = keystoreName,
