@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 import java.security.KeyStore
 
 private fun ProducerScope<AWSIotMqttClientStatus>.createConnectCallback(
@@ -189,6 +190,14 @@ suspend fun AWSIotMqttManager.publish(
     awaitClose()
 }.first()
 
+suspend fun AWSIotMqttManager.publish(
+    data: JSONObject,
+    topic: String,
+    qos: AWSIotMqttQos,
+    userData: Any? = null,
+    isRetained: Boolean = false,
+) = publish(data.toString(), topic, qos, userData, isRetained)
+
 suspend fun AWSIotMqttManager.publishWithReply(
     str: String,
     topic: String,
@@ -229,3 +238,11 @@ suspend fun AWSIotMqttManager.publishWithReply(
         jobPublish.cancel()
     }
 }.first()
+
+suspend fun AWSIotMqttManager.publishWithReply(
+    data: JSONObject,
+    topic: String,
+    qos: AWSIotMqttQos,
+    userData: Any? = null,
+    isRetained: Boolean = false,
+) = publishWithReply(data.toString(), topic, qos, userData, isRetained)

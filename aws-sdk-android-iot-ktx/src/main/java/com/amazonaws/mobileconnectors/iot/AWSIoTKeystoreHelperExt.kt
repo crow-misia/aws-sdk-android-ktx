@@ -19,13 +19,11 @@ import com.amazonaws.AmazonClientException
 import java.io.IOException
 import java.security.GeneralSecurityException
 import java.security.KeyStore
-import java.security.KeyStoreException
-import java.security.NoSuchAlgorithmException
-import java.security.UnrecoverableKeyException
-import java.security.cert.CertificateException
+import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import java.security.spec.InvalidKeySpecException
 
+@Suppress("unused")
 object AWSIoTKeystoreHelperExt {
     private const val AWS_IOT_PEM_BEGIN_CERT_TAG = "-----BEGIN CERTIFICATE-----"
     private const val AWS_IOT_PEM_END_CERT_TAG = "-----END CERTIFICATE-----"
@@ -35,6 +33,19 @@ object AWSIoTKeystoreHelperExt {
         return certBytes.map {
             AWSIotKeystoreHelper.generateCertificateFromDER(it)
         }.toTypedArray()
+    }
+
+    fun parsePrivateKeyFromPem(pem: String): PrivateKey {
+        val privateKeyReader = PrivateKeyReader(pem)
+        return try {
+            privateKeyReader.privateKey
+        } catch (e: IOException) {
+            throw AmazonClientException("An error occurred saving the certificate and key.", e)
+        } catch (e: InvalidKeySpecException) {
+            throw AWSIotCertificateException(
+                "An error occurred saving the certificate and key.", e
+            )
+        }
     }
 
     @JvmOverloads

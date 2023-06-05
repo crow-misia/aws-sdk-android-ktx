@@ -15,28 +15,28 @@
  */
 package io.github.crow_misia.aws.iot.keystore
 
-import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import io.github.crow_misia.aws.core.KeyStoreProvider
+import io.github.crow_misia.aws.iot.AWSIoTFleetProvisioner
+import io.github.crow_misia.aws.iot.AWSIoTFleetProvisionerProvider
 import io.github.crow_misia.aws.iot.AWSIoTProvisioningResponse
 import io.github.crow_misia.aws.iot.AWSIotMqttManagerProvider
 import io.github.crow_misia.aws.iot.AbstractProvisioningManager
 import io.github.crow_misia.aws.iot.ClientIdProvider
 import io.github.crow_misia.aws.iot.clientid.UUIDClientIDProvider
-import io.github.crow_misia.aws.iot.provisioningThing
 import org.json.JSONObject
-import java.util.UUID
 
 open class BasicKeyStoreProvisioningManager(
-    provider: AWSIotMqttManagerProvider,
+    mqttManagerProvider: AWSIotMqttManagerProvider,
+    provisionerProvider: AWSIoTFleetProvisionerProvider,
     private val templateName: String,
     private val keyStoreProvider: KeyStoreProvider,
     clientIdProvider: ClientIdProvider = UUIDClientIDProvider(),
-) : AbstractProvisioningManager(provider, clientIdProvider) {
+) : AbstractProvisioningManager(mqttManagerProvider, provisionerProvider, clientIdProvider) {
     override suspend fun provisioningThing(
-        manager: AWSIotMqttManager,
+        provisioner: AWSIoTFleetProvisioner,
         parameters: JSONObject
     ): AWSIoTProvisioningResponse {
         val keyStore = keyStoreProvider.provide()
-        return manager.provisioningThing(keyStore, templateName, parameters)
+        return provisioner.provisioningThing(keyStore, templateName, parameters)
     }
 }

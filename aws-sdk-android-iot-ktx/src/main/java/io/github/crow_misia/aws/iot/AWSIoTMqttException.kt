@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("unused")
-
 package io.github.crow_misia.aws.iot
 
 import com.amazonaws.AmazonClientException
 
+@Suppress("unused")
 sealed class AWSIoTMqttException : AmazonClientException {
     constructor(message: String) : super(message)
     constructor(cause: Throwable) : super(cause)

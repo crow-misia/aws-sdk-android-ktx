@@ -15,16 +15,14 @@
  */
 package io.github.crow_misia.aws.iot
 
-import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager.ClientId
+import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 
 /**
- * Client ID Provider.
+ * Fleet Provisioner Provider.
  */
-fun interface ClientIdProvider {
+fun interface AWSIoTFleetProvisionerProvider {
     /**
-     * Provide ClientID.
-     *
-     * @return ClientID
+     * provide Fleet Provisioner.
      */
-    fun provide(): ClientId
+    fun provide(manager: AWSIotMqttManager): AWSIoTFleetProvisioner
 }

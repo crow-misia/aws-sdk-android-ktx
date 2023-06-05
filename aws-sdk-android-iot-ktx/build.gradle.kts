@@ -67,6 +67,9 @@ dependencies {
     // aws sdk android
     api(libs.aws.android.sdk.iot)
 
+    // bouncy castle
+    implementation(libs.bouncycastle.bcpkix)
+
     // okhttp3
     implementation(Square.okHttp3)
 }

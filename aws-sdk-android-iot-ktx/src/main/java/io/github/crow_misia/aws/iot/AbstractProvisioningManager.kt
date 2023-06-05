@@ -21,21 +21,23 @@ import org.json.JSONObject
 /**
  * Abstract Provisioning Manager.
  *
- * @property provider AWS IoT Core MQTT Manager Provider
+ * @property mqttManagerProvider AWS IoT Core MQTT Manager Provider
+ * @property provisionerProvider AWS IoT Core Fleet Provisioner Provider
  * @property clientIdProvider Client ID Provider for Provisioning
  */
 abstract class AbstractProvisioningManager(
-    private val provider: AWSIotMqttManagerProvider,
+    private val mqttManagerProvider: AWSIotMqttManagerProvider,
+    private val provisionerProvider: AWSIoTFleetProvisionerProvider,
     private val clientIdProvider: ClientIdProvider,
 ) : ProvisioningManager {
     /**
      * Provisioning.
      *
-     * @param manager MQTT Manager
+     * @param provisioner Fleet Provisioner
      * @param parameters Provisioning Parameters
      * @return Provisioning Response
      */
-    protected abstract suspend fun provisioningThing(manager: AWSIotMqttManager, parameters: JSONObject): AWSIoTProvisioningResponse
+    protected abstract suspend fun provisioningThing(provisioner: AWSIoTFleetProvisioner, parameters: JSONObject): AWSIoTProvisioningResponse
 
     /**
      * Generate Parameters for Provisioning.
@@ -50,11 +52,12 @@ abstract class AbstractProvisioningManager(
      */
     private fun createMqttManager(): AWSIotMqttManager {
         val clientId = clientIdProvider.provide()
-        return provider.provide(clientId)
+        return mqttManagerProvider.provide(clientId)
     }
 
     override suspend fun provisioning(parameters: JSONObject): AWSIoTProvisioningResponse {
         val manager = createMqttManager()
-        return provisioningThing(manager, generateParameters(parameters))
+        val provisioner = provisionerProvider.provide(manager)
+        return provisioningThing(provisioner, generateParameters(parameters))
     }
 }
