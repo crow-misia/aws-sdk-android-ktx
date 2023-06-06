@@ -38,12 +38,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
             CreateCertificateFromCSRFleetProvisioner(it)
         },
         templateName = resources.getString(R.string.aws_template_name),
-        keyStoreProvider = { AWSIoTKeystoreHelperExt.loadKeyStore(
-            "provisioning",
-            assetManager.open("certificate.pem").bufferedReader().readText(),
-            assetManager.open("private.key").bufferedReader().readText(),
-            AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD
-        ) }
+        keyStoreProvider = {
+            AWSIoTKeystoreHelperExt.loadKeyStore(
+                certId = "provisioning",
+                certPem = assetManager.open("certificate.pem").bufferedReader().readText(),
+                keyPem = assetManager.open("private.key").bufferedReader().readText(),
+            )
+        }
     )
 
     private var thingName = sharedPreferences.getString("thingName", null).orEmpty()
@@ -82,7 +83,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
                     saveCertificateAndPrivateKey(
                         keystorePath = keystorePathStr,
                         keystoreName = keystoreName,
-                        keystorePassword = AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD
                     )
                     sharedPreferences.edit {
                         putString("certificateId", certificateId)

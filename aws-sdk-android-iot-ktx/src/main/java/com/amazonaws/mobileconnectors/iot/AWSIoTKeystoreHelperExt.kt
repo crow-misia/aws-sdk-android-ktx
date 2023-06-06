@@ -55,14 +55,41 @@ object AWSIoTKeystoreHelperExt {
         keyPem: String,
         keystorePassword: String = AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD,
     ): KeyStore {
-        val privateKeyReader = PrivateKeyReader(keyPem)
+        return loadKeyStore(certId, certPem, keyPem, keystorePassword.toCharArray())
+    }
+
+    fun loadKeyStore(
+        certId: String,
+        certPem: String,
+        keyPem: String,
+        keystorePassword: CharArray,
+    ): KeyStore {
+        val privateKey = PrivateKeyReader(keyPem).privateKey
+        return loadKeyStore(certId, certPem, privateKey, keystorePassword)
+    }
+
+    @JvmOverloads
+    fun loadKeyStore(
+        certId: String,
+        certPem: String,
+        privateKey: PrivateKey,
+        keystorePassword: String = AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD,
+    ): KeyStore {
+        return loadKeyStore(certId, certPem, privateKey, keystorePassword.toCharArray())
+    }
+
+    fun loadKeyStore(
+        certId: String,
+        certPem: String,
+        privateKey: PrivateKey,
+        keystorePassword: CharArray,
+    ): KeyStore {
         return try {
-            val privateKey = privateKeyReader.privateKey
             val certs = loadX509(certPem)
             KeyStore.getInstance(KeyStore.getDefaultType()).also {
                 it.load(null)
                 it.setCertificateEntry(certId, certs[0])
-                it.setKeyEntry(certId, privateKey, keystorePassword.toCharArray(), certs)
+                it.setKeyEntry(certId, privateKey, keystorePassword, certs)
             }
         } catch (e: IOException) {
             throw AmazonClientException("Error retrieving certificate and key.", e)
@@ -76,9 +103,17 @@ object AWSIoTKeystoreHelperExt {
         keyStore: KeyStore,
         keyStorePassword: String,
     ): KeyStore {
+        return createTempKeystore(certId, keyStore, keyStorePassword.toCharArray())
+    }
+
+    fun createTempKeystore(
+        certId: String,
+        keyStore: KeyStore,
+        keyStorePassword: CharArray,
+    ): KeyStore {
         return try {
             val certs = keyStore.getCertificateChain(certId).copyOf()
-            val key = keyStore.getKey(certId, keyStorePassword.toCharArray())
+            val key = keyStore.getKey(certId, keyStorePassword)
             KeyStore.getInstance(KeyStore.getDefaultType()).also {
                 it.load(null)
                 it.setCertificateEntry("cert-alias", certs[0])

@@ -239,10 +239,14 @@ data class AWSIoTProvisioningResponse(
         privateKey = AWSIoTKeystoreHelperExt.parsePrivateKeyFromPem(privateKeyPem),
     )
 
+    /**
+     * Save Certificate and Private Key.
+     */
+    @JvmOverloads
     fun saveCertificateAndPrivateKey(
         keystorePath: String,
         keystoreName: String,
-        keystorePassword: String,
+        keystorePassword: String = AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD,
     ) {
         AWSIotKeystoreHelper.saveCertificateAndPrivateKey(
             certificateId,

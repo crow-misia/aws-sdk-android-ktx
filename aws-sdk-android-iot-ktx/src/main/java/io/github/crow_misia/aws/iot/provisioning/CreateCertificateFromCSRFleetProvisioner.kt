@@ -135,11 +135,40 @@ class CreateCertificateFromCSRFleetProvisioner @JvmOverloads constructor(
         val keyAlgorithm: String,
         val keySpec: AlgorithmParameterSpec,
     ) {
-        object Sha256WithRsa : SigningAlgorithm("SHA256withRSA", KeyProperties.KEY_ALGORITHM_RSA, RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4))
-        object Sha384WithRsa : SigningAlgorithm("SHA384withRSA", KeyProperties.KEY_ALGORITHM_RSA, RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4))
-        object Sha512WithRsa : SigningAlgorithm("SHA512withRSA", KeyProperties.KEY_ALGORITHM_RSA, RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4))
-        object Sha256WithEcdsa : SigningAlgorithm("SHA256withECDSA", KeyProperties.KEY_ALGORITHM_EC, ECGenParameterSpec("secp256r1"))
-        object Sha384WithEcdsa : SigningAlgorithm("SHA384withECDSA", KeyProperties.KEY_ALGORITHM_EC, ECGenParameterSpec("secp256r1"))
-        object Sha512WithEcdsa : SigningAlgorithm("SHA512withECDSA", KeyProperties.KEY_ALGORITHM_EC, ECGenParameterSpec("secp256r1"))
+        companion object {
+            private const val RSA_KEY_SIZE = 2048
+            private const val EC_KEY_NAME = "secp256r1"
+        }
+
+        object Sha256WithRsa : SigningAlgorithm(
+            algorithmName = "SHA256withRSA",
+            keyAlgorithm = KeyProperties.KEY_ALGORITHM_RSA,
+            keySpec = RSAKeyGenParameterSpec(RSA_KEY_SIZE, RSAKeyGenParameterSpec.F4),
+        )
+        object Sha384WithRsa : SigningAlgorithm(
+            algorithmName = "SHA384withRSA",
+            keyAlgorithm = KeyProperties.KEY_ALGORITHM_RSA,
+            keySpec = RSAKeyGenParameterSpec(RSA_KEY_SIZE, RSAKeyGenParameterSpec.F4),
+        )
+        object Sha512WithRsa : SigningAlgorithm(
+            algorithmName = "SHA512withRSA",
+            keyAlgorithm = KeyProperties.KEY_ALGORITHM_RSA,
+            keySpec = RSAKeyGenParameterSpec(RSA_KEY_SIZE, RSAKeyGenParameterSpec.F4),
+        )
+        object Sha256WithEcdsa : SigningAlgorithm(
+            algorithmName = "SHA256withECDSA",
+            keyAlgorithm = KeyProperties.KEY_ALGORITHM_EC,
+            keySpec = ECGenParameterSpec(EC_KEY_NAME),
+        )
+        object Sha384WithEcdsa : SigningAlgorithm(
+            algorithmName = "SHA384withECDSA",
+            keyAlgorithm = KeyProperties.KEY_ALGORITHM_EC,
+            keySpec = ECGenParameterSpec(EC_KEY_NAME),
+        )
+        object Sha512WithEcdsa : SigningAlgorithm(
+            algorithmName = "SHA512withECDSA",
+            keyAlgorithm = KeyProperties.KEY_ALGORITHM_EC,
+            keySpec = ECGenParameterSpec(EC_KEY_NAME),
+        )
     }
 }

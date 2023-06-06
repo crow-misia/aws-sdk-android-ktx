@@ -26,7 +26,15 @@ import javax.net.ssl.X509TrustManager
 
 fun OkHttpClient.createNewClient(
     keyStore: KeyStore,
-    password: String?,
+    password: String,
+    caPublicKeyProvider: () -> X509Certificate,
+): OkHttpClient {
+    return createNewClient(keyStore, password.toCharArray(), caPublicKeyProvider)
+}
+
+fun OkHttpClient.createNewClient(
+    keyStore: KeyStore,
+    password: CharArray,
     caPublicKeyProvider: () -> X509Certificate,
 ): OkHttpClient {
     return newBuilder().also {
@@ -37,7 +45,7 @@ fun OkHttpClient.createNewClient(
 
 private fun OkHttpClient.Builder.sslSocketFactory(
     keyStore: KeyStore,
-    password: String?,
+    password: CharArray,
     caPublicKey: X509Certificate,
 ) {
     val trustedStore = KeyStore.getInstance(KeyStore.getDefaultType())
@@ -54,7 +62,7 @@ private fun OkHttpClient.Builder.sslSocketFactory(
     val trustManager = trustManagers[0] as X509TrustManager
 
     val keyManagerFactory = KeyManagerFactory.getInstance("X509")
-    keyManagerFactory.init(keyStore, password?.toCharArray())
+    keyManagerFactory.init(keyStore, password)
 
     val sc = SSLContext.getInstance("TLS")
     sc.init(keyManagerFactory.keyManagers, arrayOf(trustManager), null)

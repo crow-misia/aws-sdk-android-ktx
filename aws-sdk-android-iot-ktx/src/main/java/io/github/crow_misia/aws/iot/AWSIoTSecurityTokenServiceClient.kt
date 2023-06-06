@@ -28,6 +28,10 @@ import okhttp3.OkHttpClient
 import java.security.KeyStore
 import java.security.cert.X509Certificate
 
+/**
+ * STS Client.
+ */
+@Suppress("unused")
 class AWSIoTSecurityTokenServiceClient @JvmOverloads constructor(
     stsEndpoint: String,
     roleAliasName: String,
@@ -52,6 +56,25 @@ class AWSIoTSecurityTokenServiceClient @JvmOverloads constructor(
     constructor(
         keyStore: KeyStore,
         password: String = AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD,
+        rootCa: X509Certificate,
+        stsEndpoint: String,
+        roleAliasName: String,
+        okHttpClient: OkHttpClient,
+        clientConfiguration: ClientConfiguration = ClientConfiguration(),
+    ): this(
+        keyStore = keyStore,
+        password = password.toCharArray(),
+        rootCa = rootCa,
+        stsEndpoint = stsEndpoint,
+        roleAliasName = roleAliasName,
+        okHttpClient = okHttpClient,
+        clientConfiguration = clientConfiguration,
+    )
+
+    @JvmOverloads
+    constructor(
+        keyStore: KeyStore,
+        password: CharArray,
         rootCa: X509Certificate,
         stsEndpoint: String,
         roleAliasName: String,
