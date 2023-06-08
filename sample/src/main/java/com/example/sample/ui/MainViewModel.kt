@@ -10,6 +10,8 @@ import com.amazonaws.mobileconnectors.iot.AWSIoTKeystoreHelperExt
 import com.amazonaws.mobileconnectors.iot.AWSIotKeystoreHelper
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
+import com.amazonaws.mobileconnectors.iot.loadPrivateKey
+import com.amazonaws.mobileconnectors.iot.loadX509Certificate
 import com.amazonaws.regions.Region
 import com.example.sample.R
 import io.github.crow_misia.aws.iot.*
@@ -41,8 +43,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         keyStoreProvider = {
             AWSIoTKeystoreHelperExt.loadKeyStore(
                 certId = "provisioning",
-                certPem = assetManager.open("certificate.pem").bufferedReader().readText(),
-                keyPem = assetManager.open("private.key").bufferedReader().readText(),
+                certificates = assetManager.loadX509Certificate("certificate.pem"),
+                privateKey = assetManager.loadPrivateKey("private.key"),
             )
         }
     )

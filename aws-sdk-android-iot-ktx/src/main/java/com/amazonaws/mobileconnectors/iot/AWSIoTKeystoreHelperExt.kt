@@ -28,7 +28,7 @@ object AWSIoTKeystoreHelperExt {
     private const val AWS_IOT_PEM_BEGIN_CERT_TAG = "-----BEGIN CERTIFICATE-----"
     private const val AWS_IOT_PEM_END_CERT_TAG = "-----END CERTIFICATE-----"
 
-    private fun loadX509(certPem: String): Array<X509Certificate> {
+    fun loadX509(certPem: String): Array<X509Certificate> {
         val certBytes = AWSIotKeystoreHelper.parseDERFromPEM(certPem, AWS_IOT_PEM_BEGIN_CERT_TAG, AWS_IOT_PEM_END_CERT_TAG)
         return certBytes.map {
             AWSIotKeystoreHelper.generateCertificateFromDER(it)
@@ -65,31 +65,41 @@ object AWSIoTKeystoreHelperExt {
         keystorePassword: CharArray,
     ): KeyStore {
         val privateKey = PrivateKeyReader(keyPem).privateKey
-        return loadKeyStore(certId, certPem, privateKey, keystorePassword)
+        val certificates = loadX509(certPem)
+        return loadKeyStore(certId, certificates, privateKey, keystorePassword)
     }
 
-    @JvmOverloads
     fun loadKeyStore(
         certId: String,
         certPem: String,
         privateKey: PrivateKey,
         keystorePassword: String = AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD,
     ): KeyStore {
-        return loadKeyStore(certId, certPem, privateKey, keystorePassword.toCharArray())
+        val certificates = loadX509(certPem)
+        return loadKeyStore(certId, certificates, privateKey, keystorePassword)
+    }
+
+    @JvmOverloads
+    fun loadKeyStore(
+        certId: String,
+        certificates: Array<X509Certificate>,
+        privateKey: PrivateKey,
+        keystorePassword: String = AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD,
+    ): KeyStore {
+        return loadKeyStore(certId, certificates, privateKey, keystorePassword.toCharArray())
     }
 
     fun loadKeyStore(
         certId: String,
-        certPem: String,
+        certificates: Array<X509Certificate>,
         privateKey: PrivateKey,
         keystorePassword: CharArray,
     ): KeyStore {
         return try {
-            val certs = loadX509(certPem)
             KeyStore.getInstance(KeyStore.getDefaultType()).also {
                 it.load(null)
-                it.setCertificateEntry(certId, certs[0])
-                it.setKeyEntry(certId, privateKey, keystorePassword, certs)
+                it.setCertificateEntry(certId, certificates[0])
+                it.setKeyEntry(certId, privateKey, keystorePassword, certificates)
             }
         } catch (e: IOException) {
             throw AmazonClientException("Error retrieving certificate and key.", e)

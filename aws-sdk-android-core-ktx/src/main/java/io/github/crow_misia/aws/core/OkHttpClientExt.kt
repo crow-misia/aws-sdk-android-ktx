@@ -27,30 +27,32 @@ import javax.net.ssl.X509TrustManager
 fun OkHttpClient.createNewClient(
     keyStore: KeyStore,
     password: String,
-    caPublicKeyProvider: () -> X509Certificate,
+    caCertificates: Array<X509Certificate>,
 ): OkHttpClient {
-    return createNewClient(keyStore, password.toCharArray(), caPublicKeyProvider)
+    return createNewClient(keyStore, password.toCharArray(), caCertificates)
 }
 
 fun OkHttpClient.createNewClient(
     keyStore: KeyStore,
     password: CharArray,
-    caPublicKeyProvider: () -> X509Certificate,
+    caCertificates: Array<X509Certificate>,
 ): OkHttpClient {
-    return newBuilder().also {
-        // client certificate
-        it.sslSocketFactory(keyStore, password, caPublicKeyProvider())
-    }.build()
+    // client certificate
+    return newBuilder()
+        .sslSocketFactory(keyStore, password, caCertificates)
+        .build()
 }
 
 private fun OkHttpClient.Builder.sslSocketFactory(
     keyStore: KeyStore,
     password: CharArray,
-    caPublicKey: X509Certificate,
-) {
+    caCertificates: Array<X509Certificate>,
+): OkHttpClient.Builder {
     val trustedStore = KeyStore.getInstance(KeyStore.getDefaultType())
     trustedStore.load(null)
-    trustedStore.setCertificateEntry(caPublicKey.subjectX500Principal.name, caPublicKey)
+    caCertificates.forEach {
+        trustedStore.setCertificateEntry(it.subjectX500Principal.name, it)
+    }
 
     val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
     trustManagerFactory.init(trustedStore)
@@ -67,4 +69,6 @@ private fun OkHttpClient.Builder.sslSocketFactory(
     val sc = SSLContext.getInstance("TLS")
     sc.init(keyManagerFactory.keyManagers, arrayOf(trustManager), null)
     sslSocketFactory(sc.socketFactory, trustManager)
+
+    return this
 }
