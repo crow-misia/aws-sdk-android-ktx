@@ -20,10 +20,10 @@ version = Maven.version
 
 android {
     namespace = "io.github.crow_misia.aws.appsync"
-    compileSdk = 33
+    compileSdk = Build.compileSdk
 
     defaultConfig {
-        minSdk = 23
+        minSdk = Build.minSdk
         consumerProguardFiles("consumer-proguard-rules.pro")
     }
 
@@ -34,8 +34,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = Build.sourceCompatibility
+        targetCompatibility = Build.targetCompatibility
     }
 
     publishing {
@@ -50,8 +50,8 @@ tasks.withType<KotlinJvmCompile>().all {
         freeCompilerArgs.addAll("-Xjsr305=strict")
         javaParameters.set(true)
         jvmTarget.set(JvmTarget.JVM_11)
-        apiVersion.set(KotlinVersion.KOTLIN_1_8)
-        languageVersion.set(KotlinVersion.KOTLIN_1_8)
+        apiVersion.set(KotlinVersion.fromVersion(Build.kotlinApiVersion))
+        languageVersion.set(KotlinVersion.fromVersion(Build.kotlinLanguageVersion))
     }
 }
 
@@ -117,11 +117,11 @@ afterEvaluate {
 
                     developers {
                         developer {
-                            id.set("crow-misia")
-                            name.set("Zenichi Amano")
-                            email.set("crow.misia@gmail.com")
-                            roles.set(listOf("Project-Administrator", "Developer"))
-                            timezone.set("+9")
+                            id.set(Maven.developerId)
+                            name.set(Maven.developerName)
+                            email.set(Maven.developerEmail)
+                            roles.set(Maven.developerRoles)
+                            timezone.set(Maven.developerTimezone)
                         }
                     }
 

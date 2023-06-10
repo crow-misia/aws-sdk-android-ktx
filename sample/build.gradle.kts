@@ -10,12 +10,12 @@ plugins {
 
 android {
     namespace = "com.example.sample"
-    compileSdk = 33
+    compileSdk = Build.compileSdk
 
     defaultConfig {
         applicationId = "com.example.sample"
-        minSdk = 23
-        targetSdk = 33
+        minSdk = Build.minSdk
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
@@ -38,8 +38,8 @@ android {
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = Build.sourceCompatibility
+        targetCompatibility = Build.targetCompatibility
     }
 
     buildFeatures {
@@ -62,8 +62,8 @@ tasks.withType<KotlinJvmCompile>().all {
         freeCompilerArgs.addAll("-Xjsr305=strict")
         javaParameters.set(true)
         jvmTarget.set(JvmTarget.JVM_11)
-        apiVersion.set(KotlinVersion.KOTLIN_1_8)
-        languageVersion.set(KotlinVersion.KOTLIN_1_8)
+        apiVersion.set(KotlinVersion.fromVersion(Build.kotlinApiVersion))
+        languageVersion.set(KotlinVersion.fromVersion(Build.kotlinLanguageVersion))
     }
 }
 
