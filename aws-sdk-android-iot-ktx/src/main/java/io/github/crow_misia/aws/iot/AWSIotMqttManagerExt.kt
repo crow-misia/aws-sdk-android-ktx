@@ -22,7 +22,10 @@ import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.mobileconnectors.iot.*
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -30,7 +33,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.security.KeyStore
@@ -39,24 +44,21 @@ private fun ProducerScope<AWSIotMqttClientStatus>.createConnectCallback(
     isAutoReconnect: Boolean,
     resetReconnect: () -> Unit,
 ): AWSIotMqttClientStatusCallback {
-    return if (isAutoReconnect) {
-        AWSIotMqttClientStatusCallback { status, _ ->
-            trySend(status)
-            // Give up reconnect.
-            when (status) {
-                AWSIotMqttClientStatus.ConnectionLost -> close()
-                AWSIotMqttClientStatus.Connected -> resetReconnect()
-                else -> {
-                    // ignore.
+    return AWSIotMqttClientStatusCallback { status, cause ->
+        launch {
+            if (isAutoReconnect) {
+                send(status)
+                // Give up reconnect.
+                when (status) {
+                    AWSIotMqttClientStatus.ConnectionLost -> close()
+                    AWSIotMqttClientStatus.Connected -> resetReconnect()
+                    else -> {
+                        // ignore.
+                    }
                 }
-            }
-        }
-    } else {
-        AWSIotMqttClientStatusCallback { status, throwable ->
-            throwable?.also {
-                close(it)
-            } ?: run {
-                trySend(status)
+            } else {
+                send(status)
+                cause?.also { close(it) }
             }
         }
     }
@@ -78,18 +80,22 @@ private inline fun ProducerScope<*>.createSubscriptionStatusCallback(
 }
 
 
-private inline fun <T> ProducerScope<T>.createMessageDeliveryCallback(
-    crossinline sendElement: () -> T,
-) = AWSIotMqttMessageDeliveryCallback { status, userData ->
-    when (status) {
-        AWSIotMqttMessageDeliveryCallback.MessageDeliveryStatus.Success -> {
-            trySend(sendElement())
-            close()
+private fun ProducerScope<Unit>.createMessageDeliveryCallback(
+    defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
+): AWSIotMqttMessageDeliveryCallback {
+    return AWSIotMqttMessageDeliveryCallback { status, userData ->
+        when (status) {
+            AWSIotMqttMessageDeliveryCallback.MessageDeliveryStatus.Success -> {
+                launch(defaultDispatcher) {
+                    send(Unit)
+                    close()
+                }
+            }
+            AWSIotMqttMessageDeliveryCallback.MessageDeliveryStatus.Fail -> {
+                close(AWSIoTMqttDeliveryException("Error message delivery.", userData))
+            }
+            else -> close(AWSIoTMqttDeliveryException("Invalid status $status", userData))
         }
-        AWSIotMqttMessageDeliveryCallback.MessageDeliveryStatus.Fail -> {
-            close(AWSIoTMqttDeliveryException("Error message delivery.", userData))
-        }
-        else -> close(AWSIoTMqttDeliveryException("Invalid status $status", userData))
     }
 }
 
@@ -155,8 +161,10 @@ fun AWSIotMqttManager.subscribe(
     qos: AWSIotMqttQos,
     onDelivered: suspend () -> Unit = { },
 ): Flow<SubscribeData> = callbackFlow {
-    subscribeToTopic(topic, qos, createSubscriptionStatusCallback { onDelivered() }) { topic, data ->
-        trySend(SubscribeData(topic, data))
+    subscribeToTopic(topic, qos, createSubscriptionStatusCallback(onSuccess = onDelivered)) { topic, data ->
+        launch {
+            send(SubscribeData(topic, data))
+        }
     }
     awaitClose {
         @Suppress("SwallowedException")
@@ -175,7 +183,7 @@ suspend fun AWSIotMqttManager.publish(
     userData: Any? = null,
     isRetained: Boolean = false,
 ) = callbackFlow {
-    publishString(str, topic, qos, createMessageDeliveryCallback { }, userData, isRetained)
+    publishString(str, topic, qos, createMessageDeliveryCallback(), userData, isRetained)
     awaitClose()
 }.first()
 
@@ -186,7 +194,7 @@ suspend fun AWSIotMqttManager.publish(
     userData: Any? = null,
     isRetained: Boolean = false,
 ) = callbackFlow {
-    publishData(data, topic, qos, createMessageDeliveryCallback { }, userData, isRetained)
+    publishData(data, topic, qos, createMessageDeliveryCallback(), userData, isRetained)
     awaitClose()
 }.first()
 
@@ -208,34 +216,35 @@ suspend fun AWSIotMqttManager.publishWithReply(
     val acceptedTopic = "$topic/accepted"
     val rejectedTopic = "$topic/rejected"
 
+    val scope = CoroutineScope(Job())
+
     // for wait subscribe accepted/rejected topic
     val publisher = MutableSharedFlow<Unit>()
+    publisher
+        .drop(1)
+        .onEach {
+            publish(str, topic, qos, userData, isRetained)
+        }
+        .launchIn(scope)
+
     val acceptedFlow = subscribe(acceptedTopic, qos) { publisher.emit(Unit) }
     val rejectedFlow = subscribe(rejectedTopic, qos) { publisher.emit(Unit) }
-
-    val jobPublish = launch {
-        publisher
-            .drop(1)
-            .collect {
-                publish(str, topic, qos, userData, isRetained)
-            }
-    }
-    val jobResponse = launch {
-        val res = merge(acceptedFlow, rejectedFlow).first()
-        when (res.topic) {
-            acceptedTopic -> {
-                trySend(res)
-                close()
-            }
-            rejectedTopic -> {
-                close(AWSIoTMqttPublishWithReplyException("Rejected", res.topic, res.data, userData))
+    merge(acceptedFlow, rejectedFlow)
+        .onEach {
+            when (it.topic) {
+                acceptedTopic -> {
+                    send(it)
+                    close()
+                }
+                rejectedTopic -> {
+                    close(AWSIoTMqttPublishWithReplyException("Rejected", it.topic, it.data, userData))
+                }
             }
         }
-    }
+        .launchIn(scope)
 
     awaitClose {
-        jobResponse.cancel()
-        jobPublish.cancel()
+        scope.cancel()
     }
 }.first()
 
