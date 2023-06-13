@@ -15,14 +15,5 @@
  */
 package io.github.crow_misia.aws.iot
 
-/**
- * Provisioning Manager.
- */
-interface ProvisioningManager {
-    /**
-     * doing provisioning.
-     *
-     * @param parameters Provisioning Parameters
-     */
-    suspend fun provisioning(parameters: Map<String, String>): AWSIoTProvisioningResponse
-}
+@JvmField
+internal val EMPTY_BYTE_ARRAY = byteArrayOf()

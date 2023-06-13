@@ -19,7 +19,7 @@ import io.github.crow_misia.aws.iot.keystore.BasicKeyStoreProvisioningManager
 import io.github.crow_misia.aws.iot.provisioning.CreateCertificateFromCSRFleetProvisioner
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import org.json.JSONObject
+import kotlinx.serialization.Serializable
 import timber.log.Timber
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -79,9 +79,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         val serialNumber = UUID.randomUUID().toString()
         viewModelScope.launch(context = Dispatchers.IO) {
             try {
-                provisioningManager.provisioning(JSONObject().apply {
-                    put("SerialNumber", serialNumber)
-                }).apply {
+                provisioningManager.provisioning(mapOf(
+                    "SerialNumber" to serialNumber,
+                )).apply {
                     saveCertificateAndPrivateKey(
                         keystorePath = keystorePathStr,
                         keystoreName = keystoreName,
@@ -132,7 +132,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
                 // waiting until connected.
                 .filter { it == AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus.Connected }
                 .flatMapConcat {
-                    shadowClient.subscribeDocuments()
+                    shadowClient.subscribeDocuments<SampleDeviceData>()
                 }
                 .onEach { Timber.i("Received shadow data = %s", it) }
                 .catch { e -> Timber.e(e, "Error subscribe shadow.") }
@@ -145,7 +145,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
             val shadowClient = shadowClient ?: return@launch
 
             try {
-                val data = shadowClient.get()
+                val data = shadowClient.get<SampleDeviceData>()
                 Timber.i("Get shadow data = %s", data)
             } catch (e: Throwable) {
                 Timber.e(e, "Error get shadow.")
@@ -161,9 +161,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
 
             try {
                 val count = counter.incrementAndGet()
-                val data = shadowClient.update(JSONObject().apply {
-                    put("count", count)
-                })
+                val data = shadowClient.update(SampleDeviceData(count))
                 Timber.i("Updated shadow data = %s", data)
             } catch (e: Throwable) {
                 Timber.e(e, "Error update shadow.")
@@ -183,4 +181,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
             }
         }
     }
+
+    @Serializable
+    data class SampleDeviceData(
+        val count: Int?,
+    )
 }

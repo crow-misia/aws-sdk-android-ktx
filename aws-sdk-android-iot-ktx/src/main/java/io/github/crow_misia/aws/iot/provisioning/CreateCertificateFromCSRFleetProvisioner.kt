@@ -20,17 +20,28 @@ import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttQos
 import io.github.crow_misia.aws.iot.AWSIoTFleetProvisioner
+import io.github.crow_misia.aws.iot.AWSIoTMqttPublishWithReplyException
+import io.github.crow_misia.aws.iot.AWSIoTProvisioningException
 import io.github.crow_misia.aws.iot.AWSIoTProvisioningResponse
+import io.github.crow_misia.aws.iot.model.CreateCertificateFromCsrRequest
+import io.github.crow_misia.aws.iot.model.CreateCertificateFromCsrResponse
+import io.github.crow_misia.aws.iot.model.ProvisioningErrorResponse
+import io.github.crow_misia.aws.iot.model.RegisterThingRequest
+import io.github.crow_misia.aws.iot.model.RegisterThingResponse
 import io.github.crow_misia.aws.iot.publishWithReply
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.decodeFromByteArray
+import kotlinx.serialization.encodeToByteArray
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder
 import org.bouncycastle.util.io.pem.PemObject
 import org.bouncycastle.util.io.pem.PemWriter
-import org.json.JSONObject
 import java.io.StringWriter
 import java.security.KeyPairGenerator
 import java.security.PrivateKey
@@ -42,6 +53,7 @@ import javax.security.auth.x500.X500Principal
 /**
  * Create Certificate from CSR Fleet Provisioner.
  */
+@OptIn(ExperimentalSerializationApi::class)
 @Suppress("unused")
 class CreateCertificateFromCSRFleetProvisioner @JvmOverloads constructor(
     private val mqttManager: AWSIotMqttManager,
@@ -50,7 +62,7 @@ class CreateCertificateFromCSRFleetProvisioner @JvmOverloads constructor(
 ) : AWSIoTFleetProvisioner {
     override suspend fun provisioningThing(
         templateName: String,
-        parameters: JSONObject,
+        parameters: Map<String, String>,
         connect: suspend AWSIotMqttManager.() -> Flow<AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus>
     ): AWSIoTProvisioningResponse {
         val certificateRequest = createCSR()
@@ -59,34 +71,37 @@ class CreateCertificateFromCSRFleetProvisioner @JvmOverloads constructor(
             // Wait until connected.
             .filter { it == AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus.Connected }
             .map {
-                val requestCsr = JSONObject().apply {
-                    put("certificateSigningRequest", certificateRequest.csr)
-                }
-
-                val response = mqttManager.publishWithReply(
-                    data = requestCsr,
-                    topic = "\$aws/certificates/create-from-csr/json",
+                val csrRequest = Cbor.encodeToByteArray(CreateCertificateFromCsrRequest(certificateRequest.csr))
+                val csrResponse = mqttManager.publishWithReply(
+                    data = csrRequest,
+                    topic = "\$aws/certificates/create-from-csr/cbor",
                     qos = AWSIotMqttQos.QOS1,
-                ).let { (_, data) -> JSONObject(String(data)) }
+                ).let { Cbor.decodeFromByteArray<CreateCertificateFromCsrResponse>(it.data) }
 
-                val certificateOwnershipToken = response.getString("certificateOwnershipToken")
-
-                val json = mqttManager.publishWithReply(
-                    data = JSONObject().apply {
-                        put("certificateOwnershipToken", certificateOwnershipToken)
-                        put("parameters", parameters)
-                    },
-                    topic = "\$aws/provisioning-templates/$templateName/provision/json",
-                    qos = AWSIotMqttQos.QOS1
-                ).let { (_, data) -> JSONObject(String(data)) }
+                val registerRequest = Cbor.encodeToByteArray(RegisterThingRequest(
+                    certificateOwnershipToken = csrResponse.certificateOwnershipToken,
+                    parameters = parameters,
+                ))
+                val registerResponse = mqttManager.publishWithReply(
+                    data = registerRequest,
+                    topic = "\$aws/provisioning-templates/$templateName/provision/cbor",
+                    qos = AWSIotMqttQos.QOS1,
+                ).let { Cbor.decodeFromByteArray<RegisterThingResponse>(it.data) }
 
                 AWSIoTProvisioningResponse(
-                    deviceConfiguration = json.getJSONObject("deviceConfiguration"),
-                    thingName = json.getString("thingName"),
-                    certificateId = response.getString("certificateId"),
-                    certificatePem = response.getString("certificatePem"),
+                    deviceConfiguration = registerResponse.deviceConfiguration,
+                    thingName = registerResponse.thingName,
+                    certificateId = csrResponse.certificateId,
+                    certificatePem = csrResponse.certificatePem,
                     privateKey = certificateRequest.privateKey,
                 )
+            }
+            .catch {
+                if (it is AWSIoTMqttPublishWithReplyException) {
+                    val errorResponse = Cbor.decodeFromByteArray<ProvisioningErrorResponse>(it.response)
+                    throw AWSIoTProvisioningException(errorResponse)
+                }
+                throw it
             }
             .first()
     }

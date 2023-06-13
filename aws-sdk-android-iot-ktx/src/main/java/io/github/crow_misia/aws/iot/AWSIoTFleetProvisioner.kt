@@ -21,7 +21,6 @@ import com.amazonaws.mobileconnectors.iot.AWSIotKeystoreHelper
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import kotlinx.coroutines.flow.Flow
-import org.json.JSONObject
 import java.security.KeyStore
 import java.security.PrivateKey
 
@@ -30,19 +29,7 @@ interface AWSIoTFleetProvisioner {
     suspend fun provisioningThingUsingALPN(
         keyStore: KeyStore,
         templateName: String,
-        parameters: Map<String, String>,
-    ): AWSIoTProvisioningResponse {
-        return provisioningThingUsingALPN(
-            keyStore = keyStore,
-            templateName = templateName,
-            parameters = JSONObject(parameters),
-        )
-    }
-
-    suspend fun provisioningThingUsingALPN(
-        keyStore: KeyStore,
-        templateName: String,
-        parameters: JSONObject,
+        parameters: Map<String, String> = emptyMap(),
     ): AWSIoTProvisioningResponse {
         return provisioningThing(
             templateName = templateName,
@@ -57,23 +44,7 @@ interface AWSIoTFleetProvisioner {
         proxyHost: String,
         proxyPort: Int,
         templateName: String,
-        parameters: Map<String, String>,
-    ): AWSIoTProvisioningResponse {
-        return provisioningThingWithProxy(
-            keyStore = keyStore,
-            proxyHost = proxyHost,
-            proxyPort = proxyPort,
-            templateName = templateName,
-            parameters = JSONObject(parameters)
-        )
-    }
-
-    suspend fun provisioningThingWithProxy(
-        keyStore: KeyStore,
-        proxyHost: String,
-        proxyPort: Int,
-        templateName: String,
-        parameters: JSONObject,
+        parameters: Map<String, String> = emptyMap(),
     ): AWSIoTProvisioningResponse {
         return provisioningThing(
             templateName = templateName,
@@ -86,19 +57,7 @@ interface AWSIoTFleetProvisioner {
     suspend fun provisioningThing(
         keyStore: KeyStore,
         templateName: String,
-        parameters: Map<String, String>,
-    ): AWSIoTProvisioningResponse {
-        return provisioningThing(
-            keyStore = keyStore,
-            templateName = templateName,
-            parameters = JSONObject(parameters),
-        )
-    }
-
-    suspend fun provisioningThing(
-        keyStore: KeyStore,
-        templateName: String,
-        parameters: JSONObject,
+        parameters: Map<String, String> = emptyMap(),
     ): AWSIoTProvisioningResponse {
         return provisioningThing(
             templateName = templateName,
@@ -111,19 +70,7 @@ interface AWSIoTFleetProvisioner {
     suspend fun provisioningThing(
         credentialsProvider: AWSCredentialsProvider,
         templateName: String,
-        parameters: Map<String, String>,
-    ): AWSIoTProvisioningResponse {
-        return provisioningThing(
-            credentialsProvider = credentialsProvider,
-            templateName = templateName,
-            parameters = JSONObject(parameters),
-        )
-    }
-
-    suspend fun provisioningThing(
-        credentialsProvider: AWSCredentialsProvider,
-        templateName: String,
-        parameters: JSONObject,
+        parameters: Map<String, String> = emptyMap(),
     ): AWSIoTProvisioningResponse {
         return provisioningThing(
             templateName = templateName,
@@ -139,25 +86,7 @@ interface AWSIoTFleetProvisioner {
         tokenSignature: String,
         customAuthorizer: String,
         templateName: String,
-        parameters: Map<String, String>,
-    ): AWSIoTProvisioningResponse {
-        return provisioningThing(
-            tokenKeyName = tokenKeyName,
-            token = token,
-            tokenSignature = tokenSignature,
-            customAuthorizer = customAuthorizer,
-            templateName = templateName,
-            parameters = JSONObject(parameters),
-        )
-    }
-
-    suspend fun provisioningThing(
-        tokenKeyName: String,
-        token: String,
-        tokenSignature: String,
-        customAuthorizer: String,
-        templateName: String,
-        parameters: JSONObject,
+        parameters: Map<String, String> = emptyMap(),
     ): AWSIoTProvisioningResponse {
         return provisioningThing(
             templateName = templateName,
@@ -176,21 +105,7 @@ interface AWSIoTFleetProvisioner {
         username: String,
         password: String,
         templateName: String,
-        parameters: Map<String, String>,
-    ): AWSIoTProvisioningResponse {
-        return provisioningThing(
-            username = username,
-            password = password,
-            templateName = templateName,
-            parameters = JSONObject(parameters),
-        )
-    }
-
-    suspend fun provisioningThing(
-        username: String,
-        password: String,
-        templateName: String,
-        parameters: JSONObject,
+        parameters: Map<String, String> = emptyMap(),
     ): AWSIoTProvisioningResponse {
         return provisioningThing(
             templateName = templateName,
@@ -210,7 +125,7 @@ interface AWSIoTFleetProvisioner {
      */
     suspend fun provisioningThing(
         templateName: String,
-        parameters: JSONObject,
+        parameters: Map<String, String> = emptyMap(),
         connect: suspend AWSIotMqttManager.() -> Flow<AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus>,
     ): AWSIoTProvisioningResponse
 }
@@ -219,14 +134,14 @@ interface AWSIoTFleetProvisioner {
  * Things Provisioning Response.
  */
 data class AWSIoTProvisioningResponse(
-    val deviceConfiguration: JSONObject,
+    val deviceConfiguration: Map<String, String>,
     val thingName: String,
     val certificateId: String,
     val certificatePem: String,
     val privateKey: PrivateKey,
 ) {
     constructor(
-        deviceConfiguration: JSONObject,
+        deviceConfiguration: Map<String, String>,
         thingName: String,
         certificateId: String,
         certificatePem: String,

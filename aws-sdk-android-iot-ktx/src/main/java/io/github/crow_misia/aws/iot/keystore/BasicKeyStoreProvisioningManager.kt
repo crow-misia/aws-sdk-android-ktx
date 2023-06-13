@@ -23,7 +23,6 @@ import io.github.crow_misia.aws.iot.AWSIotMqttManagerProvider
 import io.github.crow_misia.aws.iot.AbstractProvisioningManager
 import io.github.crow_misia.aws.iot.ClientIdProvider
 import io.github.crow_misia.aws.iot.clientid.UUIDClientIDProvider
-import org.json.JSONObject
 
 open class BasicKeyStoreProvisioningManager(
     mqttManagerProvider: AWSIotMqttManagerProvider,
@@ -34,7 +33,7 @@ open class BasicKeyStoreProvisioningManager(
 ) : AbstractProvisioningManager(mqttManagerProvider, provisionerProvider, clientIdProvider) {
     override suspend fun provisioningThing(
         provisioner: AWSIoTFleetProvisioner,
-        parameters: JSONObject
+        parameters: Map<String, String>
     ): AWSIoTProvisioningResponse {
         val keyStore = keyStoreProvider.provide()
         return provisioner.provisioningThing(keyStore, templateName, parameters)

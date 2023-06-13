@@ -19,54 +19,70 @@ import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttQos
 import io.github.crow_misia.aws.iot.AWSIoTFleetProvisioner
+import io.github.crow_misia.aws.iot.AWSIoTMqttPublishWithReplyException
+import io.github.crow_misia.aws.iot.AWSIoTProvisioningException
 import io.github.crow_misia.aws.iot.AWSIoTProvisioningResponse
+import io.github.crow_misia.aws.iot.model.CreateKeysAndCertificateResponse
+import io.github.crow_misia.aws.iot.model.ProvisioningErrorResponse
+import io.github.crow_misia.aws.iot.model.RegisterThingRequest
+import io.github.crow_misia.aws.iot.model.RegisterThingResponse
 import io.github.crow_misia.aws.iot.publishWithReply
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import org.json.JSONObject
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.decodeFromByteArray
+import kotlinx.serialization.encodeToByteArray
 
 /**
  * Create Private Keys and Certificate Fleet Provisioner.
  */
+@OptIn(ExperimentalSerializationApi::class)
 @Suppress("unused")
 class CreateKeysAndCertificateFleetProvisioner(
     private val mqttManager: AWSIotMqttManager,
 ) : AWSIoTFleetProvisioner {
     override suspend fun provisioningThing(
         templateName: String,
-        parameters: JSONObject,
+        parameters: Map<String, String>,
         connect: suspend AWSIotMqttManager.() -> Flow<AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus>
     ): AWSIoTProvisioningResponse {
         return connect(mqttManager)
             // Wait until connected.
             .filter { it == AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus.Connected }
             .map {
-                val response = mqttManager.publishWithReply(
-                    str = "{}",
-                    topic = "\$aws/certificates/create/json",
+                val keysResponse = mqttManager.publishWithReply(
+                    topic = "\$aws/certificates/create/cbor",
                     qos = AWSIotMqttQos.QOS1,
-                ).let { (_, data) -> JSONObject(String(data)) }
+                ).let { Cbor.decodeFromByteArray<CreateKeysAndCertificateResponse>(it.data) }
 
-                val certificateOwnershipToken = response.getString("certificateOwnershipToken")
-
-                val json = mqttManager.publishWithReply(
-                    data = JSONObject().apply {
-                        put("certificateOwnershipToken", certificateOwnershipToken)
-                        put("parameters", parameters)
-                    },
-                    topic = "\$aws/provisioning-templates/$templateName/provision/json",
-                    qos = AWSIotMqttQos.QOS1
-                ).let { (_, data) -> JSONObject(String(data)) }
+                val registerRequest = Cbor.encodeToByteArray(RegisterThingRequest(
+                    certificateOwnershipToken = keysResponse.certificateOwnershipToken,
+                    parameters = parameters,
+                ))
+                val registerResponse = mqttManager.publishWithReply(
+                    data = registerRequest,
+                    topic = "\$aws/provisioning-templates/$templateName/provision/cbor",
+                    qos = AWSIotMqttQos.QOS1,
+                ).let { Cbor.decodeFromByteArray<RegisterThingResponse>(it.data) }
 
                 AWSIoTProvisioningResponse(
-                    deviceConfiguration = json.getJSONObject("deviceConfiguration"),
-                    thingName = json.getString("thingName"),
-                    certificateId = response.getString("certificateId"),
-                    certificatePem = response.getString("certificatePem"),
-                    privateKeyPem = response.getString("privateKey"),
+                    deviceConfiguration = registerResponse.deviceConfiguration,
+                    thingName = registerResponse.thingName,
+                    certificateId = keysResponse.certificateId,
+                    certificatePem = keysResponse.certificatePem,
+                    privateKeyPem = keysResponse.privateKey,
                 )
+            }
+            .catch {
+                if (it is AWSIoTMqttPublishWithReplyException) {
+                    val errorResponse = Cbor.decodeFromByteArray<ProvisioningErrorResponse>(it.response)
+                    throw AWSIoTProvisioningException(errorResponse)
+                }
+                throw it
             }
             .first()
     }

@@ -34,10 +34,8 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 import java.security.KeyStore
 
 private fun ProducerScope<AWSIotMqttClientStatus>.createConnectCallback(
@@ -177,18 +175,7 @@ fun AWSIotMqttManager.subscribe(
 }
 
 suspend fun AWSIotMqttManager.publish(
-    str: String,
-    topic: String,
-    qos: AWSIotMqttQos,
-    userData: Any? = null,
-    isRetained: Boolean = false,
-) = callbackFlow {
-    publishString(str, topic, qos, createMessageDeliveryCallback(), userData, isRetained)
-    awaitClose()
-}.first()
-
-suspend fun AWSIotMqttManager.publish(
-    data: ByteArray,
+    data: ByteArray = EMPTY_BYTE_ARRAY,
     topic: String,
     qos: AWSIotMqttQos,
     userData: Any? = null,
@@ -198,16 +185,8 @@ suspend fun AWSIotMqttManager.publish(
     awaitClose()
 }.first()
 
-suspend fun AWSIotMqttManager.publish(
-    data: JSONObject,
-    topic: String,
-    qos: AWSIotMqttQos,
-    userData: Any? = null,
-    isRetained: Boolean = false,
-) = publish(data.toString(), topic, qos, userData, isRetained)
-
 suspend fun AWSIotMqttManager.publishWithReply(
-    str: String,
+    data: ByteArray = EMPTY_BYTE_ARRAY,
     topic: String,
     qos: AWSIotMqttQos,
     userData: Any? = null,
@@ -223,23 +202,21 @@ suspend fun AWSIotMqttManager.publishWithReply(
     publisher
         .drop(1)
         .onEach {
-            publish(str, topic, qos, userData, isRetained)
+            publish(data, topic, qos, userData, isRetained)
         }
         .launchIn(scope)
 
-    val acceptedFlow = subscribe(acceptedTopic, qos) { publisher.emit(Unit) }
-    val rejectedFlow = subscribe(rejectedTopic, qos) { publisher.emit(Unit) }
-    merge(acceptedFlow, rejectedFlow)
+    // subscribe accepted topic
+    subscribe(topic = acceptedTopic, qos = qos) { publisher.emit(Unit) }
         .onEach {
-            when (it.topic) {
-                acceptedTopic -> {
-                    send(it)
-                    close()
-                }
-                rejectedTopic -> {
-                    close(AWSIoTMqttPublishWithReplyException("Rejected", it.topic, it.data, userData))
-                }
-            }
+            send(it)
+            close()
+        }
+        .launchIn(scope)
+    // subscribe rejected topic
+    subscribe(topic = rejectedTopic, qos = qos) { publisher.emit(Unit) }
+        .onEach {
+            close(AWSIoTMqttPublishWithReplyException("Rejected", it.topic, it.data, userData))
         }
         .launchIn(scope)
 
@@ -247,11 +224,3 @@ suspend fun AWSIotMqttManager.publishWithReply(
         scope.cancel()
     }
 }.first()
-
-suspend fun AWSIotMqttManager.publishWithReply(
-    data: JSONObject,
-    topic: String,
-    qos: AWSIotMqttQos,
-    userData: Any? = null,
-    isRetained: Boolean = false,
-) = publishWithReply(data.toString(), topic, qos, userData, isRetained)

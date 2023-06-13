@@ -11,6 +11,7 @@ plugins {
     id("signing")
     id("maven-publish")
     kotlin("android")
+    kotlin("plugin.serialization")
 }
 
 val mavenName = "aws-sdk-android-iot-ktx"
@@ -72,6 +73,10 @@ dependencies {
 
     // okhttp3
     implementation(Square.okHttp3)
+
+    // serialization
+    implementation(KotlinX.serialization.json)
+    implementation(KotlinX.serialization.cbor)
 }
 
 val customDokkaTask by tasks.creating(DokkaTask::class) {

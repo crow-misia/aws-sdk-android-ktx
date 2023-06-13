@@ -16,7 +16,6 @@
 package io.github.crow_misia.aws.iot
 
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
-import org.json.JSONObject
 
 /**
  * Abstract Provisioning Manager.
@@ -37,7 +36,7 @@ abstract class AbstractProvisioningManager(
      * @param parameters Provisioning Parameters
      * @return Provisioning Response
      */
-    protected abstract suspend fun provisioningThing(provisioner: AWSIoTFleetProvisioner, parameters: JSONObject): AWSIoTProvisioningResponse
+    protected abstract suspend fun provisioningThing(provisioner: AWSIoTFleetProvisioner, parameters: Map<String, String>): AWSIoTProvisioningResponse
 
     /**
      * Generate Parameters for Provisioning.
@@ -45,7 +44,7 @@ abstract class AbstractProvisioningManager(
      * @param base Base Parameters
      * @return Parameters for Provisioning
      */
-    protected open fun generateParameters(base: JSONObject): JSONObject = base
+    protected open fun generateParameters(base: Map<String, String>): Map<String, String> = base
 
     /**
      * create MQTT Manager.
@@ -55,7 +54,7 @@ abstract class AbstractProvisioningManager(
         return mqttManagerProvider.provide(clientId)
     }
 
-    override suspend fun provisioning(parameters: JSONObject): AWSIoTProvisioningResponse {
+    override suspend fun provisioning(parameters: Map<String, String>): AWSIoTProvisioningResponse {
         val manager = createMqttManager()
         val provisioner = provisionerProvider.provide(manager)
         return provisioningThing(provisioner, generateParameters(parameters))

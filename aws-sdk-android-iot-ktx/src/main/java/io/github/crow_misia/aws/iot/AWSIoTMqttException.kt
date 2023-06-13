@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("unused", "CanBeParameter", "MemberVisibilityCanBePrivate")
+
 package io.github.crow_misia.aws.iot
 
 import com.amazonaws.AmazonClientException
+import io.github.crow_misia.aws.iot.model.DeviceShadowErrorResponse
+import io.github.crow_misia.aws.iot.model.ProvisioningErrorResponse
 
-@Suppress("unused")
 sealed class AWSIoTMqttException : AmazonClientException {
     constructor(message: String) : super(message)
     constructor(cause: Throwable) : super(cause)
@@ -31,7 +34,15 @@ class AWSIoTMqttDeliveryException(
 
 class AWSIoTMqttPublishWithReplyException(
     message: String,
-    topic: String,
-    response: ByteArray,
+    val topic: String,
+    val response: ByteArray,
     val userData: Any?,
-) : AWSIoTMqttException("$message:\ntopic:$topic\nResponse:${String(response)}")
+) : AWSIoTMqttException(message)
+
+class AWSIoTProvisioningException(
+    val response: ProvisioningErrorResponse,
+) : AWSIoTMqttException(response.errorMessage)
+
+class AWSIotDeviceShadowException(
+    val response: DeviceShadowErrorResponse,
+) : AWSIoTMqttException(response.message)

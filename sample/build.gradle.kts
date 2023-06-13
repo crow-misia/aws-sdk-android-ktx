@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 plugins {
     id("com.android.application")
     kotlin("android")
+    kotlin("plugin.serialization")
 }
 
 android {
@@ -75,6 +76,7 @@ dependencies {
 
     implementation(Kotlin.stdlib)
     implementation(KotlinX.coroutines.android)
+    implementation(KotlinX.serialization.json)
 
     implementation(AndroidX.activity.compose)
     implementation(AndroidX.appCompat)
