@@ -1,6 +1,6 @@
 object Maven {
     const val groupId = "io.github.crow-misia.aws-sdk-android-ktx"
-    const val version = "0.21.0"
+    const val version = "0.21.1"
     const val desc = "AWS SDK for Android with Kotlin"
     const val siteUrl = "https://github.com/crow-misia/aws-sdk-android-ktx"
     const val gitUrl = "https://github.com/crow-misia/aws-sdk-android-ktx.git"
@@ -12,5 +12,4 @@ object Maven {
     const val developerEmail = "crow.misia@gmail.com"
     val developerRoles = listOf("Project-Administrator", "Developer")
     const val developerTimezone = "+9"
-
 }
