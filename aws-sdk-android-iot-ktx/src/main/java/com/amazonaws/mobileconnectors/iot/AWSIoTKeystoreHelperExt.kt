@@ -126,8 +126,8 @@ object AWSIoTKeystoreHelperExt {
             val key = keyStore.getKey(certId, keyStorePassword)
             KeyStore.getInstance(KeyStore.getDefaultType()).also {
                 it.load(null)
-                it.setCertificateEntry("cert-alias", certs[0])
-                it.setKeyEntry("key-alias", key, AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD.toCharArray(), certs)
+                it.setCertificateEntry(certId, certs[0])
+                it.setKeyEntry(certId, key, AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD.toCharArray(), certs)
             }
         } catch (e: GeneralSecurityException) {
             throw AWSIotCertificateException("Error retrieving certificate and key.", e)
