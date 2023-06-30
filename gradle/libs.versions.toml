@@ -2,11 +2,11 @@
 
 [versions]
 
-kotlin = "1.8.21"
+kotlin = "1.8.22"
 
 aws-android-sdk = "2.71.0"
 
-amplifyframework = "2.8.5"
+amplifyframework = "2.8.7"
 
 dokka = "1.8.20"
 
