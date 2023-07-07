@@ -30,7 +30,7 @@ object AssumeRoleWithCredentialsRequestMarshaller : Marshaller<Request<AssumeRol
 
         val request = DefaultRequest<AssumeRoleWithCredentialsRequest>(assumeRoleRequest, "AWSSecurityTokenService")
         request.httpMethod = HttpMethodName.GET
-        request.addHeader("x-amzn-iot-thingname", assumeRoleRequest.thingName)
+        request.addHeader("x-amzn-iot-thingname", assumeRoleRequest.thingName.name)
         request.resourcePath = "credentials"
 
         return request

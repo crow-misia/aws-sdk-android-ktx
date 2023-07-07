@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2021 Zenichi Amano.
+ * Copyright (C) 2023 Zenichi Amano.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.amazonaws.services.securitytoken.model
+package io.github.crow_misia.aws.iot
 
-import com.amazonaws.AmazonWebServiceRequest
-import java.io.Serializable
+import com.amazonaws.services.securitytoken.model.RoleAliasName
+import com.amazonaws.services.securitytoken.model.ThingName
 
-class AssumeRoleWithCredentialsRequest(
-    val thingName: ThingName,
-    val roleAliasName: RoleAliasName,
-) : AmazonWebServiceRequest(), Serializable {
-    companion object {
-        private const val serialVersionUID = 1L
-    }
+/**
+ * RoleAliasName Provider.
+ */
+fun interface RoleAliasNameProvider {
+    /**
+     * Provide RoleAliasName.
+     *
+     * @param thingName Thing Name
+     * @return RoleAliasName
+     */
+    fun provide(thingName: ThingName): RoleAliasName
 }

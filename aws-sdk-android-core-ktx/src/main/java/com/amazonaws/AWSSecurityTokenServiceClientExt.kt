@@ -16,7 +16,6 @@
 package com.amazonaws
 
 import com.amazonaws.http.DefaultErrorResponseHandler
-import com.amazonaws.http.ExecutionContext
 import com.amazonaws.http.JsonResponseHandler
 import com.amazonaws.services.securitytoken.AWSSecurityTokenService
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClient
@@ -25,8 +24,7 @@ import com.amazonaws.services.securitytoken.model.AssumeRoleWithCredentialsReque
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithCredentialsResult
 import com.amazonaws.services.securitytoken.model.transform.AssumeRoleWithCredentialsRequestMarshaller
 import com.amazonaws.services.securitytoken.model.transform.AssumeRoleWithCredentialsResponseJsonMarshaller
-import com.amazonaws.transform.JsonUnmarshallerContext
-import com.amazonaws.transform.Unmarshaller
+import java.net.URI
 
 fun AWSSecurityTokenService.assumeRoleWithCredentials(assumeRoleRequest: AssumeRoleWithCredentialsRequest): AssumeRoleWithCredentialsResult {
     require(this is AWSSecurityTokenServiceClient) {
@@ -36,27 +34,16 @@ fun AWSSecurityTokenService.assumeRoleWithCredentials(assumeRoleRequest: AssumeR
 }
 
 @Throws(AmazonServiceException::class, AmazonClientException::class)
-fun AWSSecurityTokenServiceClient.assumeRoleWithCredentials(assumeRoleRequest: AssumeRoleWithCredentialsRequest): AssumeRoleWithCredentialsResult {
+fun AWSSecurityTokenServiceClient.assumeRoleWithCredentials(
+    assumeRoleRequest: AssumeRoleWithCredentialsRequest,
+): AssumeRoleWithCredentialsResult {
     val executionContext = createExecutionContext(assumeRoleRequest)
 
     val request = AssumeRoleWithCredentialsRequestMarshaller.marshall(assumeRoleRequest)
-    val response = invoke(
-        request,
-        AssumeRoleWithCredentialsResponseJsonMarshaller,
-        executionContext,
-    )
-    return response.awsResponse
-}
-
-internal fun <X, Y : AmazonWebServiceRequest> AWSSecurityTokenServiceClient.invoke(
-    request: Request<Y>,
-    unmarshaller: Unmarshaller<X, JsonUnmarshallerContext>,
-    executionContext: ExecutionContext
-): Response<X> {
-    request.endpoint = endpoint
+    request.endpoint = request.endpoint.resolve("./role-aliases/${assumeRoleRequest.roleAliasName.name}/")
     request.timeOffset = timeOffset
 
-    val responseHandler = JsonResponseHandler(unmarshaller)
+    val responseHandler = JsonResponseHandler(AssumeRoleWithCredentialsResponseJsonMarshaller)
     val errorResponseHandler = DefaultErrorResponseHandler(getExceptionUnmarshallers())
-    return client.execute(request, responseHandler, errorResponseHandler, executionContext)
+    return client.execute(request, responseHandler, errorResponseHandler, executionContext).awsResponse
 }

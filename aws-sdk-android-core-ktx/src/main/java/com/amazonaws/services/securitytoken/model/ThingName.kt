@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2021 Zenichi Amano.
+ * Copyright (C) 2023 Zenichi Amano.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,8 @@
  */
 package com.amazonaws.services.securitytoken.model
 
-import com.amazonaws.AmazonWebServiceRequest
-import java.io.Serializable
-
-class AssumeRoleWithCredentialsRequest(
-    val thingName: ThingName,
-    val roleAliasName: RoleAliasName,
-) : AmazonWebServiceRequest(), Serializable {
-    companion object {
-        private const val serialVersionUID = 1L
-    }
-}
+/**
+ * Thing Name.
+ */
+@JvmInline
+value class ThingName(val name: String)

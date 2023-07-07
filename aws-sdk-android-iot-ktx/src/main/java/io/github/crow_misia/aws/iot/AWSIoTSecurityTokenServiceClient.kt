@@ -26,7 +26,6 @@ import io.github.crow_misia.aws.core.Okhttp3HttpClient
 import io.github.crow_misia.aws.core.createNewClient
 import okhttp3.OkHttpClient
 import java.security.KeyStore
-import java.security.cert.X509Certificate
 
 /**
  * STS Client.
@@ -34,7 +33,6 @@ import java.security.cert.X509Certificate
 @Suppress("unused")
 class AWSIoTSecurityTokenServiceClient @JvmOverloads constructor(
     stsEndpoint: String,
-    roleAliasName: String,
     awsCredentialsProvider: AWSCredentialsProvider = StaticCredentialsProvider(AnonymousAWSCredentials()),
     clientConfiguration: ClientConfiguration = ClientConfiguration(),
     httpClient: HttpClient,
@@ -42,12 +40,10 @@ class AWSIoTSecurityTokenServiceClient @JvmOverloads constructor(
     @JvmOverloads
     constructor(
         stsEndpoint: String,
-        roleAliasName: String,
         okHttpClient: OkHttpClient,
         clientConfiguration: ClientConfiguration = ClientConfiguration(),
     ): this(
         stsEndpoint = stsEndpoint,
-        roleAliasName = roleAliasName,
         clientConfiguration = clientConfiguration,
         httpClient = Okhttp3HttpClient(okHttpClient, clientConfiguration),
     )
@@ -56,17 +52,15 @@ class AWSIoTSecurityTokenServiceClient @JvmOverloads constructor(
     constructor(
         keyStore: KeyStore,
         password: String = AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD,
-        caCertificates: Array<X509Certificate>,
+        caCertificatesProvider: X509CertificatesProvider,
         stsEndpoint: String,
-        roleAliasName: String,
         okHttpClient: OkHttpClient,
         clientConfiguration: ClientConfiguration = ClientConfiguration(),
     ): this(
         keyStore = keyStore,
         password = password.toCharArray(),
-        caCertificates = caCertificates,
+        caCertificatesProvider = caCertificatesProvider,
         stsEndpoint = stsEndpoint,
-        roleAliasName = roleAliasName,
         okHttpClient = okHttpClient,
         clientConfiguration = clientConfiguration,
     )
@@ -75,23 +69,21 @@ class AWSIoTSecurityTokenServiceClient @JvmOverloads constructor(
     constructor(
         keyStore: KeyStore,
         password: CharArray,
-        caCertificates: Array<X509Certificate>,
+        caCertificatesProvider: X509CertificatesProvider,
         stsEndpoint: String,
-        roleAliasName: String,
         okHttpClient: OkHttpClient,
         clientConfiguration: ClientConfiguration = ClientConfiguration(),
     ): this(
         stsEndpoint = stsEndpoint,
-        roleAliasName = roleAliasName,
         clientConfiguration = clientConfiguration,
         okHttpClient = okHttpClient.createNewClient(
             keyStore = keyStore,
             password = password,
-            caCertificates = caCertificates,
+            caCertificates = caCertificatesProvider.provide(),
         ),
     )
 
     init {
-        setEndpoint("$stsEndpoint/role-aliases/$roleAliasName/")
+        setEndpoint(stsEndpoint)
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2021 Zenichi Amano.
+ * Copyright (C) 2023 Zenichi Amano.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.amazonaws.services.securitytoken.model
+package io.github.crow_misia.aws.iot
 
-import com.amazonaws.AmazonWebServiceRequest
-import java.io.Serializable
+import java.security.cert.X509Certificate
 
-class AssumeRoleWithCredentialsRequest(
-    val thingName: ThingName,
-    val roleAliasName: RoleAliasName,
-) : AmazonWebServiceRequest(), Serializable {
-    companion object {
-        private const val serialVersionUID = 1L
-    }
+/**
+ * X509 certificates Provider.
+ */
+fun interface X509CertificatesProvider {
+    /**
+     * Provide X509 certificates.
+     *
+     * @return X509 certificates
+     */
+    fun provide(): Array<X509Certificate>
 }

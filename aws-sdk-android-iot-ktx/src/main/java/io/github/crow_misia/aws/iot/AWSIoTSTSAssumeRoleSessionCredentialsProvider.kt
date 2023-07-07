@@ -25,7 +25,8 @@ import io.github.crow_misia.aws.core.AWSTemporaryCredentials
 import io.github.crow_misia.aws.core.asAWSCredentials
 
 open class AWSIoTSTSAssumeRoleSessionCredentialsProvider(
-    private var thingName: String,
+    private val thingNameProvider: ThingNameProvider,
+    private val roleAliasNameProvider: RoleAliasNameProvider,
     private val securityTokenService: AWSIoTSecurityTokenServiceClient,
 ) : AWSCredentialsProvider {
     companion object {
@@ -50,8 +51,12 @@ open class AWSIoTSTSAssumeRoleSessionCredentialsProvider(
     }
 
     private fun startSession() {
+        val thingName = thingNameProvider.provide()
         val assumeRoleResult = securityTokenService.assumeRoleWithCredentials(
-            AssumeRoleWithCredentialsRequest(thingName)
+            AssumeRoleWithCredentialsRequest(
+                thingName = thingName,
+                roleAliasName = roleAliasNameProvider.provide(thingName),
+            )
         )
         val stsCredentials = assumeRoleResult.credentials
         temporaryCredentials = stsCredentials.asAWSCredentials()
