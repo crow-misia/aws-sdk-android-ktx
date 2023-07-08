@@ -16,17 +16,18 @@
 package io.github.crow_misia.aws.iot
 
 import com.amazonaws.services.securitytoken.model.RoleAliasName
-import com.amazonaws.services.securitytoken.model.ThingName
 
 /**
  * RoleAliasName Provider.
+ *
+ * @param T Application Data Type
  */
-fun interface RoleAliasNameProvider {
+fun interface RoleAliasNameProvider<T> {
     /**
      * Provide RoleAliasName.
      *
-     * @param thingName Thing Name
+     * @param data Application Data
      * @return RoleAliasName
      */
-    fun provide(thingName: ThingName): RoleAliasName
+    fun provide(data: T): RoleAliasName
 }

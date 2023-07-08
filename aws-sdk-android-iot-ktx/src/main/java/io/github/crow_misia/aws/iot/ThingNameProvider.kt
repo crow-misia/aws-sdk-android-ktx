@@ -19,12 +19,15 @@ import com.amazonaws.services.securitytoken.model.ThingName
 
 /**
  * ThingName Provider.
+ *
+ * @param T Application Data Type
  */
-fun interface ThingNameProvider {
+fun interface ThingNameProvider<T> {
     /**
      * Provide ThingName.
      *
+     * @param data Application Data
      * @return ThingName
      */
-    fun provide(): ThingName
+    fun provide(data: T): ThingName
 }
