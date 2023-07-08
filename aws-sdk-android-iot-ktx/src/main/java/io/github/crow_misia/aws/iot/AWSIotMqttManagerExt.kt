@@ -23,6 +23,7 @@ import com.amazonaws.mobileconnectors.iot.*
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -38,12 +39,17 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import java.security.KeyStore
 
+@OptIn(DelicateCoroutinesApi::class)
 private fun ProducerScope<AWSIotMqttClientStatus>.createConnectCallback(
     isAutoReconnect: Boolean,
     resetReconnect: () -> Unit,
+    defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ): AWSIotMqttClientStatusCallback {
     return AWSIotMqttClientStatusCallback { status, cause ->
-        launch {
+        launch(defaultDispatcher) {
+            if (isClosedForSend) {
+                return@launch
+            }
             if (isAutoReconnect) {
                 send(status)
                 // Give up reconnect.
@@ -56,7 +62,11 @@ private fun ProducerScope<AWSIotMqttClientStatus>.createConnectCallback(
                 }
             } else {
                 send(status)
-                cause?.also { close(it) }
+                cause?.also { cancel("MQTT Connection Error", it) } ?: run {
+                    if (status == AWSIotMqttClientStatus.ConnectionLost) {
+                        close()
+                    }
+                }
             }
         }
     }
@@ -73,7 +83,7 @@ private inline fun ProducerScope<*>.createSubscriptionStatusCallback(
     }
 
     override fun onFailure(exception: Throwable) {
-        close(exception)
+        cancel("Subscription failure.", exception)
     }
 }
 
