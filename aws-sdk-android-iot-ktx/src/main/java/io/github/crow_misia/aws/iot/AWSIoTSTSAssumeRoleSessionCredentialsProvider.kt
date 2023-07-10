@@ -17,15 +17,16 @@
 
 package io.github.crow_misia.aws.iot
 
-import com.amazonaws.assumeRoleWithCredentials
 import com.amazonaws.auth.AWSCredentials
 import com.amazonaws.auth.AWSCredentialsProvider
+import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager.Endpoint
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithCredentialsRequest
 import com.amazonaws.services.securitytoken.model.ThingName
 import io.github.crow_misia.aws.core.AWSTemporaryCredentials
 import io.github.crow_misia.aws.core.asAWSCredentials
 
 open class AWSIoTSTSAssumeRoleSessionCredentialsProvider(
+    private val stsEndpoint: Endpoint,
     private val thingNameProvider: ThingNameProvider<Unit>,
     private val roleAliasNameProvider: RoleAliasNameProvider<ThingName>,
     private val securityTokenService: AWSIoTSecurityTokenServiceClient,

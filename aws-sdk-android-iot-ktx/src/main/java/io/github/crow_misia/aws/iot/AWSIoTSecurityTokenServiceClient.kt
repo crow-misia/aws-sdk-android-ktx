@@ -15,13 +15,21 @@
  */
 package io.github.crow_misia.aws.iot
 
+import com.amazonaws.AmazonClientException
+import com.amazonaws.AmazonServiceException
 import com.amazonaws.ClientConfiguration
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.auth.AnonymousAWSCredentials
 import com.amazonaws.http.HttpClient
+import com.amazonaws.http.JsonErrorResponseHandler
+import com.amazonaws.http.JsonResponseHandler
 import com.amazonaws.internal.StaticCredentialsProvider
 import com.amazonaws.mobileconnectors.iot.AWSIotKeystoreHelper
-import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClient
+import com.amazonaws.services.iot.AWSIotClient
+import com.amazonaws.services.securitytoken.model.AssumeRoleWithCredentialsRequest
+import com.amazonaws.services.securitytoken.model.AssumeRoleWithCredentialsResult
+import com.amazonaws.services.securitytoken.model.transform.AssumeRoleWithCredentialsRequestMarshaller
+import com.amazonaws.services.securitytoken.model.transform.AssumeRoleWithCredentialsResponseJsonMarshaller
 import io.github.crow_misia.aws.core.Okhttp3HttpClient
 import io.github.crow_misia.aws.core.createNewClient
 import okhttp3.OkHttpClient
@@ -36,7 +44,7 @@ class AWSIoTSecurityTokenServiceClient @JvmOverloads constructor(
     awsCredentialsProvider: AWSCredentialsProvider = StaticCredentialsProvider(AnonymousAWSCredentials()),
     clientConfiguration: ClientConfiguration = ClientConfiguration(),
     httpClient: HttpClient,
-) : AWSSecurityTokenServiceClient(awsCredentialsProvider, clientConfiguration, httpClient) {
+) : AWSIotClient(awsCredentialsProvider, clientConfiguration, httpClient) {
     @JvmOverloads
     constructor(
         stsEndpoint: String,
@@ -85,5 +93,20 @@ class AWSIoTSecurityTokenServiceClient @JvmOverloads constructor(
 
     init {
         setEndpoint(stsEndpoint)
+    }
+
+    @Throws(AmazonServiceException::class, AmazonClientException::class)
+    fun assumeRoleWithCredentials(
+        assumeRoleRequest: AssumeRoleWithCredentialsRequest,
+    ): AssumeRoleWithCredentialsResult {
+        val executionContext = createExecutionContext(assumeRoleRequest)
+
+        val request = AssumeRoleWithCredentialsRequestMarshaller.marshall(assumeRoleRequest)
+        request.endpoint = endpoint
+        request.timeOffset = timeOffset
+
+        val responseHandler = JsonResponseHandler(AssumeRoleWithCredentialsResponseJsonMarshaller)
+        val errorResponseHandler = JsonErrorResponseHandler(jsonErrorUnmarshallers)
+        return client.execute(request, responseHandler, errorResponseHandler, executionContext).awsResponse
     }
 }
