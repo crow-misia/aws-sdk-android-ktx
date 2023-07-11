@@ -21,12 +21,13 @@ import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager.ClientId
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager.Endpoint
 import com.amazonaws.regions.Region
+import com.amazonaws.services.securitytoken.model.ThingName
 import java.util.concurrent.ConcurrentHashMap
 
 interface AWSIotMqttManagerProvider {
     fun provide(clientId: ClientId): AWSIotMqttManager
 
-    fun provide(clientId: String) = provide(ClientId.fromString(clientId))
+    fun provide(thingName: ThingName) = provide(ClientId.fromString(thingName.name))
 
     fun allDisconnect()
 
@@ -57,7 +58,7 @@ interface AWSIotMqttManagerProvider {
 class AWSIotMqttManagerProviderImpl(
     private val generator: (clientId: ClientId) -> AWSIotMqttManager,
 ) : AWSIotMqttManagerProvider {
-    private val cache: MutableMap<String, AWSIotMqttManager> = ConcurrentHashMap()
+    private val cache = ConcurrentHashMap<String, AWSIotMqttManager>()
 
     override fun provide(clientId: ClientId): AWSIotMqttManager {
         return cache.getOrPut(clientId.value) {

@@ -13,6 +13,7 @@ import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import com.amazonaws.mobileconnectors.iot.loadPrivateKey
 import com.amazonaws.mobileconnectors.iot.loadX509Certificate
 import com.amazonaws.regions.Region
+import com.amazonaws.services.securitytoken.model.ThingName
 import com.example.sample.R
 import io.github.crow_misia.aws.iot.*
 import io.github.crow_misia.aws.iot.keystore.BasicKeyStoreProvisioningManager
@@ -49,7 +50,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         }
     )
 
-    private var thingName = sharedPreferences.getString("thingName", null).orEmpty()
+    private var thingNameProvider = ThingNameProvider<Unit> {
+        ThingName(sharedPreferences.getString("thingName", null).orEmpty())
+    }
 
     private var shadowClient: AWSIoTMqttShadowClient? = null
 
@@ -63,7 +66,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
     }
 
     private fun createMqttManager(): AWSIotMqttManager {
-        return provider.provide(thingName)
+        return provider.provide(thingNameProvider.provide(Unit))
     }
 
     fun onClickProvisioning() {
@@ -89,7 +92,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
                     sharedPreferences.edit {
                         putString("certificateId", certificateId)
                         putString("thingName", thingName)
-                        this@MainViewModel.thingName = thingName
                     }
                     Timber.i("Registered things.\n%s", this)
                 }

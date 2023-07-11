@@ -19,6 +19,7 @@ package io.github.crow_misia.aws.iot
 
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttQos
+import com.amazonaws.services.securitytoken.model.ThingName
 import io.github.crow_misia.aws.iot.model.DeviceShadowDeltaResponse
 import io.github.crow_misia.aws.iot.model.DeviceShadowDocumentsResponse
 import io.github.crow_misia.aws.iot.model.DeviceShadowErrorResponse
@@ -38,12 +39,12 @@ import java.io.ByteArrayInputStream
 @OptIn(ExperimentalSerializationApi::class)
 class AWSIoTMqttShadowClient internal constructor(
     private val manager: AWSIotMqttManager,
-    private val thingNameProvider: () -> String,
+    private val thingNameProvider: ThingNameProvider<Unit>,
     private val jsonFormat: Json,
 ) {
     constructor(
         manager: AWSIotMqttManager,
-        thinsName: String,
+        thinsName: ThingName,
         jsonFormat: Json = defaultJsonFormat,
     ): this(manager = manager, thingNameProvider = { thinsName }, jsonFormat = jsonFormat)
 
@@ -155,7 +156,7 @@ class AWSIoTMqttShadowClient internal constructor(
     }
 
     private fun getTopicName(shadowName: String?, method: String): String {
-        val thingName = thingNameProvider()
+        val thingName = thingNameProvider.provide(Unit).name
 
         return shadowName?.let {
             "\$aws/things/${thingName}/shadow/name/$shadowName/$method"
@@ -174,21 +175,21 @@ class AWSIoTMqttShadowClient internal constructor(
     companion object {
         internal val defaultJsonFormat = Json {
             encodeDefaults = true
-            explicitNulls = true
+            explicitNulls = false
             ignoreUnknownKeys = true
         }
     }
 }
 
 fun AWSIotMqttManager.asShadowClient(
-    thingName: String,
+    thingName: ThingName,
     jsonFormat: Json = AWSIoTMqttShadowClient.defaultJsonFormat,
 ): AWSIoTMqttShadowClient {
     return AWSIoTMqttShadowClient(manager = this, thingNameProvider = { thingName }, jsonFormat = jsonFormat)
 }
 
 fun AWSIotMqttManager.asShadowClient(
-    thingNameProvider: () -> String,
+    thingNameProvider: ThingNameProvider<Unit>,
     jsonFormat: Json = AWSIoTMqttShadowClient.defaultJsonFormat,
 ): AWSIoTMqttShadowClient {
     return AWSIoTMqttShadowClient(this, thingNameProvider, jsonFormat)
