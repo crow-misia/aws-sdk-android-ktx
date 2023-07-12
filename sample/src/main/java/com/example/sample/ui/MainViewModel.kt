@@ -126,7 +126,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         viewModelScope.launch(Dispatchers.IO) {
             Timber.i("certId = %s, thingName = %s", certId, thingName)
             val shadowClient = shadowClient ?: run {
-                manager.asShadowClient(thingName).also {
+                manager.asShadowClient(ThingName(thingName)).also {
                     this@MainViewModel.shadowClient = it
                 }
             }
