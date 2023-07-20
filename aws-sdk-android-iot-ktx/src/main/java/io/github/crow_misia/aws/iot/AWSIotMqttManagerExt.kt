@@ -26,12 +26,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
@@ -43,10 +43,10 @@ import java.security.KeyStore
 private fun ProducerScope<AWSIotMqttClientStatus>.createConnectCallback(
     isAutoReconnect: Boolean,
     resetReconnect: () -> Unit,
-    defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    context: CoroutineDispatcher = Dispatchers.Default,
 ): AWSIotMqttClientStatusCallback {
     return AWSIotMqttClientStatusCallback { status, cause ->
-        launch(defaultDispatcher) {
+        launch(context) {
             if (isClosedForSend) {
                 return@launch
             }
@@ -62,7 +62,7 @@ private fun ProducerScope<AWSIotMqttClientStatus>.createConnectCallback(
                 }
             } else {
                 send(status)
-                cause?.also { cancel("MQTT Connection Error", it) } ?: run {
+                cause?.also { close(it) } ?: run {
                     if (status == AWSIotMqttClientStatus.ConnectionLost) {
                         close()
                     }
@@ -73,28 +73,28 @@ private fun ProducerScope<AWSIotMqttClientStatus>.createConnectCallback(
 }
 
 private inline fun ProducerScope<*>.createSubscriptionStatusCallback(
-    defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    context: CoroutineDispatcher = Dispatchers.Default,
     crossinline onSuccess: suspend () -> Unit,
 ) = object : AWSIotMqttSubscriptionStatusCallback {
     override fun onSuccess() {
-        launch(defaultDispatcher) {
+        launch(context) {
             onSuccess()
         }
     }
 
     override fun onFailure(exception: Throwable) {
-        cancel("Subscription failure.", exception)
+        close(exception)
     }
 }
 
 
 private fun ProducerScope<Unit>.createMessageDeliveryCallback(
-    defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    context: CoroutineDispatcher = Dispatchers.Default,
 ): AWSIotMqttMessageDeliveryCallback {
     return AWSIotMqttMessageDeliveryCallback { status, userData ->
         when (status) {
             AWSIotMqttMessageDeliveryCallback.MessageDeliveryStatus.Success -> {
-                launch(defaultDispatcher) {
+                launch(context) {
                     send(Unit)
                     close()
                 }
@@ -201,11 +201,13 @@ suspend fun AWSIotMqttManager.publishWithReply(
     qos: AWSIotMqttQos,
     userData: Any? = null,
     isRetained: Boolean = false,
+    context: CoroutineDispatcher = Dispatchers.IO,
 ): SubscribeData = callbackFlow {
     val acceptedTopic = "$topic/accepted"
     val rejectedTopic = "$topic/rejected"
 
-    val scope = CoroutineScope(Job())
+    val job = Job()
+    val scope = CoroutineScope(context + job)
 
     // for wait subscribe accepted/rejected topic
     val publisher = MutableSharedFlow<Unit>()
@@ -218,6 +220,7 @@ suspend fun AWSIotMqttManager.publishWithReply(
 
     // subscribe accepted topic
     subscribe(topic = acceptedTopic, qos = qos) { publisher.emit(Unit) }
+        .catch { close(it) }
         .onEach {
             send(it)
             close()
@@ -225,12 +228,13 @@ suspend fun AWSIotMqttManager.publishWithReply(
         .launchIn(scope)
     // subscribe rejected topic
     subscribe(topic = rejectedTopic, qos = qos) { publisher.emit(Unit) }
+        .catch { close(it) }
         .onEach {
             close(AWSIoTMqttPublishWithReplyException("Rejected", it.topic, it.data, userData))
         }
         .launchIn(scope)
 
     awaitClose {
-        scope.cancel()
+        job.cancel()
     }
 }.first()

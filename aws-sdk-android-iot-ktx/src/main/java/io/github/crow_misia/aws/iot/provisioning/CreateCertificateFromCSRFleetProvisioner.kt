@@ -54,7 +54,7 @@ import javax.security.auth.x500.X500Principal
  * Create Certificate from CSR Fleet Provisioner.
  */
 @OptIn(ExperimentalSerializationApi::class)
-@Suppress("unused")
+@Suppress("unused", "UnnecessaryOptInAnnotation")
 class CreateCertificateFromCSRFleetProvisioner @JvmOverloads constructor(
     private val mqttManager: AWSIotMqttManager,
     private val signingAlgorithm: SigningAlgorithm = SigningAlgorithm.Sha256WithEcdsa,
@@ -63,7 +63,7 @@ class CreateCertificateFromCSRFleetProvisioner @JvmOverloads constructor(
     override suspend fun provisioningThing(
         templateName: String,
         parameters: Map<String, String>,
-        connect: suspend AWSIotMqttManager.() -> Flow<AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus>
+        connect: suspend AWSIotMqttManager.() -> Flow<AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus>,
     ): AWSIoTProvisioningResponse {
         val certificateRequest = createCSR()
 
