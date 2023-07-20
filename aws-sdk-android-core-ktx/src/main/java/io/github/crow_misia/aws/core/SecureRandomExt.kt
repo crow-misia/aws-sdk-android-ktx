@@ -15,8 +15,9 @@
  */
 package io.github.crow_misia.aws.core
 
-import android.util.Base64
 import java.security.SecureRandom
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 /**
  * Base64エンコードのランダムな文字列を生成する.
@@ -24,8 +25,9 @@ import java.security.SecureRandom
  * @param n 生成するランダムデータの大きさ. 実際に出力される文字列の長さは、nの4/3程度になります
  * @return Base64エンコード文字列
  */
+@OptIn(ExperimentalEncodingApi::class)
 fun SecureRandom.nextBase64(n: Int): String {
     val tmp = ByteArray(n)
     nextBytes(tmp)
-    return Base64.encodeToString(tmp, Base64.NO_WRAP)
+    return Base64.Default.encode(tmp)
 }
