@@ -58,7 +58,7 @@ android {
     }
 }
 
-tasks.withType<KotlinJvmCompile>().all {
+kotlin {
     compilerOptions {
         freeCompilerArgs.addAll("-Xjsr305=strict")
         javaParameters.set(true)
