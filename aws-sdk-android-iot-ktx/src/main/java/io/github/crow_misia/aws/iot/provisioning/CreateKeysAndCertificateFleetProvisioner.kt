@@ -27,31 +27,37 @@ import io.github.crow_misia.aws.iot.model.ProvisioningErrorResponse
 import io.github.crow_misia.aws.iot.model.RegisterThingRequest
 import io.github.crow_misia.aws.iot.model.RegisterThingResponse
 import io.github.crow_misia.aws.iot.publishWithReply
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.timeout
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
+import kotlin.time.Duration
 
 /**
  * Create Private Keys and Certificate Fleet Provisioner.
  */
 @OptIn(ExperimentalSerializationApi::class)
-@Suppress("unused")
+@Suppress("unused", "UnnecessaryOptInAnnotation")
 class CreateKeysAndCertificateFleetProvisioner(
     private val mqttManager: AWSIotMqttManager,
 ) : AWSIoTFleetProvisioner {
+    @OptIn(FlowPreview::class)
     override suspend fun provisioningThing(
         templateName: String,
         parameters: Map<String, String>,
+        timeout: Duration,
         connect: suspend AWSIotMqttManager.() -> Flow<AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus>
     ): AWSIoTProvisioningResponse {
         return connect(mqttManager)
             // Wait until connected.
+            .timeout(timeout)
             .filter { it == AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus.Connected }
             .map {
                 val keysResponse = mqttManager.publishWithReply(
@@ -77,12 +83,12 @@ class CreateKeysAndCertificateFleetProvisioner(
                     privateKeyPem = keysResponse.privateKey,
                 )
             }
-            .catch {
-                if (it is AWSIoTMqttPublishWithReplyException) {
-                    val errorResponse = Cbor.decodeFromByteArray<ProvisioningErrorResponse>(it.response)
+            .catch { e ->
+                if (e is AWSIoTMqttPublishWithReplyException) {
+                    val errorResponse = Cbor.decodeFromByteArray<ProvisioningErrorResponse>(e.response)
                     throw AWSIoTProvisioningException(errorResponse)
                 }
-                throw it
+                throw e
             }
             .first()
     }

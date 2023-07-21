@@ -23,17 +23,26 @@ import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import kotlinx.coroutines.flow.Flow
 import java.security.KeyStore
 import java.security.PrivateKey
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 @Suppress("unused")
 interface AWSIoTFleetProvisioner {
+    companion object {
+        // default provisioning timeout duration.
+        val defaultTimeout = 30.seconds
+    }
+
     suspend fun provisioningThingUsingALPN(
         keyStore: KeyStore,
         templateName: String,
         parameters: Map<String, String> = emptyMap(),
+        timeout: Duration = defaultTimeout,
     ): AWSIoTProvisioningResponse {
         return provisioningThing(
             templateName = templateName,
             parameters = parameters,
+            timeout = timeout,
         ) {
             connectUsingALPN(keyStore = keyStore)
         }
@@ -45,10 +54,12 @@ interface AWSIoTFleetProvisioner {
         proxyPort: Int,
         templateName: String,
         parameters: Map<String, String> = emptyMap(),
+        timeout: Duration = defaultTimeout,
     ): AWSIoTProvisioningResponse {
         return provisioningThing(
             templateName = templateName,
             parameters = parameters,
+            timeout = timeout,
         ) {
             connectWithProxy(keyStore = keyStore, proxyHost = proxyHost, proxyPort = proxyPort)
         }
@@ -58,10 +69,12 @@ interface AWSIoTFleetProvisioner {
         keyStore: KeyStore,
         templateName: String,
         parameters: Map<String, String> = emptyMap(),
+        timeout: Duration = defaultTimeout,
     ): AWSIoTProvisioningResponse {
         return provisioningThing(
             templateName = templateName,
             parameters = parameters,
+            timeout = timeout,
         ) {
             connect(keyStore = keyStore)
         }
@@ -71,10 +84,12 @@ interface AWSIoTFleetProvisioner {
         credentialsProvider: AWSCredentialsProvider,
         templateName: String,
         parameters: Map<String, String> = emptyMap(),
+        timeout: Duration = defaultTimeout,
     ): AWSIoTProvisioningResponse {
         return provisioningThing(
             templateName = templateName,
             parameters = parameters,
+            timeout = timeout,
         ) {
             connect(credentialsProvider = credentialsProvider)
         }
@@ -87,10 +102,12 @@ interface AWSIoTFleetProvisioner {
         customAuthorizer: String,
         templateName: String,
         parameters: Map<String, String> = emptyMap(),
+        timeout: Duration = defaultTimeout,
     ): AWSIoTProvisioningResponse {
         return provisioningThing(
             templateName = templateName,
             parameters = parameters,
+            timeout = timeout,
         ) {
             connect(
                 tokenKeyName = tokenKeyName,
@@ -106,10 +123,12 @@ interface AWSIoTFleetProvisioner {
         password: String,
         templateName: String,
         parameters: Map<String, String> = emptyMap(),
+        timeout: Duration = defaultTimeout,
     ): AWSIoTProvisioningResponse {
         return provisioningThing(
             templateName = templateName,
             parameters = parameters,
+            timeout = timeout,
         ) {
             connect(
                 username = username,
@@ -126,6 +145,7 @@ interface AWSIoTFleetProvisioner {
     suspend fun provisioningThing(
         templateName: String,
         parameters: Map<String, String> = emptyMap(),
+        timeout: Duration = defaultTimeout,
         connect: suspend AWSIotMqttManager.() -> Flow<AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus>,
     ): AWSIoTProvisioningResponse
 }

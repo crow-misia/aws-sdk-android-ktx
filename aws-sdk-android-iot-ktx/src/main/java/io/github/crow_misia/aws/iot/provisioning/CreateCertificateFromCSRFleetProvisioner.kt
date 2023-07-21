@@ -29,11 +29,13 @@ import io.github.crow_misia.aws.iot.model.ProvisioningErrorResponse
 import io.github.crow_misia.aws.iot.model.RegisterThingRequest
 import io.github.crow_misia.aws.iot.model.RegisterThingResponse
 import io.github.crow_misia.aws.iot.publishWithReply
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.timeout
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.decodeFromByteArray
@@ -49,6 +51,7 @@ import java.security.spec.AlgorithmParameterSpec
 import java.security.spec.ECGenParameterSpec
 import java.security.spec.RSAKeyGenParameterSpec
 import javax.security.auth.x500.X500Principal
+import kotlin.time.Duration
 
 /**
  * Create Certificate from CSR Fleet Provisioner.
@@ -60,15 +63,18 @@ class CreateCertificateFromCSRFleetProvisioner @JvmOverloads constructor(
     private val signingAlgorithm: SigningAlgorithm = SigningAlgorithm.Sha256WithEcdsa,
     private val securityProvider: String? = null,
 ) : AWSIoTFleetProvisioner {
+    @OptIn(FlowPreview::class)
     override suspend fun provisioningThing(
         templateName: String,
         parameters: Map<String, String>,
+        timeout: Duration,
         connect: suspend AWSIotMqttManager.() -> Flow<AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus>,
     ): AWSIoTProvisioningResponse {
         val certificateRequest = createCSR()
 
         return connect(mqttManager)
             // Wait until connected.
+            .timeout(timeout)
             .filter { it == AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus.Connected }
             .map {
                 val csrRequest = Cbor.encodeToByteArray(CreateCertificateFromCsrRequest(certificateRequest.csr))
@@ -96,12 +102,12 @@ class CreateCertificateFromCSRFleetProvisioner @JvmOverloads constructor(
                     privateKey = certificateRequest.privateKey,
                 )
             }
-            .catch {
-                if (it is AWSIoTMqttPublishWithReplyException) {
-                    val errorResponse = Cbor.decodeFromByteArray<ProvisioningErrorResponse>(it.response)
+            .catch { e ->
+                if (e is AWSIoTMqttPublishWithReplyException) {
+                    val errorResponse = Cbor.decodeFromByteArray<ProvisioningErrorResponse>(e.response)
                     throw AWSIoTProvisioningException(errorResponse)
                 }
-                throw it
+                throw e
             }
             .first()
     }

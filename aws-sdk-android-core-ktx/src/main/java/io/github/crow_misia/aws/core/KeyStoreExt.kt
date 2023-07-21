@@ -15,13 +15,23 @@
  */
 package io.github.crow_misia.aws.core
 
+import java.io.ByteArrayOutputStream
 import java.security.KeyStore
-import java.security.KeyStoreException
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.io.encoding.encodingWith
 
 /**
- * KeyStore Provider.
+ * キーストアの内容をBase64エンコード文字列に変換する.
+ *
+ * @param password キーストアのパスワード
  */
-fun interface KeyStoreProvider {
-    @Throws(KeyStoreException::class)
-    fun provide(): KeyStore
+@OptIn(ExperimentalEncodingApi::class)
+fun KeyStore.asBase64(password: CharArray): String {
+    return ByteArrayOutputStream().use { out ->
+        out.encodingWith(Base64.Default).use {
+            store(it, password)
+        }
+        out.toString()
+    }
 }

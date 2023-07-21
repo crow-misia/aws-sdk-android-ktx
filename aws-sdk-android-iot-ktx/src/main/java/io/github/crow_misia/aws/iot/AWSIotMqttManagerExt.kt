@@ -41,8 +41,6 @@ import java.security.KeyStore
 
 @OptIn(DelicateCoroutinesApi::class)
 private fun ProducerScope<AWSIotMqttClientStatus>.createConnectCallback(
-    isAutoReconnect: Boolean,
-    resetReconnect: () -> Unit,
     context: CoroutineDispatcher = Dispatchers.Default,
 ): AWSIotMqttClientStatusCallback {
     return AWSIotMqttClientStatusCallback { status, cause ->
@@ -50,22 +48,10 @@ private fun ProducerScope<AWSIotMqttClientStatus>.createConnectCallback(
             if (isClosedForSend) {
                 return@launch
             }
-            if (isAutoReconnect) {
-                send(status)
-                // Give up reconnect.
-                when (status) {
-                    AWSIotMqttClientStatus.ConnectionLost -> close()
-                    AWSIotMqttClientStatus.Connected -> resetReconnect()
-                    else -> {
-                        // ignore.
-                    }
-                }
-            } else {
-                send(status)
-                cause?.also { close(it) } ?: run {
-                    if (status == AWSIotMqttClientStatus.ConnectionLost) {
-                        close()
-                    }
+            send(status)
+            cause?.also { close(it) } ?: run {
+                if (status == AWSIotMqttClientStatus.ConnectionLost) {
+                    close()
                 }
             }
         }
@@ -110,7 +96,7 @@ private fun ProducerScope<Unit>.createMessageDeliveryCallback(
 fun AWSIotMqttManager.connectUsingALPN(
     keyStore: KeyStore,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
-    connectUsingALPN(keyStore, createConnectCallback(isAutoReconnect, ::resetReconnect))
+    connectUsingALPN(keyStore, createConnectCallback())
     awaitClose { disconnectQuite() }
 }
 
@@ -119,21 +105,21 @@ fun AWSIotMqttManager.connectWithProxy(
     proxyHost: String,
     proxyPort: Int,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
-    connectWithProxy(keyStore, proxyHost, proxyPort, createConnectCallback(isAutoReconnect, ::resetReconnect))
+    connectWithProxy(keyStore, proxyHost, proxyPort, createConnectCallback())
     awaitClose { disconnectQuite() }
 }
 
 fun AWSIotMqttManager.connect(
     keyStore: KeyStore,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
-    connect(keyStore, createConnectCallback(isAutoReconnect, ::resetReconnect))
+    connect(keyStore, createConnectCallback())
     awaitClose { disconnectQuite() }
 }
 
 fun AWSIotMqttManager.connect(
     credentialsProvider: AWSCredentialsProvider,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
-    connect(credentialsProvider, createConnectCallback(isAutoReconnect, ::resetReconnect))
+    connect(credentialsProvider, createConnectCallback())
     awaitClose { disconnectQuite() }
 }
 
@@ -143,7 +129,7 @@ fun AWSIotMqttManager.connect(
     tokenSignature: String,
     customAuthorizer: String,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
-    connect(tokenKeyName, token, tokenSignature, customAuthorizer, createConnectCallback(isAutoReconnect, ::resetReconnect))
+    connect(tokenKeyName, token, tokenSignature, customAuthorizer, createConnectCallback())
     awaitClose { disconnectQuite() }
 }
 
@@ -151,7 +137,7 @@ fun AWSIotMqttManager.connect(
     username: String,
     password: String,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
-    connect(username, password, createConnectCallback(isAutoReconnect, ::resetReconnect))
+    connect(username, password, createConnectCallback())
     awaitClose { disconnectQuite() }
 }
 
