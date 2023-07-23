@@ -60,6 +60,7 @@ dependencies {
 
     implementation(Kotlin.stdlib)
     implementation(KotlinX.coroutines.core)
+    implementation(KotlinX.serialization.json)
 
     // aws sdk android
     api(libs.aws.android.sdk.core)

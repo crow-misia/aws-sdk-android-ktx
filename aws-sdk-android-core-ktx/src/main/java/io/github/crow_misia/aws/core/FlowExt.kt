@@ -32,14 +32,26 @@ interface RetryPolicy {
     val factor: Long
     fun randomBetween(range: LongRange): Duration
 
-    object Default : RetryPolicy {
-        private val random = Random.Default
-        override val numRetries: Int = Int.MAX_VALUE
-        override val base: Duration = 500.milliseconds
-        override val maxDelay: Duration = 15.minutes
-        override val factor: Long = 3L
-        override fun randomBetween(range: LongRange): Duration {
-            return random.nextLong(range).milliseconds
+    companion object {
+        val Default = create()
+
+        fun create(
+            numRetries: Int = Int.MAX_VALUE,
+            base: Duration = 500.milliseconds,
+            maxDelay: Duration = 15.minutes,
+            factor: Long = 3L,
+            random: Random = Random.Default
+        ): RetryPolicy {
+            return object : RetryPolicy {
+                private val random = random
+                override val numRetries = numRetries
+                override val base = base
+                override val maxDelay = maxDelay
+                override val factor = factor
+                override fun randomBetween(range: LongRange): Duration {
+                    return random.nextLong(range).milliseconds
+                }
+            }
         }
     }
 }
