@@ -32,23 +32,38 @@ interface AWSIotMqttManagerProvider {
     fun allDisconnect()
 
     companion object {
+        private val defaultConfiguration: AWSIotMqttManager.() -> Unit = {
+            setMetricsIsEnabled(false)
+            isAutoReconnect = false
+        }
         @JvmStatic
-        fun create(region: Region, endpoint: Endpoint): AWSIotMqttManagerProvider {
-            return AWSIotMqttManagerProviderImpl { clientId ->
+        fun create(
+            region: Region,
+            endpoint: Endpoint,
+            configure: AWSIotMqttManager.() -> Unit = defaultConfiguration,
+        ): AWSIotMqttManagerProvider {
+            return AWSIotMqttManagerProviderImpl(configure) { clientId ->
                 AWSIotMqttManager.from(region, clientId, endpoint)
             }
         }
 
         @JvmStatic
-        fun create(endpoint: Endpoint): AWSIotMqttManagerProvider {
-            return AWSIotMqttManagerProviderImpl { clientId ->
+        fun create(
+            endpoint: Endpoint,
+            configure: AWSIotMqttManager.() -> Unit = defaultConfiguration,
+        ): AWSIotMqttManagerProvider {
+            return AWSIotMqttManagerProviderImpl(configure) { clientId ->
                 AWSIotMqttManager(clientId.value, endpoint.value)
             }
         }
 
         @JvmStatic
-        fun create(region: Region, accountEndpointPrefix: String): AWSIotMqttManagerProvider {
-            return AWSIotMqttManagerProviderImpl { clientId ->
+        fun create(
+            region: Region,
+            accountEndpointPrefix: String,
+            configure: AWSIotMqttManager.() -> Unit = defaultConfiguration,
+        ): AWSIotMqttManagerProvider {
+            return AWSIotMqttManagerProviderImpl(configure) { clientId ->
                 AWSIotMqttManager(clientId.value, region, accountEndpointPrefix)
             }
         }
@@ -56,6 +71,7 @@ interface AWSIotMqttManagerProvider {
 }
 
 class AWSIotMqttManagerProviderImpl(
+    private val configure: AWSIotMqttManager.() -> Unit,
     private val generator: (clientId: ClientId) -> AWSIotMqttManager,
 ) : AWSIotMqttManagerProvider {
     private val cache = ConcurrentHashMap<String, AWSIotMqttManager>()
@@ -63,7 +79,7 @@ class AWSIotMqttManagerProviderImpl(
     override fun provide(clientId: ClientId): AWSIotMqttManager {
         return cache.getOrPut(clientId.value) {
             generator(clientId)
-        }
+        }.apply(configure)
     }
 
     override fun allDisconnect() {
