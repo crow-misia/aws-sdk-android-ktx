@@ -25,11 +25,23 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
+/**
+ * リトライポリシー.
+ */
 interface RetryPolicy {
+    /** リトライ回数 */
     val numRetries: Int
+    /** 基準間隔 */
     val base: Duration
+    /** 最大遅延時間 */
     val maxDelay: Duration
+    /** 係数 */
     val factor: Long
+    /**
+     * 指定期間内でランダムな期間を返す.
+     * @param range 指定期間
+     * @return 遅延期間
+     */
     fun randomBetween(range: LongRange): Duration
 
     companion object {

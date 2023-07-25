@@ -67,6 +67,7 @@ dependencies {
 
     // okhttp3
     implementation(Square.okHttp3)
+    implementation(Square.okio)
 }
 
 val customDokkaTask by tasks.creating(DokkaTask::class) {

@@ -5,7 +5,6 @@
     <ID>LongParameterList:AWSIoTSecurityTokenServiceClient.kt$AWSIoTSecurityTokenServiceClient$( keyStore: KeyStore, password: String = AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD, caCertificates: Array&lt;X509Certificate>, stsEndpoint: String, roleAliasName: String, okHttpClient: OkHttpClient, clientConfiguration: ClientConfiguration = ClientConfiguration(), )</ID>
   </ManuallySuppressedIssues>
   <CurrentIssues>
-    <ID>LongParameterList:AWSIoTSecurityTokenServiceClient.kt$AWSIoTSecurityTokenServiceClient$( keyStore: KeyStore, password: CharArray, caCertificates: Array&lt;X509Certificate>, stsEndpoint: String, roleAliasName: String, okHttpClient: OkHttpClient, clientConfiguration: ClientConfiguration = ClientConfiguration(), )</ID>
-    <ID>LongParameterList:AWSIoTSecurityTokenServiceClient.kt$AWSIoTSecurityTokenServiceClient$( keyStore: KeyStore, password: String = AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD, caCertificates: Array&lt;X509Certificate>, stsEndpoint: String, roleAliasName: String, okHttpClient: OkHttpClient, clientConfiguration: ClientConfiguration = ClientConfiguration(), )</ID>
+    <ID>LongParameterList:AWSIoTFleetProvisioner.kt$AWSIoTFleetProvisioner$( tokenKeyName: String, token: String, tokenSignature: String, customAuthorizer: String, templateName: String, parameters: Map&lt;String, String> = emptyMap(), timeout: Duration = defaultTimeout, )</ID>
   </CurrentIssues>
 </SmellBaseline>
