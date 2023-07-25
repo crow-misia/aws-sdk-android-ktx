@@ -37,6 +37,7 @@ interface AWSIotMqttManagerProvider {
             isAutoReconnect = false
         }
         @JvmStatic
+        @JvmOverloads
         fun create(
             region: Region,
             endpoint: Endpoint,
@@ -48,6 +49,7 @@ interface AWSIotMqttManagerProvider {
         }
 
         @JvmStatic
+        @JvmOverloads
         fun create(
             endpoint: Endpoint,
             configure: AWSIotMqttManager.() -> Unit = defaultConfiguration,
@@ -58,6 +60,7 @@ interface AWSIotMqttManagerProvider {
         }
 
         @JvmStatic
+        @JvmOverloads
         fun create(
             region: Region,
             accountEndpointPrefix: String,
