@@ -27,6 +27,7 @@ import io.github.crow_misia.aws.iot.model.DeviceShadowGetResponse
 import io.github.crow_misia.aws.iot.model.DeviceShadowState
 import io.github.crow_misia.aws.iot.model.DeviceShadowUpdateRequest
 import io.github.crow_misia.aws.iot.model.DeviceShadowUpdateResponse
+import io.github.crow_misia.aws.iot.publisher.TopicName
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -155,12 +156,12 @@ class AWSIoTMqttShadowClient internal constructor(
         }
     }
 
-    private fun getTopicName(shadowName: String?, method: String): String {
+    private fun getTopicName(shadowName: String?, method: String): TopicName {
         val thingName = thingNameProvider.provide(Unit).name
 
-        return shadowName?.let {
+        return TopicName(shadowName?.let {
             "\$aws/things/${thingName}/shadow/name/$shadowName/$method"
-        } ?: "\$aws/things/${thingName}/shadow/$method"
+        } ?: "\$aws/things/${thingName}/shadow/$method")
     }
 
     private inline fun <T> wrapError(block: () -> T): T {

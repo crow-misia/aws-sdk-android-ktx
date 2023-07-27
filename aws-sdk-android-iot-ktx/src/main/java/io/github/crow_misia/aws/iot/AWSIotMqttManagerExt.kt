@@ -21,6 +21,7 @@ import com.amazonaws.AmazonClientException
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.mobileconnectors.iot.*
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus
+import io.github.crow_misia.aws.iot.publisher.TopicName
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -74,14 +75,15 @@ private inline fun ProducerScope<*>.createSubscriptionStatusCallback(
 }
 
 
-private fun ProducerScope<Unit>.createMessageDeliveryCallback(
+private fun <T> ProducerScope<T?>.createMessageDeliveryCallback(
     context: CoroutineDispatcher = Dispatchers.Default,
 ): AWSIotMqttMessageDeliveryCallback {
     return AWSIotMqttMessageDeliveryCallback { status, userData ->
         when (status) {
             AWSIotMqttMessageDeliveryCallback.MessageDeliveryStatus.Success -> {
                 launch(context) {
-                    send(Unit)
+                    @Suppress("UNCHECKED_CAST")
+                    send(userData as? T)
                     close()
                 }
             }
@@ -151,11 +153,11 @@ private fun AWSIotMqttManager.disconnectQuite() {
 }
 
 fun AWSIotMqttManager.subscribe(
-    topic: String,
+    topic: TopicName,
     qos: AWSIotMqttQos,
     onDelivered: suspend () -> Unit = { },
 ): Flow<SubscribeData> = callbackFlow {
-    subscribeToTopic(topic, qos, createSubscriptionStatusCallback(onSuccess = onDelivered)) { topic, data ->
+    subscribeToTopic(topic.value, qos, createSubscriptionStatusCallback(onSuccess = onDelivered)) { topic, data ->
         launch {
             send(SubscribeData(topic, data))
         }
@@ -163,7 +165,7 @@ fun AWSIotMqttManager.subscribe(
     awaitClose {
         @Suppress("SwallowedException")
         try {
-            unsubscribeTopic(topic)
+            unsubscribeTopic(topic.value)
         } catch (e: AmazonClientException) {
             // ignore.
         }
@@ -172,25 +174,53 @@ fun AWSIotMqttManager.subscribe(
 
 suspend fun AWSIotMqttManager.publish(
     data: ByteArray = EMPTY_BYTE_ARRAY,
-    topic: String,
+    topic: TopicName,
     qos: AWSIotMqttQos,
-    userData: Any? = null,
+    isRetained: Boolean = false,
+) = publish<Unit>(
+    data = data,
+    topic = topic,
+    qos = qos,
+    userData = null,
+    isRetained = isRetained,
+)
+
+suspend fun <T> AWSIotMqttManager.publish(
+    data: ByteArray = EMPTY_BYTE_ARRAY,
+    topic: TopicName,
+    qos: AWSIotMqttQos,
+    userData: T? = null,
     isRetained: Boolean = false,
 ) = callbackFlow {
-    publishData(data, topic, qos, createMessageDeliveryCallback(), userData, isRetained)
+    publishData(data, topic.value, qos, createMessageDeliveryCallback<T>(), userData, isRetained)
     awaitClose()
 }.first()
 
 suspend fun AWSIotMqttManager.publishWithReply(
     data: ByteArray = EMPTY_BYTE_ARRAY,
-    topic: String,
+    topic: TopicName,
     qos: AWSIotMqttQos,
-    userData: Any? = null,
+    isRetained: Boolean = false,
+    context: CoroutineDispatcher = Dispatchers.IO,
+): SubscribeData = publishWithReply<Unit>(
+    data = data,
+    topic = topic,
+    qos = qos,
+    userData = null,
+    isRetained = isRetained,
+    context = context,
+)
+
+suspend fun <T> AWSIotMqttManager.publishWithReply(
+    data: ByteArray = EMPTY_BYTE_ARRAY,
+    topic: TopicName,
+    qos: AWSIotMqttQos,
+    userData: T? = null,
     isRetained: Boolean = false,
     context: CoroutineDispatcher = Dispatchers.IO,
 ): SubscribeData = callbackFlow {
-    val acceptedTopic = "$topic/accepted"
-    val rejectedTopic = "$topic/rejected"
+    val acceptedTopic = TopicName("$topic/accepted")
+    val rejectedTopic = TopicName("$topic/rejected")
 
     val job = Job()
     val scope = CoroutineScope(context + job)
@@ -199,9 +229,7 @@ suspend fun AWSIotMqttManager.publishWithReply(
     val publisher = MutableSharedFlow<Unit>()
     publisher
         .drop(1)
-        .onEach {
-            publish(data, topic, qos, userData, isRetained)
-        }
+        .onEach { publish(data, topic, qos, userData, isRetained) }
         .launchIn(scope)
 
     // subscribe accepted topic

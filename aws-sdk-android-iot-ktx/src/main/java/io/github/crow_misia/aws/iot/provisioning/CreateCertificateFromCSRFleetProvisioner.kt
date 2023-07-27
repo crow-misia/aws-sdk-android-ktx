@@ -29,6 +29,7 @@ import io.github.crow_misia.aws.iot.model.ProvisioningErrorResponse
 import io.github.crow_misia.aws.iot.model.RegisterThingRequest
 import io.github.crow_misia.aws.iot.model.RegisterThingResponse
 import io.github.crow_misia.aws.iot.publishWithReply
+import io.github.crow_misia.aws.iot.publisher.TopicName
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -80,7 +81,7 @@ class CreateCertificateFromCSRFleetProvisioner @JvmOverloads constructor(
                 val csrRequest = Cbor.encodeToByteArray(CreateCertificateFromCsrRequest(certificateRequest.csr))
                 val csrResponse = mqttManager.publishWithReply(
                     data = csrRequest,
-                    topic = "\$aws/certificates/create-from-csr/cbor",
+                    topic = TopicName("\$aws/certificates/create-from-csr/cbor"),
                     qos = AWSIotMqttQos.QOS1,
                 ).let { Cbor.decodeFromByteArray<CreateCertificateFromCsrResponse>(it.data) }
 
@@ -90,7 +91,7 @@ class CreateCertificateFromCSRFleetProvisioner @JvmOverloads constructor(
                 ))
                 val registerResponse = mqttManager.publishWithReply(
                     data = registerRequest,
-                    topic = "\$aws/provisioning-templates/$templateName/provision/cbor",
+                    topic = TopicName("\$aws/provisioning-templates/$templateName/provision/cbor"),
                     qos = AWSIotMqttQos.QOS1,
                 ).let { Cbor.decodeFromByteArray<RegisterThingResponse>(it.data) }
 

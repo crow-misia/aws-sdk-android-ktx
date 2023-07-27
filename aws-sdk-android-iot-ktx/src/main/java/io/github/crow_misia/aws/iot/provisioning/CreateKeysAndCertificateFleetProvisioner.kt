@@ -27,6 +27,7 @@ import io.github.crow_misia.aws.iot.model.ProvisioningErrorResponse
 import io.github.crow_misia.aws.iot.model.RegisterThingRequest
 import io.github.crow_misia.aws.iot.model.RegisterThingResponse
 import io.github.crow_misia.aws.iot.publishWithReply
+import io.github.crow_misia.aws.iot.publisher.TopicName
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -61,7 +62,7 @@ class CreateKeysAndCertificateFleetProvisioner(
             .filter { it == AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus.Connected }
             .map {
                 val keysResponse = mqttManager.publishWithReply(
-                    topic = "\$aws/certificates/create/cbor",
+                    topic = TopicName("\$aws/certificates/create/cbor"),
                     qos = AWSIotMqttQos.QOS1,
                 ).let { Cbor.decodeFromByteArray<CreateKeysAndCertificateResponse>(it.data) }
 
@@ -71,7 +72,7 @@ class CreateKeysAndCertificateFleetProvisioner(
                 ))
                 val registerResponse = mqttManager.publishWithReply(
                     data = registerRequest,
-                    topic = "\$aws/provisioning-templates/$templateName/provision/cbor",
+                    topic = TopicName("\$aws/provisioning-templates/$templateName/provision/cbor"),
                     qos = AWSIotMqttQos.QOS1,
                 ).let { Cbor.decodeFromByteArray<RegisterThingResponse>(it.data) }
 
