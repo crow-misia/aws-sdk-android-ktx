@@ -219,8 +219,8 @@ suspend fun <T> AWSIotMqttManager.publishWithReply(
     isRetained: Boolean = false,
     context: CoroutineDispatcher = Dispatchers.IO,
 ): SubscribeData = callbackFlow {
-    val acceptedTopic = TopicName("$topic/accepted")
-    val rejectedTopic = TopicName("$topic/rejected")
+    val acceptedTopic = TopicName("${topic.value}/accepted")
+    val rejectedTopic = TopicName("${topic.value}/rejected")
 
     val job = Job()
     val scope = CoroutineScope(context + job)

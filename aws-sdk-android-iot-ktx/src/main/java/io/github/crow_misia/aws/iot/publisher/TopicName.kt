@@ -19,4 +19,6 @@ package io.github.crow_misia.aws.iot.publisher
  * トピック名.
  */
 @JvmInline
-value class TopicName(val value: String)
+value class TopicName(val value: String) {
+    override fun toString(): String = value
+}

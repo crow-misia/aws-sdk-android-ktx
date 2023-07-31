@@ -19,4 +19,6 @@ package com.amazonaws.services.securitytoken.model
  * Role Alias Name.
  */
 @JvmInline
-value class RoleAliasName(val name: String)
+value class RoleAliasName(val name: String) {
+    override fun toString(): String = name
+}

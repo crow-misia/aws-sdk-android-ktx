@@ -19,4 +19,6 @@ package com.amazonaws.services.securitytoken.model
  * Thing Name.
  */
 @JvmInline
-value class ThingName(val name: String)
+value class ThingName(val name: String) {
+    override fun toString(): String = name
+}
