@@ -17,7 +17,9 @@ package io.github.crow_misia.aws.core
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
+import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -25,5 +27,12 @@ inline fun <reified T> Json.encodeToByteArray(value: T): ByteArray {
     return ByteArrayOutputStream().use {
         encodeToStream(value, it)
         it.toByteArray()
+    }
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+inline fun <reified T> Json.decodeFromByteArray(value: ByteArray): T {
+    return ByteArrayInputStream(value).use {
+        decodeFromStream(it)
     }
 }

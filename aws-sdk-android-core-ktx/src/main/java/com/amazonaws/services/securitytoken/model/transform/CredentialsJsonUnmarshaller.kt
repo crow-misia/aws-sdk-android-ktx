@@ -16,11 +16,11 @@
 package com.amazonaws.services.securitytoken.model.transform
 
 import com.amazonaws.services.securitytoken.model.Credentials
-import com.amazonaws.transform.Unmarshaller
 import com.amazonaws.transform.JsonUnmarshallerContext
-import com.amazonaws.transform.SimpleTypeJsonUnmarshallers.StringJsonUnmarshaller
 import com.amazonaws.transform.SimpleTypeJsonUnmarshallers.DateJsonUnmarshaller
+import com.amazonaws.transform.SimpleTypeJsonUnmarshallers.StringJsonUnmarshaller
 import com.amazonaws.transform.TimestampFormat
+import com.amazonaws.transform.Unmarshaller
 
 object CredentialsJsonUnmarshaller : Unmarshaller<Credentials, JsonUnmarshallerContext> {
     override fun unmarshall(context: JsonUnmarshallerContext): Credentials? {
