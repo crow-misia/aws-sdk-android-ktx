@@ -1,6 +1,6 @@
 object Maven {
     const val groupId = "io.github.crow-misia.aws-sdk-android-ktx"
-    const val version = "0.29.1"
+    const val version = "0.29.2"
     const val desc = "AWS SDK for Android with Kotlin"
     const val siteUrl = "https://github.com/crow-misia/aws-sdk-android-ktx"
     const val gitUrl = "https://github.com/crow-misia/aws-sdk-android-ktx.git"
