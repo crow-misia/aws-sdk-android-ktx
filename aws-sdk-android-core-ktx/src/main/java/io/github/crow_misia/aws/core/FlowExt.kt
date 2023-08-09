@@ -30,7 +30,7 @@ import kotlin.time.Duration.Companion.minutes
  */
 interface RetryPolicy {
     /** リトライ回数 */
-    val numRetries: Int
+    val numRetries: Long
     /** 基準間隔 */
     val base: Duration
     /** 最大遅延時間 */
@@ -48,14 +48,13 @@ interface RetryPolicy {
         val Default = create()
 
         fun create(
-            numRetries: Int = Int.MAX_VALUE,
+            numRetries: Long = Long.MAX_VALUE,
             base: Duration = 500.milliseconds,
             maxDelay: Duration = 15.minutes,
             factor: Long = 3L,
             random: Random = Random.Default
         ): RetryPolicy {
             return object : RetryPolicy {
-                private val random = random
                 override val numRetries = numRetries
                 override val base = base
                 override val maxDelay = maxDelay
@@ -70,14 +69,14 @@ interface RetryPolicy {
 
 inline fun <T> Flow<T>.retryWithPolicy(
     retryPolicy: RetryPolicy = RetryPolicy.Default,
-    crossinline isTargetCause: (cause: Throwable) -> Boolean = { it is IOException },
+    crossinline isTargetCause: (cause: Throwable, attempt: Long) -> Boolean = { cause, _ -> cause is IOException },
 ): Flow<T> {
     val base = retryPolicy.base
     val factor = retryPolicy.factor
     val maxDelay = retryPolicy.maxDelay
     var delay = base
     return retryWhen { cause, attempt ->
-        if (isTargetCause(cause) && attempt < retryPolicy.numRetries) {
+        if (isTargetCause(cause, attempt) && attempt < retryPolicy.numRetries) {
             // Decorrlated jitter
             // sleep = min(cap, random_between(base, sleep * 3))
             val random = retryPolicy.randomBetween(base.inWholeMilliseconds.. delay.inWholeMilliseconds * factor)
