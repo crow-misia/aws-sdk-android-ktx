@@ -37,6 +37,7 @@ interface RetryPolicy {
     val maxDelay: Duration
     /** 係数 */
     val factor: Long
+
     /**
      * 指定期間内でランダムな期間を返す.
      * @param range 指定期間
@@ -69,14 +70,14 @@ interface RetryPolicy {
 
 inline fun <T> Flow<T>.retryWithPolicy(
     retryPolicy: RetryPolicy = RetryPolicy.Default,
-    crossinline isTargetCause: (cause: Throwable, attempt: Long) -> Boolean = { cause, _ -> cause is IOException },
+    crossinline predicate: suspend (cause: Throwable, attempt: Long) -> Boolean = { cause, _ -> cause is IOException },
 ): Flow<T> {
     val base = retryPolicy.base
     val factor = retryPolicy.factor
     val maxDelay = retryPolicy.maxDelay
     var delay = base
     return retryWhen { cause, attempt ->
-        if (isTargetCause(cause, attempt) && attempt < retryPolicy.numRetries) {
+        if (predicate(cause, attempt) && attempt < retryPolicy.numRetries) {
             // Decorrlated jitter
             // sleep = min(cap, random_between(base, sleep * 3))
             val random = retryPolicy.randomBetween(base.inWholeMilliseconds.. delay.inWholeMilliseconds * factor)
