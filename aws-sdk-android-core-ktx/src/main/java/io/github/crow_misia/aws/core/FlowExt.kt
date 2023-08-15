@@ -17,6 +17,7 @@ package io.github.crow_misia.aws.core
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retryWhen
 import java.io.IOException
 import kotlin.random.Random
@@ -37,6 +38,8 @@ interface RetryPolicy {
     val maxDelay: Duration
     /** 係数 */
     val factor: Long
+    /** 回数リセット */
+    val resetAttempt: Boolean
 
     /**
      * 指定期間内でランダムな期間を返す.
@@ -53,13 +56,15 @@ interface RetryPolicy {
             base: Duration = 500.milliseconds,
             maxDelay: Duration = 15.minutes,
             factor: Long = 3L,
-            random: Random = Random.Default
+            resetAttempt: Boolean = false,
+            random: Random = Random.Default,
         ): RetryPolicy {
             return object : RetryPolicy {
                 override val numRetries = numRetries
                 override val base = base
                 override val maxDelay = maxDelay
                 override val factor = factor
+                override val resetAttempt = resetAttempt
                 override fun randomBetween(range: LongRange): Duration {
                     return random.nextLong(range).milliseconds
                 }
@@ -76,8 +81,10 @@ inline fun <T> Flow<T>.retryWithPolicy(
     val factor = retryPolicy.factor
     val maxDelay = retryPolicy.maxDelay
     var delay = base
-    return retryWhen { cause, attempt ->
+    var attempt = 0L
+    return retryWhen { cause, _ ->
         if (predicate(cause, attempt) && attempt < retryPolicy.numRetries) {
+            attempt++
             // Decorrlated jitter
             // sleep = min(cap, random_between(base, sleep * 3))
             val random = retryPolicy.randomBetween(base.inWholeMilliseconds.. delay.inWholeMilliseconds * factor)
@@ -87,5 +94,12 @@ inline fun <T> Flow<T>.retryWithPolicy(
         } else {
             return@retryWhen false
         }
+    }.run {
+        if (retryPolicy.resetAttempt) {
+            onEach {
+                delay = base
+                attempt = 0
+            }
+        } else this
     }
 }
