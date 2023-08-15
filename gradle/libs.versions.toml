@@ -4,7 +4,7 @@
 
 aws-android-sdk = "2.73.0"
 
-amplifyframework = "2.11.1"
+amplifyframework = "2.11.2"
 
 dokka = "1.8.20"
 
