@@ -37,6 +37,15 @@ android {
         targetCompatibility = Build.targetCompatibility
     }
 
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all {
+                it.useJUnitPlatform()
+            }
+        }
+    }
+
     publishing {
         singleVariant("release") {
             withSourcesJar()
@@ -67,6 +76,13 @@ dependencies {
     // okhttp3
     implementation(Square.okHttp3)
     implementation(Square.okio)
+
+    // Unit testing
+    testImplementation(Testing.Kotest.runner.junit5)
+    testImplementation(Testing.Kotest.assertions.core)
+    testImplementation(Testing.Kotest.property)
+    testImplementation(Testing.Kotest.extensions.robolectric)
+    testImplementation(Testing.robolectric)
 }
 
 val customDokkaTask by tasks.creating(DokkaTask::class) {
