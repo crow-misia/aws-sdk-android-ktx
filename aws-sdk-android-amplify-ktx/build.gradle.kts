@@ -21,7 +21,7 @@ android {
     compileSdk = Build.compileSdk
 
     defaultConfig {
-        minSdk = Build.minSdk
+        minSdk = 24
         consumerProguardFiles("consumer-proguard-rules.pro")
     }
 
@@ -93,7 +93,7 @@ val customDokkaTask by tasks.creating(DokkaTask::class) {
         plugins(libs.javadoc.plugin)
     }
     inputs.dir("src/main/java")
-    outputDirectory.set(buildDir.resolve("javadoc"))
+    outputDirectory.set(layout.buildDirectory.dir("javadoc"))
 }
 
 val javadocJar by tasks.creating(Jar::class) {

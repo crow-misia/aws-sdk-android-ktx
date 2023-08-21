@@ -12,7 +12,7 @@ class FlowExtTest : StringSpec({
         flowOf(1, 2, 3)
             .onEach {
                 if (it == 3) {
-                    throw IllegalStateException()
+                    error("dummy error")
                 }
             }
             .retryWithPolicy { _, attempt ->
@@ -31,7 +31,7 @@ class FlowExtTest : StringSpec({
         flowOf(1, 2, 3)
             .onEach {
                 if (it == 3) {
-                    throw IllegalStateException()
+                    error("dummy error")
                 }
             }
             .retryWithPolicy(RetryPolicy.create(resetAttempt = true)) { _, attempt ->
