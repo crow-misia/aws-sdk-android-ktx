@@ -96,7 +96,7 @@ internal class ChannelMqttMessageQueue(
     }
 
     override suspend fun send(message: MqttMessage) {
-        queue.trySend(message)
+        queue.send(message)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
@@ -105,9 +105,7 @@ internal class ChannelMqttMessageQueue(
             while (!queue.isClosedForSend && !queue.isEmpty) {
                 delay(100.milliseconds)
             }
-            queue.close()
-        } ?: run {
-            queue.close()
         }
+        queue.close()
     }
 }
