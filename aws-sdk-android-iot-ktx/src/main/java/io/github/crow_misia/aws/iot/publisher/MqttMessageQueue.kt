@@ -91,7 +91,7 @@ internal class ChannelMqttMessageQueue(
     override fun asFlow(client: AWSIotMqttManager): Flow<MqttMessage> {
         return queue.receiveAsFlow()
             .onEach {
-                client.publish(it.data, it.topicName, it.qos, it.userData, it.isRetained)
+                client.publish(it)
             }
     }
 

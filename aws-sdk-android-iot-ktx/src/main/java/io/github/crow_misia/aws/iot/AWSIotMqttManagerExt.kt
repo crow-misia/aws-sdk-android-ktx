@@ -21,6 +21,7 @@ import com.amazonaws.AmazonClientException
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.mobileconnectors.iot.*
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus
+import io.github.crow_misia.aws.iot.publisher.MqttMessage
 import io.github.crow_misia.aws.iot.publisher.TopicName
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -183,6 +184,14 @@ suspend fun AWSIotMqttManager.publish(
     qos = qos,
     userData = null,
     isRetained = isRetained,
+)
+
+suspend fun AWSIotMqttManager.publish(message: MqttMessage) = publish(
+    data = message.data,
+    topic = message.topicName,
+    qos = message.qos,
+    userData = message.userData,
+    isRetained = message.isRetained,
 )
 
 suspend fun <T> AWSIotMqttManager.publish(
