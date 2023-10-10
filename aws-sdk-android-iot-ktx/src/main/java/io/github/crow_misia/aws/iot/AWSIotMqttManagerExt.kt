@@ -17,81 +17,67 @@
 
 package io.github.crow_misia.aws.iot
 
-import com.amazonaws.AmazonClientException
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.mobileconnectors.iot.*
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus
 import io.github.crow_misia.aws.iot.publisher.MqttMessage
 import io.github.crow_misia.aws.iot.publisher.TopicName
+import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.security.KeyStore
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
-@OptIn(DelicateCoroutinesApi::class)
-private fun ProducerScope<AWSIotMqttClientStatus>.createConnectCallback(
-    context: CoroutineDispatcher = Dispatchers.Default,
-): AWSIotMqttClientStatusCallback {
+private fun ProducerScope<AWSIotMqttClientStatus>.createConnectCallback(): AWSIotMqttClientStatusCallback {
     return AWSIotMqttClientStatusCallback { status, cause ->
-        launch(context) {
-            if (isClosedForSend) {
-                return@launch
-            }
-            send(status)
-            cause?.also { close(it) } ?: run {
-                if (status == AWSIotMqttClientStatus.ConnectionLost) {
-                    close()
-                }
+        trySendBlocking(status)
+        cause?.also {
+            close(it)
+        } ?: run {
+            if (status == AWSIotMqttClientStatus.ConnectionLost) {
+                close()
             }
         }
     }
 }
 
-private inline fun ProducerScope<*>.createSubscriptionStatusCallback(
-    context: CoroutineDispatcher = Dispatchers.Default,
-    crossinline onSuccess: suspend () -> Unit,
+private fun createSubscriptionStatusCallback(
+    continuation: CancellableContinuation<Unit>,
 ) = object : AWSIotMqttSubscriptionStatusCallback {
     override fun onSuccess() {
-        launch(context) {
-            onSuccess()
-        }
+        continuation.resume(Unit)
     }
 
     override fun onFailure(exception: Throwable) {
-        close(exception)
+        continuation.resumeWithException(exception)
     }
 }
 
-
-private fun <T> ProducerScope<T?>.createMessageDeliveryCallback(
-    context: CoroutineDispatcher = Dispatchers.Default,
-): AWSIotMqttMessageDeliveryCallback {
+private fun <T> createMessageDeliveryCallback(continuation: CancellableContinuation<T>): AWSIotMqttMessageDeliveryCallback {
     return AWSIotMqttMessageDeliveryCallback { status, userData ->
         when (status) {
             AWSIotMqttMessageDeliveryCallback.MessageDeliveryStatus.Success -> {
-                launch(context) {
-                    @Suppress("UNCHECKED_CAST")
-                    send(userData as? T)
-                    close()
-                }
+                continuation.resume(userData as T)
             }
             AWSIotMqttMessageDeliveryCallback.MessageDeliveryStatus.Fail -> {
-                close(AWSIoTMqttDeliveryException("Error message delivery.", userData))
+                continuation.resumeWithException(AWSIoTMqttDeliveryException("Error message delivery.", userData))
             }
-            else -> close(AWSIoTMqttDeliveryException("Invalid status $status", userData))
+            else -> {
+                continuation.resumeWithException(AWSIoTMqttDeliveryException("Invalid status $status", userData))
+            }
         }
     }
 }
@@ -146,10 +132,8 @@ fun AWSIotMqttManager.connect(
 
 @Suppress("TooGenericExceptionCaught", "SwallowedException")
 private fun AWSIotMqttManager.disconnectQuite() {
-    try {
+    runCatching {
         disconnect()
-    } catch (e: Throwable) {
-        // ignore.
     }
 }
 
@@ -157,18 +141,32 @@ fun AWSIotMqttManager.subscribe(
     topic: TopicName,
     qos: AWSIotMqttQos,
     onDelivered: suspend () -> Unit = { },
+): Flow<SubscribeData> = subscribe(
+    topics = listOf(topic),
+    qos = qos,
+    onDelivered = onDelivered,
+)
+
+fun AWSIotMqttManager.subscribe(
+    topics: List<TopicName>,
+    qos: AWSIotMqttQos,
+    onDelivered: suspend () -> Unit = { },
 ): Flow<SubscribeData> = callbackFlow {
-    subscribeToTopic(topic.value, qos, createSubscriptionStatusCallback(onSuccess = onDelivered)) { topic, data ->
-        launch {
-            send(SubscribeData(topic, data))
+    topics.forEach { topic ->
+        suspendCancellableCoroutine {
+            subscribeToTopic(topic.value, qos, createSubscriptionStatusCallback(it)) { topic, data ->
+                trySend(SubscribeData(topic, data))
+            }
         }
     }
+
+    onDelivered()
+
     awaitClose {
-        @Suppress("SwallowedException")
-        try {
-            unsubscribeTopic(topic.value)
-        } catch (e: AmazonClientException) {
-            // ignore.
+        topics.forEach { topic ->
+            runCatching {
+                unsubscribeTopic(topic.value)
+            }
         }
     }
 }
@@ -200,10 +198,9 @@ suspend fun <T> AWSIotMqttManager.publish(
     qos: AWSIotMqttQos,
     userData: T? = null,
     isRetained: Boolean = false,
-) = callbackFlow {
-    publishData(data, topic.value, qos, createMessageDeliveryCallback<T>(), userData, isRetained)
-    awaitClose()
-}.first()
+) = suspendCancellableCoroutine {
+    publishData(data, topic.value, qos, createMessageDeliveryCallback(it), userData, isRetained)
+}
 
 suspend fun AWSIotMqttManager.publishWithReply(
     data: ByteArray = EMPTY_BYTE_ARRAY,
@@ -231,33 +228,31 @@ suspend fun <T> AWSIotMqttManager.publishWithReply(
     val acceptedTopic = TopicName("${topic.value}/accepted")
     val rejectedTopic = TopicName("${topic.value}/rejected")
 
-    val job = Job()
-    val scope = CoroutineScope(context + job)
+    val scope = CoroutineScope(context)
 
-    // for wait subscribe accepted/rejected topic
-    val publisher = MutableSharedFlow<Unit>()
-    publisher
-        .drop(1)
-        .onEach { publish(data, topic, qos, userData, isRetained) }
-        .launchIn(scope)
-
-    // subscribe accepted topic
-    subscribe(topic = acceptedTopic, qos = qos) { publisher.emit(Unit) }
-        .catch { close(it) }
-        .onEach {
-            send(it)
-            close()
+    // subscribe accepted/rejected topic
+    subscribe(topics = listOf(acceptedTopic, rejectedTopic), qos = qos) {
+        publish(data, topic, qos, userData, isRetained)
+    }.catch {
+        close(it)
+    }.onEach {
+        when (it.topic) {
+            acceptedTopic.value -> {
+                trySendBlocking(it)
+                close()
+            }
+            rejectedTopic.value -> {
+                close(AWSIoTMqttPublishWithReplyException(
+                    message = "Rejected",
+                    topic = it.topic,
+                    response = it.data,
+                    userData = userData,
+                ))
+            }
         }
-        .launchIn(scope)
-    // subscribe rejected topic
-    subscribe(topic = rejectedTopic, qos = qos) { publisher.emit(Unit) }
-        .catch { close(it) }
-        .onEach {
-            close(AWSIoTMqttPublishWithReplyException("Rejected", it.topic, it.data, userData))
-        }
-        .launchIn(scope)
+    }.launchIn(scope)
 
     awaitClose {
-        job.cancel()
+        scope.cancel()
     }
 }.first()

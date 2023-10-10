@@ -83,7 +83,9 @@ class CreateCertificateFromCSRFleetProvisioner @JvmOverloads constructor(
                     data = csrRequest,
                     topic = TopicName("\$aws/certificates/create-from-csr/cbor"),
                     qos = AWSIotMqttQos.QOS1,
-                ).let { Cbor.decodeFromByteArray<CreateCertificateFromCsrResponse>(it.data) }
+                ).let {
+                    Cbor.decodeFromByteArray<CreateCertificateFromCsrResponse>(it.data)
+                }
 
                 val registerRequest = Cbor.encodeToByteArray(RegisterThingRequest(
                     certificateOwnershipToken = csrResponse.certificateOwnershipToken,
@@ -93,7 +95,9 @@ class CreateCertificateFromCSRFleetProvisioner @JvmOverloads constructor(
                     data = registerRequest,
                     topic = TopicName("\$aws/provisioning-templates/$templateName/provision/cbor"),
                     qos = AWSIotMqttQos.QOS1,
-                ).let { Cbor.decodeFromByteArray<RegisterThingResponse>(it.data) }
+                ).let {
+                    Cbor.decodeFromByteArray<RegisterThingResponse>(it.data)
+                }
 
                 AWSIoTProvisioningResponse(
                     deviceConfiguration = registerResponse.deviceConfiguration,

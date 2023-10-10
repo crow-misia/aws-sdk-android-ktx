@@ -64,7 +64,9 @@ class CreateKeysAndCertificateFleetProvisioner(
                 val keysResponse = mqttManager.publishWithReply(
                     topic = TopicName("\$aws/certificates/create/cbor"),
                     qos = AWSIotMqttQos.QOS1,
-                ).let { Cbor.decodeFromByteArray<CreateKeysAndCertificateResponse>(it.data) }
+                ).let {
+                    Cbor.decodeFromByteArray<CreateKeysAndCertificateResponse>(it.data)
+                }
 
                 val registerRequest = Cbor.encodeToByteArray(RegisterThingRequest(
                     certificateOwnershipToken = keysResponse.certificateOwnershipToken,
@@ -74,7 +76,9 @@ class CreateKeysAndCertificateFleetProvisioner(
                     data = registerRequest,
                     topic = TopicName("\$aws/provisioning-templates/$templateName/provision/cbor"),
                     qos = AWSIotMqttQos.QOS1,
-                ).let { Cbor.decodeFromByteArray<RegisterThingResponse>(it.data) }
+                ).let {
+                    Cbor.decodeFromByteArray<RegisterThingResponse>(it.data)
+                }
 
                 AWSIoTProvisioningResponse(
                     deviceConfiguration = registerResponse.deviceConfiguration,

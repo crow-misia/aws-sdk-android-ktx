@@ -47,7 +47,11 @@ class AWSIoTMqttShadowClient internal constructor(
         manager: AWSIotMqttManager,
         thinsName: ThingName,
         jsonFormat: Json = defaultJsonFormat,
-    ): this(manager = manager, thingNameProvider = { thinsName }, jsonFormat = jsonFormat)
+    ): this(
+        manager = manager,
+        thingNameProvider = { thinsName },
+        jsonFormat = jsonFormat,
+    )
 
     fun disconnect() {
         manager.disconnect()
@@ -68,7 +72,9 @@ class AWSIoTMqttShadowClient internal constructor(
             manager.publishWithReply(
                 topic = getTopicName(shadowName, "get"),
                 qos = AWSIotMqttQos.QOS1,
-            ).let { jsonFormat.decodeFromStream(responseSerializer, it.inputStream()) }
+            ).let {
+                jsonFormat.decodeFromStream(responseSerializer, it.inputStream())
+            }
         }
     }
 
@@ -95,9 +101,7 @@ class AWSIoTMqttShadowClient internal constructor(
         version: Int? = null,
     ): DeviceShadowUpdateResponse<T> {
         val request = DeviceShadowUpdateRequest(
-            state = DeviceShadowState(
-                reported = reported,
-            ),
+            state = DeviceShadowState(reported = reported),
             clientToken = clientToken,
             version = version,
         )
@@ -107,7 +111,9 @@ class AWSIoTMqttShadowClient internal constructor(
                 data = request.asByteArray(serializer),
                 topic = getTopicName(shadowName, "update"),
                 qos = AWSIotMqttQos.QOS1,
-            ).let { jsonFormat.decodeFromStream(responseSerializer, it.inputStream()) }
+            ).let {
+                jsonFormat.decodeFromStream(responseSerializer, it.inputStream())
+            }
         }
     }
 
@@ -126,7 +132,9 @@ class AWSIoTMqttShadowClient internal constructor(
         return manager.subscribe(
             topic = getTopicName(shadowName, "update/delta"),
             qos = AWSIotMqttQos.QOS1,
-        ).map { jsonFormat.decodeFromStream(responseSerializer, it.inputStream()) }
+        ).map {
+            jsonFormat.decodeFromStream(responseSerializer, it.inputStream())
+        }
     }
 
     inline fun <reified T> subscribeDocuments(shadowName: String? = null): Flow<DeviceShadowDocumentsResponse<T>> {
@@ -144,7 +152,9 @@ class AWSIoTMqttShadowClient internal constructor(
         return manager.subscribe(
             topic = getTopicName(shadowName, "update/documents"),
             qos = AWSIotMqttQos.QOS1,
-        ).map { jsonFormat.decodeFromStream(responseSerializer, it.inputStream()) }
+        ).map {
+            jsonFormat.decodeFromStream(responseSerializer, it.inputStream())
+        }
     }
 
     suspend fun delete(shadowName: String? = null) {
