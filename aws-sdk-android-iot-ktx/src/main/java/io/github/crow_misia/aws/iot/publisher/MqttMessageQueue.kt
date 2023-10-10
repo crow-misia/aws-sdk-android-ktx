@@ -24,9 +24,9 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -43,7 +43,7 @@ interface MqttMessageQueue {
     /**
      * メッセージ送信.
      */
-    suspend fun send(message: MqttMessage)
+    fun send(message: MqttMessage)
 
     /**
      * キューを閉じる.
@@ -67,13 +67,12 @@ internal class FlowMqttMessageQueue(
     private val parentFlow: Flow<MqttMessage>,
 ) : MqttMessageQueue {
     override fun asFlow(client: AWSIotMqttManager): Flow<MqttMessage> {
-        return parentFlow
-            .onEach {
-                client.publish(it.data, it.topicName, it.qos, it.userData, it.isRetained)
-            }
+        return parentFlow.onEach {
+            client.publish(it)
+        }
     }
 
-    override suspend fun send(message: MqttMessage) {
+    override fun send(message: MqttMessage) {
         throw UnsupportedOperationException()
     }
 
@@ -84,19 +83,21 @@ internal class FlowMqttMessageQueue(
 
 internal class ChannelMqttMessageQueue(
     capacity: Int = Channel.UNLIMITED,
-    onBufferOverflow: BufferOverflow = BufferOverflow.DROP_LATEST,
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
 ) : MqttMessageQueue {
-    private val queue = Channel<MqttMessage>(capacity = capacity, onBufferOverflow = onBufferOverflow)
+    private val queue = Channel<MqttMessage>(
+        capacity = capacity,
+        onBufferOverflow = onBufferOverflow,
+    )
 
     override fun asFlow(client: AWSIotMqttManager): Flow<MqttMessage> {
-        return queue.receiveAsFlow()
-            .onEach {
-                client.publish(it)
-            }
+        return queue.consumeAsFlow().onEach {
+            client.publish(it)
+        }
     }
 
-    override suspend fun send(message: MqttMessage) {
-        queue.send(message)
+    override fun send(message: MqttMessage) {
+        queue.trySend(message)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)

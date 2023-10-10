@@ -32,6 +32,9 @@ fun MainContent(viewModel: MainViewModel) {
         Button(onClick = viewModel::onClickSubscribeShadow) {
             Text(text = stringResource(R.string.subscribe_shadow))
         }
+        Button(onClick = viewModel::onClickSend) {
+            Text(text = stringResource(R.string.send_message))
+        }
         Button(onClick = viewModel::onClickGetShadow) {
             Text(text = stringResource(R.string.get_shadow))
         }

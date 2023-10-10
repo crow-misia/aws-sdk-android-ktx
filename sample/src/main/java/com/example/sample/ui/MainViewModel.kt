@@ -18,12 +18,15 @@ import com.example.sample.R
 import io.github.crow_misia.aws.iot.*
 import io.github.crow_misia.aws.iot.keystore.BasicKeyStoreProvisioningManager
 import io.github.crow_misia.aws.iot.provisioning.CreateCertificateFromCSRFleetProvisioner
+import io.github.crow_misia.aws.iot.publisher.MqttMessage
+import io.github.crow_misia.aws.iot.publisher.MqttMessageQueue
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.Serializable
 import timber.log.Timber
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.seconds
 
 class MainViewModel(application: Application) : AndroidViewModel(application), DefaultLifecycleObserver {
     private val sharedPreferences = application.getSharedPreferences("app", Context.MODE_PRIVATE)
@@ -55,10 +58,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
     }
 
     private var shadowClient: AWSIoTMqttShadowClient? = null
+    private var messageQueue: MqttMessageQueue? = null
 
     override fun onCleared() {
         shadowClient?.disconnect()
         shadowClient = null
+        viewModelScope.launch {
+            messageQueue?.close(1.seconds)
+            messageQueue = null
+        }
 
         provider.allDisconnect()
 
@@ -134,11 +142,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
                 // waiting until connected.
                 .filter { it == AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus.Connected }
                 .flatMapConcat {
+                    messageQueue = MqttMessageQueue.createMessageQueue().also {
+                        it.asFlow(manager)
+                            .catch { e -> Timber.e(e) }
+                            .onEach { message -> Timber.i("message queue received. $message") }
+                            .launchIn(viewModelScope)
+                    }
                     shadowClient.subscribeDocuments<SampleDeviceData>()
                 }
                 .onEach { Timber.i("Received shadow data = %s", it) }
                 .catch { e -> Timber.e(e, "Error subscribe shadow.") }
                 .launchIn(this)
+        }
+    }
+
+    fun onClickSend() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val queue = messageQueue ?: return@launch
+
+            queue.send(SampleMqttMessage(System.currentTimeMillis()))
         }
     }
 

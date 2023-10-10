@@ -3,6 +3,7 @@
 
     <string name="provisioning">provisioning</string>
     <string name="subscribe_shadow">subscribe shadow</string>
+    <string name="send_message">send message</string>
     <string name="get_shadow">get shadow</string>
     <string name="update_shadow">update shadow</string>
     <string name="delete_shadow">delete shadow</string>
