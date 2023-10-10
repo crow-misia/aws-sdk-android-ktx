@@ -87,11 +87,9 @@ class AWSIotMqttManagerProviderImpl(
 
     override fun allDisconnect() {
         cache.values.removeAll {
-            try {
+            runCatching {
                 it.disconnect()
-            } catch (_: Throwable) {
-                true
-            }
+            }.getOrDefault(true)
         }
     }
 }

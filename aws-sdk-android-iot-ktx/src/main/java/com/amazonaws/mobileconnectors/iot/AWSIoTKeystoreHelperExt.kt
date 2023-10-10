@@ -16,12 +16,9 @@
 package com.amazonaws.mobileconnectors.iot
 
 import com.amazonaws.AmazonClientException
-import java.io.IOException
-import java.security.GeneralSecurityException
 import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
-import java.security.spec.InvalidKeySpecException
 
 @Suppress("unused")
 object AWSIoTKeystoreHelperExt {
@@ -37,14 +34,10 @@ object AWSIoTKeystoreHelperExt {
 
     fun parsePrivateKeyFromPem(pem: String): PrivateKey {
         val privateKeyReader = PrivateKeyReader(pem)
-        return try {
+        return runCatching {
             privateKeyReader.privateKey
-        } catch (e: IOException) {
-            throw AmazonClientException("An error occurred saving the certificate and key.", e)
-        } catch (e: InvalidKeySpecException) {
-            throw AWSIotCertificateException(
-                "An error occurred saving the certificate and key.", e
-            )
+        }.getOrElse {
+            throw AmazonClientException("An error occurred saving the certificate and key.", it)
         }
     }
 
@@ -95,16 +88,14 @@ object AWSIoTKeystoreHelperExt {
         privateKey: PrivateKey,
         keystorePassword: CharArray,
     ): KeyStore {
-        return try {
+        return runCatching {
             KeyStore.getInstance(KeyStore.getDefaultType()).also {
                 it.load(null)
                 it.setCertificateEntry(certId, certificates[0])
                 it.setKeyEntry(certId, privateKey, keystorePassword, certificates)
             }
-        } catch (e: IOException) {
-            throw AmazonClientException("Error retrieving certificate and key.", e)
-        } catch (e: GeneralSecurityException) {
-            throw AWSIotCertificateException("Error retrieving certificate and key.", e)
+        }.getOrElse {
+            throw AmazonClientException("Error retrieving certificate and key.", it)
         }
     }
 
@@ -121,7 +112,7 @@ object AWSIoTKeystoreHelperExt {
         keyStore: KeyStore,
         keyStorePassword: CharArray,
     ): KeyStore {
-        return try {
+        return runCatching {
             val certs = keyStore.getCertificateChain(certId).copyOf()
             val key = keyStore.getKey(certId, keyStorePassword)
             KeyStore.getInstance(KeyStore.getDefaultType()).also {
@@ -129,10 +120,8 @@ object AWSIoTKeystoreHelperExt {
                 it.setCertificateEntry(certId, certs[0])
                 it.setKeyEntry(certId, key, AWSIotKeystoreHelper.AWS_IOT_INTERNAL_KEYSTORE_PASSWORD.toCharArray(), certs)
             }
-        } catch (e: GeneralSecurityException) {
-            throw AWSIotCertificateException("Error retrieving certificate and key.", e)
-        } catch (e: IOException) {
-            throw AmazonClientException("Error retrieving certificate and key.", e)
+        }.getOrElse {
+            throw AWSIotCertificateException("Error retrieving certificate and key.", it)
         }
     }
 }

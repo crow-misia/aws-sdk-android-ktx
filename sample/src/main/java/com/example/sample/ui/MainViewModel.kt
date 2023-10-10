@@ -81,7 +81,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
 
         val serialNumber = UUID.randomUUID().toString()
         viewModelScope.launch(context = Dispatchers.IO) {
-            try {
+            runCatching {
                 provisioningManager.provisioning(mapOf(
                     "SerialNumber" to serialNumber,
                 )).apply {
@@ -95,8 +95,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
                     }
                     Timber.i("Registered things.\n%s", this)
                 }
-            } catch (e: Throwable) {
-                Timber.e(e, "Error provisioning.")
+            }.onFailure {
+                Timber.e(it, "Error provisioning.")
             }
         }
     }
@@ -146,11 +146,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         viewModelScope.launch(Dispatchers.IO) {
             val shadowClient = shadowClient ?: return@launch
 
-            try {
-                val data = shadowClient.get<SampleDeviceData>()
-                Timber.i("Get shadow data = %s", data)
-            } catch (e: Throwable) {
-                Timber.e(e, "Error get shadow.")
+            runCatching {
+                shadowClient.get<SampleDeviceData>()
+            }.onSuccess {
+                Timber.i("Get shadow data = %s", it)
+            }.onFailure {
+                Timber.e(it, "Error get shadow.")
             }
         }
     }
@@ -161,12 +162,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         viewModelScope.launch(Dispatchers.IO) {
             val shadowClient = shadowClient ?: return@launch
 
-            try {
+            runCatching {
                 val count = counter.incrementAndGet()
-                val data = shadowClient.update(SampleDeviceData(count))
-                Timber.i("Updated shadow data = %s", data)
-            } catch (e: Throwable) {
-                Timber.e(e, "Error update shadow.")
+                shadowClient.update(SampleDeviceData(count))
+            }.onSuccess {
+                Timber.i("Updated shadow data = %s", it)
+            }.onFailure {
+                Timber.e(it, "Error update shadow.")
             }
         }
     }
@@ -175,11 +177,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         viewModelScope.launch(Dispatchers.IO) {
             val shadowClient = shadowClient ?: return@launch
 
-            try {
+            runCatching {
                 shadowClient.delete()
+            }.onSuccess {
                 Timber.i("Deleted shadow data")
-            } catch (e: Throwable) {
-                Timber.e(e, "Error delete shadow.")
+            }.onFailure {
+                Timber.e(it, "Error delete shadow.")
             }
         }
     }

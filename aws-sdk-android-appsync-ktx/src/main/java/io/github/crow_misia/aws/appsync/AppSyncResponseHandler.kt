@@ -34,7 +34,6 @@ import com.apollographql.apollo3.api.parseJsonResponse
 import okio.buffer
 import okio.source
 import java.io.ByteArrayInputStream
-import java.io.IOException
 import java.util.zip.GZIPInputStream
 
 /**
@@ -99,10 +98,10 @@ class AppSyncResponseHandler<D : Operation.Data>(
             }
         } finally {
             if (!needsConnectionLeftOpen) {
-                try {
+                runCatching {
                     jsonReader.close()
-                } catch (e: IOException) {
-                    log.warn("Error closing json parser", e)
+                }.onFailure {
+                    log.warn("Error closing json parser", it)
                 }
             }
         }

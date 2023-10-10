@@ -15,7 +15,6 @@
  */
 package io.github.crow_misia.aws.amplify.core
 
-import com.amazonaws.AmazonClientException
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amplifyframework.auth.AWSCredentials
 import com.amplifyframework.auth.AuthException
@@ -25,12 +24,10 @@ fun <T : AWSCredentials> AWSCredentialsProvider.toAmplifyCredentialProvider(): c
     return object : com.amplifyframework.auth.AWSCredentialsProvider<T> {
         @Suppress("UNCHECKED_CAST")
         override fun fetchAWSCredentials(onSuccess: Consumer<T>, onError: Consumer<AuthException>) {
-            try {
+            runCatching {
                 onSuccess.accept(credentials.toAmplifyCredentials() as T)
-            } catch (e: AmazonClientException) {
-                onError.accept(AuthException(e.message.orEmpty(), "", e))
-            } catch (e: IllegalStateException) {
-                onError.accept(AuthException(e.message.orEmpty(), "", e))
+            }.getOrElse {
+                onError.accept(AuthException(it.message.orEmpty(), "", it))
             }
         }
     }

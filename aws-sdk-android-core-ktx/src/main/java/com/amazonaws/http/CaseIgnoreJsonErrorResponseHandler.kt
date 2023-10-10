@@ -18,7 +18,6 @@ package com.amazonaws.http
 import com.amazonaws.AmazonClientException
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.transform.JsonErrorUnmarshaller
-import java.io.IOException
 
 class CaseIgnoreJsonErrorResponseHandler(
     private val unmarshallerList: List<JsonErrorUnmarshaller>,
@@ -36,10 +35,10 @@ class CaseIgnoreJsonErrorResponseHandler(
                 fixedHeaders.forEach { header -> it.header(header.key, header.value) }
             }
             .build()
-        val error = try {
+        val error = runCatching {
             JsonErrorResponse.fromResponse(fixedResponse)
-        } catch (e: IOException) {
-            throw AmazonClientException("Unable to parse error response", e)
+        }.getOrElse {
+            throw AmazonClientException("Unable to parse error response", it)
         }
 
         val ase = runErrorUnmarshallers(error) ?: return null
