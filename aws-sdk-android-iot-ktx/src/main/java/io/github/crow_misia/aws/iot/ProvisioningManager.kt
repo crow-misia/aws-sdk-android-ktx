@@ -24,5 +24,7 @@ interface ProvisioningManager {
      *
      * @param parameters Provisioning Parameters
      */
-    suspend fun provisioning(parameters: Map<String, String>): AWSIoTProvisioningResponse
+    suspend fun provisioning(
+        parameters: Map<String, String>,
+    ): AWSIoTProvisioningResponse
 }

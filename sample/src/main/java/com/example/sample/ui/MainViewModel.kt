@@ -82,19 +82,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         val serialNumber = UUID.randomUUID().toString()
         viewModelScope.launch(context = Dispatchers.IO) {
             runCatching {
-                provisioningManager.provisioning(mapOf(
-                    "SerialNumber" to serialNumber,
-                )).apply {
-                    saveCertificateAndPrivateKey(
-                        keystorePath = keystorePathStr,
-                        keystoreName = keystoreName,
-                    )
-                    sharedPreferences.edit {
-                        putString("certificateId", certificateId)
-                        putString("thingName", thingName)
-                    }
-                    Timber.i("Registered things.\n%s", this)
+                provisioningManager.provisioning(
+                    mapOf("SerialNumber" to serialNumber)
+                )
+            }.mapCatching {
+                it.saveCertificateAndPrivateKey(
+                    keystorePath = keystorePathStr,
+                    keystoreName = keystoreName,
+                )
+                sharedPreferences.edit {
+                    putString("certificateId", it.certificateId)
+                    putString("thingName", it.thingName)
                 }
+                Timber.i("Registered things.\n%s", this)
             }.onFailure {
                 Timber.e(it, "Error provisioning.")
             }

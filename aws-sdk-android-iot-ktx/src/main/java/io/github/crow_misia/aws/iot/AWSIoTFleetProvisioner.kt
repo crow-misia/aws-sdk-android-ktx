@@ -20,13 +20,14 @@ import com.amazonaws.mobileconnectors.iot.AWSIoTKeystoreHelperExt
 import com.amazonaws.mobileconnectors.iot.AWSIotKeystoreHelper
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import java.security.KeyStore
 import java.security.PrivateKey
+import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-@Suppress("unused")
 interface AWSIoTFleetProvisioner {
     companion object {
         // default provisioning timeout duration.
@@ -38,14 +39,14 @@ interface AWSIoTFleetProvisioner {
         templateName: String,
         parameters: Map<String, String> = emptyMap(),
         timeout: Duration = defaultTimeout,
-    ): AWSIoTProvisioningResponse {
-        return provisioningThing(
-            templateName = templateName,
-            parameters = parameters,
-            timeout = timeout,
-        ) {
-            connectUsingALPN(keyStore = keyStore)
-        }
+        context: CoroutineContext = Dispatchers.IO,
+    ) = provisioningThing(
+        templateName = templateName,
+        parameters = parameters,
+        timeout = timeout,
+        context = context,
+    ) {
+        connectUsingALPN(keyStore = keyStore)
     }
 
     suspend fun provisioningThingWithProxy(
@@ -55,14 +56,14 @@ interface AWSIoTFleetProvisioner {
         templateName: String,
         parameters: Map<String, String> = emptyMap(),
         timeout: Duration = defaultTimeout,
-    ): AWSIoTProvisioningResponse {
-        return provisioningThing(
-            templateName = templateName,
-            parameters = parameters,
-            timeout = timeout,
-        ) {
-            connectWithProxy(keyStore = keyStore, proxyHost = proxyHost, proxyPort = proxyPort)
-        }
+        context: CoroutineContext = Dispatchers.IO,
+    ) = provisioningThing(
+        templateName = templateName,
+        parameters = parameters,
+        timeout = timeout,
+        context = context,
+    ) {
+        connectWithProxy(keyStore = keyStore, proxyHost = proxyHost, proxyPort = proxyPort)
     }
 
     suspend fun provisioningThing(
@@ -70,14 +71,14 @@ interface AWSIoTFleetProvisioner {
         templateName: String,
         parameters: Map<String, String> = emptyMap(),
         timeout: Duration = defaultTimeout,
-    ): AWSIoTProvisioningResponse {
-        return provisioningThing(
-            templateName = templateName,
-            parameters = parameters,
-            timeout = timeout,
-        ) {
-            connect(keyStore = keyStore)
-        }
+        context: CoroutineContext = Dispatchers.IO,
+    ) = provisioningThing(
+        templateName = templateName,
+        parameters = parameters,
+        timeout = timeout,
+        context = context,
+    ) {
+        connect(keyStore = keyStore)
     }
 
     suspend fun provisioningThing(
@@ -85,14 +86,14 @@ interface AWSIoTFleetProvisioner {
         templateName: String,
         parameters: Map<String, String> = emptyMap(),
         timeout: Duration = defaultTimeout,
-    ): AWSIoTProvisioningResponse {
-        return provisioningThing(
-            templateName = templateName,
-            parameters = parameters,
-            timeout = timeout,
-        ) {
-            connect(credentialsProvider = credentialsProvider)
-        }
+        context: CoroutineContext = Dispatchers.IO,
+    ) = provisioningThing(
+        templateName = templateName,
+        parameters = parameters,
+        timeout = timeout,
+        context = context,
+    ) {
+        connect(credentialsProvider = credentialsProvider)
     }
 
     suspend fun provisioningThing(
@@ -103,19 +104,19 @@ interface AWSIoTFleetProvisioner {
         templateName: String,
         parameters: Map<String, String> = emptyMap(),
         timeout: Duration = defaultTimeout,
-    ): AWSIoTProvisioningResponse {
-        return provisioningThing(
-            templateName = templateName,
-            parameters = parameters,
-            timeout = timeout,
-        ) {
-            connect(
-                tokenKeyName = tokenKeyName,
-                token = token,
-                tokenSignature = tokenSignature,
-                customAuthorizer = customAuthorizer
-            )
-        }
+        context: CoroutineContext = Dispatchers.IO,
+    ) = provisioningThing(
+        templateName = templateName,
+        parameters = parameters,
+        timeout = timeout,
+        context = context,
+    ) {
+        connect(
+            tokenKeyName = tokenKeyName,
+            token = token,
+            tokenSignature = tokenSignature,
+            customAuthorizer = customAuthorizer
+        )
     }
 
     suspend fun provisioningThing(
@@ -124,17 +125,17 @@ interface AWSIoTFleetProvisioner {
         templateName: String,
         parameters: Map<String, String> = emptyMap(),
         timeout: Duration = defaultTimeout,
-    ): AWSIoTProvisioningResponse {
-        return provisioningThing(
-            templateName = templateName,
-            parameters = parameters,
-            timeout = timeout,
-        ) {
-            connect(
-                username = username,
-                password = password,
-            )
-        }
+        context: CoroutineContext = Dispatchers.IO,
+    ) = provisioningThing(
+        templateName = templateName,
+        parameters = parameters,
+        timeout = timeout,
+        context = context,
+    ) {
+        connect(
+            username = username,
+            password = password,
+        )
     }
 
     /**
@@ -146,6 +147,7 @@ interface AWSIoTFleetProvisioner {
         templateName: String,
         parameters: Map<String, String> = emptyMap(),
         timeout: Duration = defaultTimeout,
+        context: CoroutineContext = Dispatchers.IO,
         connect: suspend AWSIotMqttManager.() -> Flow<AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus>,
     ): AWSIoTProvisioningResponse
 }

@@ -36,7 +36,10 @@ abstract class AbstractProvisioningManager(
      * @param parameters Provisioning Parameters
      * @return Provisioning Response
      */
-    protected abstract suspend fun provisioningThing(provisioner: AWSIoTFleetProvisioner, parameters: Map<String, String>): AWSIoTProvisioningResponse
+    protected abstract suspend fun provisioningThing(
+        provisioner: AWSIoTFleetProvisioner,
+        parameters: Map<String, String>,
+    ): AWSIoTProvisioningResponse
 
     /**
      * Generate Parameters for Provisioning.
@@ -54,7 +57,9 @@ abstract class AbstractProvisioningManager(
         return mqttManagerProvider.provide(clientId)
     }
 
-    override suspend fun provisioning(parameters: Map<String, String>): AWSIoTProvisioningResponse {
+    override suspend fun provisioning(
+        parameters: Map<String, String>,
+    ): AWSIoTProvisioningResponse {
         val manager = createMqttManager()
         val provisioner = provisionerProvider.provide(manager)
         return provisioningThing(provisioner, generateParameters(parameters))
