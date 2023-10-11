@@ -21,13 +21,17 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.onFailure
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withTimeoutOrNull
+import java.time.Clock
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -38,7 +42,7 @@ interface MqttMessageQueue {
     /**
      * Flowを取得.
      */
-    fun asFlow(client: AWSIotMqttManager): Flow<MqttMessage>
+    suspend fun asFlow(client: AWSIotMqttManager): Flow<MqttMessage>
 
     /**
      * メッセージ送信.
@@ -53,8 +57,8 @@ interface MqttMessageQueue {
     suspend fun close(timeout: Duration)
 
     companion object {
-        fun createMessageQueue(): MqttMessageQueue {
-            return ChannelMqttMessageQueue()
+        fun createMessageQueue(clock: Clock, messageExpired: Duration): MqttMessageQueue {
+            return ChannelMqttMessageQueue(clock, messageExpired)
         }
 
         fun wrap(block: suspend FlowCollector<MqttMessage>.() -> Unit): MqttMessageQueue {
@@ -66,7 +70,7 @@ interface MqttMessageQueue {
 internal class FlowMqttMessageQueue(
     private val parentFlow: Flow<MqttMessage>,
 ) : MqttMessageQueue {
-    override fun asFlow(client: AWSIotMqttManager): Flow<MqttMessage> {
+    override suspend fun asFlow(client: AWSIotMqttManager): Flow<MqttMessage> {
         return parentFlow.onEach {
             client.publish(it)
         }
@@ -82,22 +86,40 @@ internal class FlowMqttMessageQueue(
 }
 
 internal class ChannelMqttMessageQueue(
-    capacity: Int = Channel.UNLIMITED,
-    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
+    private val clock: Clock,
+    private val messageExpired: Duration,
+    private val capacity: Int = Channel.UNLIMITED,
+    private val onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
 ) : MqttMessageQueue {
-    private val queue = Channel<MqttMessage>(
-        capacity = capacity,
-        onBufferOverflow = onBufferOverflow,
+    private var queue = Channel<MqttMessage>(
+        capacity = Channel.RENDEZVOUS,
+        onBufferOverflow = BufferOverflow.SUSPEND,
     )
+    private val errorBoundary = CopyOnWriteArrayList<ErrorMqttMessage>()
 
-    override fun asFlow(client: AWSIotMqttManager): Flow<MqttMessage> {
-        return queue.consumeAsFlow().onEach {
-            client.publish(it)
+    override suspend fun asFlow(client: AWSIotMqttManager): Flow<MqttMessage> {
+        return createQueue().onEach { message ->
+            runCatching {
+                client.publish(message)
+            }.onFailure {
+                errorBoundary.add(ErrorMqttMessage.wrap(message, clock))
+            }
+        }.onStart {
+            val limitTime = clock.millis() - messageExpired.inWholeMilliseconds
+            errorBoundary.removeAll {
+                if (it.timestamp < limitTime) {
+                    true
+                } else {
+                    queue.trySend(it).isSuccess
+                }
+            }
         }
     }
 
     override fun send(message: MqttMessage) {
-        queue.trySend(message)
+        queue.trySend(message).onFailure {
+            errorBoundary.add(ErrorMqttMessage.wrap(message, clock))
+        }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
@@ -108,5 +130,33 @@ internal class ChannelMqttMessageQueue(
             }
         }
         queue.close()
+    }
+
+    private fun createQueue(): Flow<MqttMessage> {
+        return Channel<MqttMessage>(
+            capacity = capacity,
+            onBufferOverflow = onBufferOverflow,
+        ).also { channel ->
+            queue = channel
+        }.consumeAsFlow()
+    }
+}
+
+/**
+ * エラー発生MQTTメッセージ.
+ *
+ * @property timestamp 送信タイムスタンプ(ms)
+ */
+private class ErrorMqttMessage private constructor(
+    private val delegated: MqttMessage,
+    val timestamp: Long,
+): MqttMessage by delegated {
+    companion object {
+        fun wrap(message: MqttMessage, clock: Clock): ErrorMqttMessage {
+            if (message is ErrorMqttMessage) {
+                return message
+            }
+            return ErrorMqttMessage(message, clock.millis())
+        }
     }
 }
