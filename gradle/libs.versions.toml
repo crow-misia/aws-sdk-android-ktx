@@ -4,7 +4,7 @@
 
 aws-android-sdk = "2.73.0"
 
-amplifyframework = "2.14.4"
+amplifyframework = "2.14.5"
 
 dokka = "1.9.10"
 
@@ -16,7 +16,7 @@ aws-android-sdk-iot = { group = "com.amazonaws", name = "aws-android-sdk-iot", v
 
 amplifyframework-aws-core = { group = "com.amplifyframework", name = "aws-core", version.ref = "amplifyframework" }
 
-bouncycastle-bcpkix = "org.bouncycastle:bcpkix-jdk18on:1.76"
+bouncycastle-bcpkix = "org.bouncycastle:bcpkix-jdk18on:1.77"
 
 dokka-gradle-plugin = { group = "org.jetbrains.dokka", name = "dokka-gradle-plugin", version.ref = "dokka" }
 
