@@ -20,8 +20,4 @@ bouncycastle-bcpkix = "org.bouncycastle:bcpkix-jdk18on:1.77"
 
 dokka-gradle-plugin = { group = "org.jetbrains.dokka", name = "dokka-gradle-plugin", version.ref = "dokka" }
 
-dokka-analysis = { group = "org.jetbrains.dokka", name = "dokka-analysis", version.ref = "dokka" }
-
-dokka-base = { group = "org.jetbrains.dokka", name = "dokka-base", version.ref = "dokka" }
-
 javadoc-plugin = { group = "org.jetbrains.dokka", name = "javadoc-plugin", version.ref = "dokka" }
