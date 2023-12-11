@@ -1,4 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 7.3.1" type="baseline" client="gradle" dependencies="true" name="AGP (7.3.1)" variant="all" version="7.3.1">
+<issues format="6" by="lint 8.2.0" type="baseline" client="gradle" dependencies="true" name="AGP (8.2.0)" variant="all" version="8.2.0">
+
+    <issue
+        id="ObsoleteLintCustomCheck"
+        message="Library lint checks reference invalid APIs; these checks **will be skipped**!&#xA;&#xA;Lint found an issue registry (`androidx.compose.runtime.lint.RuntimeIssueRegistry`)&#xA;which contains some references to invalid API:&#xA;org.jetbrains.kotlin.analysis.api.session.KtAnalysisSessionProvider: org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeTokenFactory getTokenFactory()&#xA;(Referenced from androidx/compose/runtime/lint/AutoboxingStateCreationDetector.class)&#xA;&#xA;Therefore, this lint check library is **not** included&#xA;in analysis. This affects the following lint checks:&#xA;`AutoboxingStateValueProperty`&#xA;`AutoboxingStateCreation`&#xA;`CoroutineCreationDuringComposition`&#xA;`FlowOperatorInvokedInComposition`&#xA;`ComposableLambdaParameterNaming`&#xA;`ComposableLambdaParameterPosition`&#xA;`ComposableNaming`&#xA;`StateFlowValueCalledInComposition`&#xA;`CompositionLocalNaming`&#xA;`MutableCollectionMutableState`&#xA;`ProduceStateDoesNotAssignValue`&#xA;`RememberReturnType`&#xA;`OpaqueUnitKey`&#xA;`UnrememberedMutableState`&#xA;&#xA;To use this lint check, upgrade to a more recent version&#xA;of the library.">
+        <location
+            file="../../../.gradle/caches/transforms-3/d9f24e09255776c50ab08f67cb1b3cab/transformed/runtime-release/jars/lint.jar"/>
+    </issue>
+
+    <issue
+        id="TrustAllX509TrustManager"
+        message="`checkServerTrusted` is empty, which could cause insecure network traffic due to trusting arbitrary TLS/SSL certificates presented by peers">
+        <location
+            file="../../../.gradle/caches/modules-2/files-2.1/org.bouncycastle/bcpkix-jdk18on/1.77/ed953791ba0229747dd0fd9911e3d76a462acfd3/bcpkix-jdk18on-1.77.jar"/>
+    </issue>
+
+    <issue
+        id="TrustAllX509TrustManager"
+        message="`checkServerTrusted` is empty, which could cause insecure network traffic due to trusting arbitrary TLS/SSL certificates presented by peers">
+        <location
+            file="../../../.gradle/caches/modules-2/files-2.1/org.bouncycastle/bcpkix-jdk18on/1.77/ed953791ba0229747dd0fd9911e3d76a462acfd3/bcpkix-jdk18on-1.77.jar"/>
+    </issue>
+
+    <issue
+        id="MonochromeLauncherIcon"
+        message="The application adaptive icon is missing a monochrome tag"
+        errorLine1="&lt;adaptive-icon xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
+        errorLine2="^">
+        <location
+            file="src/main/res/mipmap-anydpi-v26/ic_launcher.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="MonochromeLauncherIcon"
+        message="The application adaptive roundIcon is missing a monochrome tag"
+        errorLine1="&lt;adaptive-icon xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
+        errorLine2="^">
+        <location
+            file="src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml"
+            line="2"
+            column="1"/>
+    </issue>
 
 </issues>
