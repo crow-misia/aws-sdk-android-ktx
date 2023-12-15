@@ -10,9 +10,15 @@ complexity:
 style:
   MaxLineLength:
     maxLineLength: 150
+  MagicNumber:
+    ignorePropertyDeclaration: true
+    ignoreExtensionFunctions: true
   WildcardImport:
     active: false
 
 naming:
+  FunctionNaming:
+    ignoreAnnotated:
+      - Composable
   PackageNaming:
     active: false

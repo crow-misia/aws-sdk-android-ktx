@@ -3,12 +3,12 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
-    id("com.android.library")
-    id("io.gitlab.arturbosch.detekt")
-    id("org.jetbrains.dokka")
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.dokka)
+    alias(libs.plugins.kotlin.android)
     id("signing")
     id("maven-publish")
-    kotlin("android")
 }
 
 val mavenName = "aws-sdk-android-amplify-ktx"
@@ -37,18 +37,18 @@ android {
         targetCompatibility = Build.targetCompatibility
     }
 
-    testOptions {
-        unitTests {
-            isIncludeAndroidResources = true
-            all {
-                it.useJUnitPlatform()
-            }
-        }
-    }
-
     publishing {
         singleVariant("release") {
             withSourcesJar()
+        }
+    }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+        unitTests.all {
+            it.useJUnitPlatform()
         }
     }
 }
@@ -64,12 +64,12 @@ kotlin {
 }
 
 dependencies {
-    coreLibraryDesugaring(Android.tools.desugarJdkLibs)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     api(project(":aws-sdk-android-core-ktx"))
 
-    implementation(Kotlin.stdlib)
-    implementation(KotlinX.coroutines.core)
+    implementation(libs.kotlin.stdlib)
+    implementation(libs.kotlinx.coroutines.android)
 
     // aws sdk android
     implementation(libs.aws.android.sdk.core)
@@ -78,11 +78,10 @@ dependencies {
     implementation(libs.amplifyframework.aws.core)
 
     // Unit testing
-    testImplementation(Testing.Kotest.runner.junit5)
-    testImplementation(Testing.Kotest.assertions.core)
-    testImplementation(Testing.Kotest.property)
-    testImplementation(Testing.Kotest.extensions.robolectric)
-    testImplementation(Testing.robolectric)
+    testImplementation(libs.kotest.runner.junit5)
+    testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.kotest.property)
+    testImplementation(libs.mockk)
 }
 
 val customDokkaTask by tasks.creating(DokkaTask::class) {
@@ -90,7 +89,7 @@ val customDokkaTask by tasks.creating(DokkaTask::class) {
         noAndroidSdkLink.set(false)
     }
     dependencies {
-        plugins(libs.javadoc.plugin)
+        plugins(libs.dokka.javadoc.plugin)
     }
     inputs.dir("src/main/java")
     outputDirectory.set(layout.buildDirectory.dir("javadoc"))

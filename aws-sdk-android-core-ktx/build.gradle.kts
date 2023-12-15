@@ -3,12 +3,12 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
-    id("com.android.library")
-    id("io.gitlab.arturbosch.detekt")
-    id("org.jetbrains.dokka")
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.dokka)
+    alias(libs.plugins.kotlin.android)
     id("signing")
     id("maven-publish")
-    kotlin("android")
 }
 
 val mavenName = "aws-sdk-android-core-ktx"
@@ -37,18 +37,18 @@ android {
         targetCompatibility = Build.targetCompatibility
     }
 
-    testOptions {
-        unitTests {
-            isIncludeAndroidResources = true
-            all {
-                it.useJUnitPlatform()
-            }
-        }
-    }
-
     publishing {
         singleVariant("release") {
             withSourcesJar()
+        }
+    }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+        unitTests.all {
+            it.useJUnitPlatform()
         }
     }
 }
@@ -64,25 +64,25 @@ kotlin {
 }
 
 dependencies {
-    coreLibraryDesugaring(Android.tools.desugarJdkLibs)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
-    implementation(Kotlin.stdlib)
-    implementation(KotlinX.coroutines.core)
-    implementation(KotlinX.serialization.json)
+    implementation(libs.kotlin.stdlib)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(platform(libs.kotlinx.serialization.bom))
+    implementation(libs.kotlinx.serialization.json)
 
     // aws sdk android
     api(libs.aws.android.sdk.core)
 
     // okhttp3
-    implementation(Square.okHttp3)
-    implementation(Square.okio)
+    implementation(libs.okhttp3.android)
+    implementation(libs.okio)
 
     // Unit testing
-    testImplementation(Testing.Kotest.runner.junit5)
-    testImplementation(Testing.Kotest.assertions.core)
-    testImplementation(Testing.Kotest.property)
-    testImplementation(Testing.Kotest.extensions.robolectric)
-    testImplementation(Testing.robolectric)
+    testImplementation(libs.kotest.runner.junit5)
+    testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.kotest.property)
+    testImplementation(libs.mockk)
 }
 
 val customDokkaTask by tasks.creating(DokkaTask::class) {
@@ -90,7 +90,7 @@ val customDokkaTask by tasks.creating(DokkaTask::class) {
         noAndroidSdkLink.set(false)
     }
     dependencies {
-        plugins(libs.javadoc.plugin)
+        plugins(libs.dokka.javadoc.plugin)
     }
     inputs.dir("src/main/java")
     outputDirectory.set(layout.buildDirectory.dir("javadoc"))

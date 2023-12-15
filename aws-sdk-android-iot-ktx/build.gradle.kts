@@ -3,13 +3,13 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
-    id("com.android.library")
-    id("io.gitlab.arturbosch.detekt")
-    id("org.jetbrains.dokka")
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.dokka)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.plugin.serialization)
     id("signing")
     id("maven-publish")
-    kotlin("android")
-    kotlin("plugin.serialization")
 }
 
 val mavenName = "aws-sdk-android-iot-ktx"
@@ -38,18 +38,18 @@ android {
         targetCompatibility = Build.targetCompatibility
     }
 
-    testOptions {
-        unitTests {
-            isIncludeAndroidResources = true
-            all {
-                it.useJUnitPlatform()
-            }
-        }
-    }
-
     publishing {
         singleVariant("release") {
             withSourcesJar()
+        }
+    }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+        unitTests.all {
+            it.useJUnitPlatform()
         }
     }
 }
@@ -65,12 +65,12 @@ kotlin {
 }
 
 dependencies {
-    coreLibraryDesugaring(Android.tools.desugarJdkLibs)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     api(project(":aws-sdk-android-core-ktx"))
 
-    implementation(Kotlin.stdlib)
-    implementation(KotlinX.coroutines.core)
+    implementation(libs.kotlin.stdlib)
+    implementation(libs.kotlinx.coroutines.android)
 
     // aws sdk android
     api(libs.aws.android.sdk.iot)
@@ -79,18 +79,19 @@ dependencies {
     implementation(libs.bouncycastle.bcpkix)
 
     // okhttp3
-    implementation(Square.okHttp3)
+    implementation(libs.okhttp3.android)
+    implementation(libs.okio)
 
     // serialization
-    implementation(KotlinX.serialization.json)
-    implementation(KotlinX.serialization.cbor)
+    implementation(platform(libs.kotlinx.serialization.bom))
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.serialization.cbor)
 
     // Unit testing
-    testImplementation(Testing.Kotest.runner.junit5)
-    testImplementation(Testing.Kotest.assertions.core)
-    testImplementation(Testing.Kotest.property)
-    testImplementation(Testing.Kotest.extensions.robolectric)
-    testImplementation(Testing.robolectric)
+    testImplementation(libs.kotest.runner.junit5)
+    testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.kotest.property)
+    testImplementation(libs.mockk)
 }
 
 val customDokkaTask by tasks.creating(DokkaTask::class) {
@@ -98,7 +99,7 @@ val customDokkaTask by tasks.creating(DokkaTask::class) {
         noAndroidSdkLink.set(false)
     }
     dependencies {
-        plugins(libs.javadoc.plugin)
+        plugins(libs.dokka.javadoc.plugin)
     }
     inputs.dir("src/main/java")
     outputDirectory.set(layout.buildDirectory.dir("javadoc"))
@@ -169,8 +170,8 @@ afterEvaluate {
                 val snapshotsRepoUrl = uri("https://oss.sonatype.org/content/repositories/snapshots")
                 url = if (Maven.version.endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
                 credentials {
-                    username = project.findProperty("sona.user") as String? ?: providers.environmentVariable("SONA_USER").orNull
-                    password = project.findProperty("sona.password") as String? ?: providers.environmentVariable("SONA_PASSWORD").orNull
+                    username = providers.gradleProperty("sona.user").orElse(providers.environmentVariable("SONA_USER")).orNull
+                    password = providers.gradleProperty("sona.password").orElse(providers.environmentVariable("SONA_PASSWORD")).orNull
                 }
             }
         }
