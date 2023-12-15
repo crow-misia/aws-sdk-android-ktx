@@ -31,6 +31,7 @@ import com.apollographql.apollo3.api.CustomScalarAdapters
 import com.apollographql.apollo3.api.Operation
 import com.apollographql.apollo3.api.json.jsonReader
 import com.apollographql.apollo3.api.parseJsonResponse
+import com.apollographql.apollo3.api.parseResponse
 import okio.buffer
 import okio.source
 import java.io.ByteArrayInputStream
@@ -79,7 +80,7 @@ class AppSyncResponseHandler<D : Operation.Data>(
         val jsonReader = content.source().buffer().jsonReader()
 
         return try {
-            val result = operation.parseJsonResponse(jsonReader, customScalarAdapters)
+            val result = operation.parseResponse(jsonReader = jsonReader, customScalarAdapters = customScalarAdapters)
 
             checksumCalculatingInputStream?.crC32Checksum?.also { clientSideCRC ->
                 val serverSideCRC = crc32Checksum.toLong()
