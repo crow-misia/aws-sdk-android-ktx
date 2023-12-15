@@ -62,11 +62,11 @@ okio = "3.6.0"
 
 timber = "5.0.1"
 
-apollographql = "3.8.2"
+apollographql = "4.0.0-beta.4"
 
 aws-android-sdk = "2.73.0"
 
-amplifyframework = "2.14.6"
+amplifyframework = "2.14.7"
 
 [libraries]
 
