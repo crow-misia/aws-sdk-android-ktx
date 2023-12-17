@@ -58,7 +58,7 @@ dokka = "1.9.10"
 
 okhttp3 = "5.0.0-alpha.11"
 
-okio = "3.6.0"
+okio = "3.7.0"
 
 timber = "5.0.1"
 
