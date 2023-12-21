@@ -1,6 +1,6 @@
 # aws-sdk-android-ktx
 
-[![Android CI](https://github.com/crow-misia/aws-sdk-android-ktx/actions/workflows/android.yml/badge.svg?branch=main)](https://github.com/crow-misia/aws-sdk-android-ktx/actions/workflows/android.yml)
+[![Build](https://github.com/crow-misia/aws-sdk-android-ktx/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/crow-misia/aws-sdk-android-ktx/actions/workflows/build.yml)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.crow-misia.aws-sdk-android-ktx/aws-sdk-android-iot-ktx.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:io.github.crow-misia.aws-sdk-android-ktx%20a:aws-sdk-android-iot-ktx)
 [![License](https://img.shields.io/github/license/crow-misia/aws-sdk-android-ktx)](LICENSE)
 
