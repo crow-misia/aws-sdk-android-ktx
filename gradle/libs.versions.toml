@@ -18,7 +18,7 @@ dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 
 android-gradle-plugin = "8.2.0"
 
-kotlin = "1.9.21"
+kotlin = "1.9.22"
 
 kotlinx-coroutines = "1.7.3"
 
@@ -56,7 +56,7 @@ mockk = "1.13.8"
 
 dokka = "1.9.10"
 
-okhttp3 = "5.0.0-alpha.11"
+okhttp3 = "5.0.0-alpha.12"
 
 okio = "3.7.0"
 
@@ -64,7 +64,7 @@ timber = "5.0.1"
 
 apollographql = "4.0.0-beta.4"
 
-aws-android-sdk = "2.73.0"
+aws-android-sdk = "2.74.0"
 
 amplifyframework = "2.14.7"
 
