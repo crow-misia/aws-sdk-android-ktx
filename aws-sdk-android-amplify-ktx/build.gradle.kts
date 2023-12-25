@@ -72,7 +72,9 @@ dependencies {
 
     api(project(":aws-sdk-android-core-ktx"))
 
+    implementation(platform(libs.kotlin.bom))
     implementation(libs.kotlin.stdlib)
+    implementation(platform(libs.kotlinx.coroutines.bom))
     implementation(libs.kotlinx.coroutines.android)
 
     // aws sdk android

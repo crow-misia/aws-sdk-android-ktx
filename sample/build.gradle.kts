@@ -73,7 +73,9 @@ dependencies {
     implementation(project(":aws-sdk-android-core-ktx"))
     implementation(project(":aws-sdk-android-iot-ktx"))
 
+    implementation(platform(libs.kotlin.bom))
     implementation(libs.kotlin.stdlib)
+    implementation(platform(libs.kotlinx.coroutines.bom))
     implementation(libs.kotlinx.coroutines.android)
     implementation(platform(libs.kotlinx.serialization.bom))
     implementation(libs.kotlinx.serialization.json)
