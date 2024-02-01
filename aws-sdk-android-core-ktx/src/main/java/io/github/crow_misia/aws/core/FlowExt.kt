@@ -73,9 +73,9 @@ interface RetryPolicy {
     }
 }
 
-inline fun <T> Flow<T>.retryWithPolicy(
+fun <T> Flow<T>.retryWithPolicy(
     retryPolicy: RetryPolicy = RetryPolicy.Default,
-    crossinline predicate: suspend (cause: Throwable, attempt: Long) -> Boolean = { cause, _ -> cause is IOException },
+    predicate: suspend (cause: Throwable, attempt: Long) -> Boolean = { cause, _ -> cause is IOException },
 ): Flow<T> {
     val base = retryPolicy.base
     val factor = retryPolicy.factor
@@ -85,20 +85,19 @@ inline fun <T> Flow<T>.retryWithPolicy(
     return retryWhen { cause, _ ->
         if (predicate(cause, attempt) && attempt < retryPolicy.numRetries) {
             attempt++
-            // Decorrlated jitter
+            // Decorrelated jitter
             // sleep = min(cap, random_between(base, sleep * 3))
             val random = retryPolicy.randomBetween(base.inWholeMilliseconds.. delay.inWholeMilliseconds * factor)
             delay = minOf(maxDelay, random)
             delay(delay)
             return@retryWhen true
-        } else {
-            return@retryWhen false
         }
+        return@retryWhen false
     }.run {
         if (retryPolicy.resetAttempt) {
             onEach {
                 delay = base
-                attempt = 0
+                attempt = 0L
             }
         } else this
     }
