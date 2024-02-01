@@ -45,9 +45,9 @@ class FlowExtTest : StringSpec({
             attemptExpect = listOf(0L, 1L, 2L),
         ) {
             when (it) {
-                0 -> throw IllegalStateException("other error")
-                2 -> throw IllegalStateException("other error")
-                3 -> throw IllegalStateException("other error")
+                0 -> error("other error")
+                2 -> error("other error")
+                3 -> error("other error")
             }
         }
     }
@@ -62,9 +62,9 @@ class FlowExtTest : StringSpec({
             attemptExpect = listOf(0L, 0L, 1L),
         ) {
             when (it) {
-                0 -> throw IllegalStateException("other error")
-                2 -> throw IllegalStateException("other error")
-                3 -> throw IllegalStateException("other error")
+                0 -> error("other error")
+                2 -> error("other error")
+                3 -> error("other error")
             }
         }
     }
