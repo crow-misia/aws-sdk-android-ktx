@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.toList
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class FlowExtTest : StringSpec({
     suspend fun test(
@@ -66,5 +67,18 @@ class FlowExtTest : StringSpec({
                 3 -> throw IllegalStateException("other error")
             }
         }
+    }
+
+    "リトライポリシーのコピー" {
+        val base = RetryPolicy.create(
+            numRetries = 100,
+            base = 123.seconds,
+            resetAttempt = true,
+            factor = 4L,
+            maxDelay = 456.seconds,
+        )
+        base.copy(numRetries = 123).base shouldBe 123.seconds
+        base.copy(base = 1.seconds).numRetries shouldBe 100
+        base.copy(factor = 5).resetAttempt shouldBe true
     }
 })

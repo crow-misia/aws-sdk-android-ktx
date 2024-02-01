@@ -48,6 +48,23 @@ interface RetryPolicy {
      */
     fun randomBetween(range: LongRange): Duration
 
+    /**
+     * 以前の設定値を引き継いで、一部変更する.
+     *
+     * @param numRetries リトライ回数
+     * @param base 基準間隔
+     * @param maxDelay 最大遅延時間
+     * @param factor 係数
+     * @param resetAttempt 回数リセット
+     */
+    fun copy(
+        numRetries: Long = this.numRetries,
+        base: Duration = this.base,
+        maxDelay: Duration = this.maxDelay,
+        factor: Long = this.factor,
+        resetAttempt: Boolean = this.resetAttempt,
+    ): RetryPolicy
+
     companion object {
         val Default = create()
 
@@ -59,17 +76,45 @@ interface RetryPolicy {
             resetAttempt: Boolean = false,
             random: Random = Random.Default,
         ): RetryPolicy {
-            return object : RetryPolicy {
-                override val numRetries = numRetries
-                override val base = base
-                override val maxDelay = maxDelay
-                override val factor = factor
-                override val resetAttempt = resetAttempt
-                override fun randomBetween(range: LongRange): Duration {
-                    return random.nextLong(range).milliseconds
-                }
-            }
+            return RetryPolicyImpl(
+                numRetries = numRetries,
+                base = base,
+                maxDelay = maxDelay,
+                factor = factor,
+                resetAttempt = resetAttempt,
+                random = random,
+            ).copy()
         }
+    }
+}
+
+private data class RetryPolicyImpl(
+    override val numRetries: Long,
+    override val base: Duration,
+    override val maxDelay: Duration,
+    override val factor: Long,
+    override val resetAttempt: Boolean,
+    private val random: Random,
+) : RetryPolicy {
+    override fun randomBetween(range: LongRange): Duration {
+        return random.nextLong(range).milliseconds
+    }
+
+    override fun copy(
+        numRetries: Long,
+        base: Duration,
+        maxDelay: Duration,
+        factor: Long,
+        resetAttempt: Boolean
+    ): RetryPolicy {
+        return copy(
+            numRetries = numRetries,
+            base = base,
+            maxDelay = maxDelay,
+            factor = factor,
+            resetAttempt = resetAttempt,
+            random = random,
+        )
     }
 }
 
