@@ -31,10 +31,10 @@ import kotlinx.serialization.encodeToByteArray
 /**
  * Create Private Keys and Certificate Fleet Provisioner.
  */
-@OptIn(ExperimentalSerializationApi::class)
 class CreateKeysAndCertificateFleetProvisioner(
     mqttManager: AWSIotMqttManager,
 ) : AbstractFleetProvisioner(mqttManager) {
+    @OptIn(ExperimentalSerializationApi::class)
     override suspend fun process(
         templateName: String,
         parameters: Map<String, String>,
@@ -45,6 +45,7 @@ class CreateKeysAndCertificateFleetProvisioner(
         )
     }
 
+    @ExperimentalSerializationApi
     private suspend fun createAndRegister(
         templateName: String,
         parameters: Map<String, String>,

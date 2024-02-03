@@ -44,12 +44,12 @@ import javax.security.auth.x500.X500Principal
 /**
  * Create Certificate from CSR Fleet Provisioner.
  */
-@OptIn(ExperimentalSerializationApi::class)
 class CreateCertificateFromCSRFleetProvisioner @JvmOverloads constructor(
     mqttManager: AWSIotMqttManager,
     private val signingAlgorithm: SigningAlgorithm = SigningAlgorithm.Sha256WithEcdsa,
     private val securityProvider: String? = null,
 ) : AbstractFleetProvisioner(mqttManager) {
+    @OptIn(ExperimentalSerializationApi::class)
     override suspend fun process(
         templateName: String,
         parameters: Map<String, String>,
@@ -89,6 +89,7 @@ class CreateCertificateFromCSRFleetProvisioner @JvmOverloads constructor(
         )
     }
 
+    @ExperimentalSerializationApi
     private suspend fun createAndRegister(
         templateName: String,
         parameters: Map<String, String>,

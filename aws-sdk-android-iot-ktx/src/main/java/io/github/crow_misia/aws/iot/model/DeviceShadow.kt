@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:OptIn(ExperimentalSerializationApi::class, ExperimentalSerializationApi::class)
 
 package io.github.crow_misia.aws.iot.model
 

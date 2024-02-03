@@ -22,21 +22,16 @@ import io.github.crow_misia.aws.iot.AWSIoTMqttPublishWithReplyException
 import io.github.crow_misia.aws.iot.AWSIoTProvisioningException
 import io.github.crow_misia.aws.iot.AWSIoTProvisioningResponse
 import io.github.crow_misia.aws.iot.model.ProvisioningErrorResponse
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.channels.ProducerScope
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.flow.timeout
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.decodeFromByteArray
 import kotlin.coroutines.CoroutineContext
@@ -45,47 +40,36 @@ import kotlin.time.Duration
 /**
  * Abstract Fleet Provisioner.
  */
-@OptIn(ExperimentalSerializationApi::class)
 abstract class AbstractFleetProvisioner(
     protected val mqttManager: AWSIotMqttManager,
 ) : AWSIoTFleetProvisioner {
-    @OptIn(FlowPreview::class)
+    @OptIn(ExperimentalSerializationApi::class)
     override suspend fun provisioningThing(
         templateName: String,
         parameters: Map<String, String>,
         timeout: Duration,
         context: CoroutineContext,
         connect: suspend AWSIotMqttManager.() -> Flow<AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus>,
-    ): AWSIoTProvisioningResponse = channelFlow {
-        val scope = CoroutineScope(context)
+    ): AWSIoTProvisioningResponse = withContext(context) {
+        withTimeout(timeout) {
+            connect(mqttManager)
+                // Wait until connected.
+                .filter { it == AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus.Connected }
+                .take(1)
+                .map { process(templateName, parameters) }
+                .catch { handleError(it) }
+                .first()
+        }
+    }
 
-        connect(mqttManager)
-            .catch {
-                handleError(it)
+    @ExperimentalSerializationApi
+    private fun handleError(cause: Throwable) {
+        when (cause) {
+            is AWSIoTMqttPublishWithReplyException -> {
+                val errorResponse = Cbor.decodeFromByteArray<ProvisioningErrorResponse>(cause.response)
+                throw AWSIoTProvisioningException(errorResponse)
             }
-            // Wait until connected.
-            .timeout(timeout)
-            .filter { it == AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus.Connected }
-            .take(1)
-            .onEach {
-                trySend(process(templateName, parameters))
-            }.catch {
-                handleError(it)
-            }.onCompletion {
-                if (!isClosedForSend) {
-                    handleError(it)
-                }
-            }.launchIn(scope)
-
-        awaitClose()
-    }.first()
-
-    private fun ProducerScope<*>.handleError(cause: Throwable?) {
-        if (cause is AWSIoTMqttPublishWithReplyException) {
-            val errorResponse = Cbor.decodeFromByteArray<ProvisioningErrorResponse>(cause.response)
-            close(AWSIoTProvisioningException(errorResponse))
-        } else {
-            close(cause)
+            else -> throw cause
         }
     }
 

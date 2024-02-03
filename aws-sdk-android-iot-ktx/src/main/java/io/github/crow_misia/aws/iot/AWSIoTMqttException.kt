@@ -21,27 +21,29 @@ import com.amazonaws.AmazonClientException
 import io.github.crow_misia.aws.iot.model.DeviceShadowErrorResponse
 import io.github.crow_misia.aws.iot.model.ProvisioningErrorResponse
 
-sealed class AWSIoTMqttException : AmazonClientException {
-    constructor(message: String) : super(message)
-    constructor(cause: Throwable) : super(cause)
-    constructor(message: String, cause: Throwable) : super(message, cause)
+sealed class AWSIoTMqttException(
+    message: String? = null,
+    cause: Throwable? = null,
+) : AmazonClientException(message, cause) {
+    constructor(cause: Throwable) : this(null, cause)
 }
 
 class AWSIoTMqttDeliveryException(
     message: String,
-    val userData: Any?,
+    val userData: Any? = null,
 ) : AWSIoTMqttException(message)
 
 class AWSIoTMqttPublishWithReplyException(
     message: String,
     val topic: String,
     val response: ByteArray,
-    val userData: Any?,
+    val userData: Any? = null,
 ) : AWSIoTMqttException(message)
 
 class AWSIoTProvisioningException(
     val response: ProvisioningErrorResponse,
-) : AWSIoTMqttException(response.errorMessage)
+    cause: Throwable? = null,
+) : AWSIoTMqttException(response.errorMessage, cause)
 
 class AWSIotDeviceShadowException(
     val response: DeviceShadowErrorResponse,
