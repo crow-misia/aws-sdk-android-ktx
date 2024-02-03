@@ -97,11 +97,15 @@ dependencies {
 
     implementation(libs.timber)
 
+    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.kotest.property)
     testImplementation(libs.mockk)
 
+    androidTestImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.rules)
     androidTestImplementation(libs.androidx.test.ext.junit.ktx)
     androidTestImplementation(libs.androidx.test.ext.truth)
     androidTestImplementation(libs.androidx.test.espresso.core)
