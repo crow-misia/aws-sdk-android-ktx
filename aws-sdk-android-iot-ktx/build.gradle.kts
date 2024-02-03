@@ -24,6 +24,8 @@ android {
     defaultConfig {
         minSdk = Build.minSdk
         consumerProguardFiles("consumer-proguard-rules.pro")
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     lint {
@@ -36,6 +38,13 @@ android {
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = Build.sourceCompatibility
         targetCompatibility = Build.targetCompatibility
+    }
+
+    packaging {
+        resources {
+            excludes.add("/META-INF/{AL2.0,LGPL2.1}")
+            excludes.add("/META-INF/LICENSE*")
+        }
     }
 
     publishing {
@@ -94,10 +103,18 @@ dependencies {
     implementation(libs.kotlinx.serialization.cbor)
 
     // Unit testing
+    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.kotest.property)
     testImplementation(libs.mockk)
+
+    androidTestImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.androidx.test.ext.junit.ktx)
+    androidTestImplementation(libs.androidx.test.ext.truth)
+    androidTestImplementation(libs.androidx.test.espresso.core)
+    androidTestImplementation(libs.mockk.android)
+    androidTestImplementation(libs.truth)
 }
 
 val customDokkaTask by tasks.creating(DokkaTask::class) {
