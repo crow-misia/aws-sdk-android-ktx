@@ -7,5 +7,6 @@
   <CurrentIssues>
     <ID>LongParameterList:AWSIoTFleetProvisioner.kt$AWSIoTFleetProvisioner$( keyStore: KeyStore, proxyHost: String, proxyPort: Int, templateName: String, parameters: Map&lt;String, String> = emptyMap(), timeout: Duration = defaultTimeout, context: CoroutineContext = Dispatchers.IO, )</ID>
     <ID>LongParameterList:AWSIoTFleetProvisioner.kt$AWSIoTFleetProvisioner$( tokenKeyName: String, token: String, tokenSignature: String, customAuthorizer: String, templateName: String, parameters: Map&lt;String, String> = emptyMap(), timeout: Duration = defaultTimeout, context: CoroutineContext = Dispatchers.IO, )</ID>
+    <ID>MaxLineLength:ChannelMqttMessageQueueTest.kt$ChannelMqttMessageQueueTest$coJustRun { client.publish(capture(results)) } andThenThrowsMany(listOf(AWSIoTMqttDeliveryException("error"), AWSIoTMqttDeliveryException("error"))) andThenJust Runs</ID>
   </CurrentIssues>
 </SmellBaseline>
