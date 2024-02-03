@@ -21,7 +21,6 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.onFailure
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
@@ -47,7 +46,7 @@ interface MqttMessageQueue {
     /**
      * メッセージ送信.
      */
-    fun send(message: MqttMessage)
+    suspend fun send(message: MqttMessage)
 
     /**
      * キューを閉じる.
@@ -57,8 +56,18 @@ interface MqttMessageQueue {
     suspend fun close(timeout: Duration)
 
     companion object {
-        fun createMessageQueue(clock: Clock, messageExpired: Duration): MqttMessageQueue {
-            return ChannelMqttMessageQueue(clock, messageExpired)
+        fun createMessageQueue(
+            clock: Clock,
+            messageExpired: Duration,
+            capacity: Int = Channel.UNLIMITED,
+            onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
+        ): MqttMessageQueue {
+            return ChannelMqttMessageQueue(
+                clock = clock,
+                messageExpired = messageExpired,
+                capacity = capacity,
+                onBufferOverflow = onBufferOverflow,
+            )
         }
 
         fun wrap(block: suspend FlowCollector<MqttMessage>.() -> Unit): MqttMessageQueue {
@@ -76,7 +85,7 @@ internal class FlowMqttMessageQueue(
         }
     }
 
-    override fun send(message: MqttMessage) {
+    override suspend fun send(message: MqttMessage) {
         throw UnsupportedOperationException()
     }
 
@@ -88,57 +97,59 @@ internal class FlowMqttMessageQueue(
 internal class ChannelMqttMessageQueue(
     private val clock: Clock,
     private val messageExpired: Duration,
-    private val capacity: Int = Channel.UNLIMITED,
-    private val onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
+    capacity: Int = Channel.UNLIMITED,
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
 ) : MqttMessageQueue {
-    private var queue = Channel<MqttMessage>(
-        capacity = Channel.RENDEZVOUS,
-        onBufferOverflow = BufferOverflow.SUSPEND,
-    )
+    private var isBinded = false
     private val errorBoundary = CopyOnWriteArrayList<ErrorMqttMessage>()
+    private val channel =
+        Channel<MqttMessage>(capacity = capacity, onBufferOverflow = onBufferOverflow) {
+            errorBoundary.add(ErrorMqttMessage.wrap(it) { clock.millis() })
+        }
+    private var parentFlow = channel.consumeAsFlow()
 
     override suspend fun asFlow(client: AWSIotMqttManager): Flow<MqttMessage> {
-        return createQueue().onEach { message ->
-            runCatching {
-                client.publish(message)
-            }.onFailure {
-                errorBoundary.add(ErrorMqttMessage.wrap(message, clock))
-            }
-        }.onStart {
-            val limitTime = clock.millis() - messageExpired.inWholeMilliseconds
-            errorBoundary.removeAll {
-                if (it.timestamp < limitTime) {
-                    true
-                } else {
-                    queue.trySend(it).isSuccess
+        if (!isBinded) {
+            isBinded = true
+            parentFlow = parentFlow.onStart {
+                if (errorBoundary.isNotEmpty()) {
+                    val limitTime = clock.millis() - messageExpired.inWholeMilliseconds
+                    val copyList = ArrayList(errorBoundary)
+                    errorBoundary.clear()
+                    copyList.filter { it.timestamp >= limitTime }
+                        .onEach { emit(it) }
                 }
+            }.onEach {
+                client.publishWithError(it).getOrThrow()
             }
+        }
+        return parentFlow
+    }
+
+    private suspend fun AWSIotMqttManager.publishWithError(message: MqttMessage): Result<*> {
+        return runCatching {
+            publish(message)
+        }.onFailure {
+            errorBoundary.add(ErrorMqttMessage.wrap(message) { clock.millis() })
         }
     }
 
-    override fun send(message: MqttMessage) {
-        queue.trySend(message).onFailure {
-            errorBoundary.add(ErrorMqttMessage.wrap(message, clock))
+    override suspend fun send(message: MqttMessage) {
+        runCatching {
+            channel.send(message)
+        }.onFailure {
+            errorBoundary.add(ErrorMqttMessage.wrap(message) { clock.millis() })
         }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
     override suspend fun close(timeout: Duration) {
         withTimeoutOrNull(timeout) {
-            while (!queue.isClosedForSend && !queue.isEmpty) {
+            while (!channel.isClosedForSend && !channel.isEmpty) {
                 delay(100.milliseconds)
             }
         }
-        queue.close()
-    }
-
-    private fun createQueue(): Flow<MqttMessage> {
-        return Channel<MqttMessage>(
-            capacity = capacity,
-            onBufferOverflow = onBufferOverflow,
-        ).also { channel ->
-            queue = channel
-        }.consumeAsFlow()
+        channel.close()
     }
 }
 
@@ -150,13 +161,12 @@ internal class ChannelMqttMessageQueue(
 private class ErrorMqttMessage private constructor(
     private val delegated: MqttMessage,
     val timestamp: Long,
-): MqttMessage by delegated {
+) : MqttMessage by delegated {
     companion object {
-        fun wrap(message: MqttMessage, clock: Clock): ErrorMqttMessage {
-            if (message is ErrorMqttMessage) {
-                return message
-            }
-            return ErrorMqttMessage(message, clock.millis())
+        inline fun wrap(message: MqttMessage, getCurrentTime: () -> Long): ErrorMqttMessage {
+            return if (message is ErrorMqttMessage) {
+                message
+            } else ErrorMqttMessage(message, getCurrentTime())
         }
     }
 }
