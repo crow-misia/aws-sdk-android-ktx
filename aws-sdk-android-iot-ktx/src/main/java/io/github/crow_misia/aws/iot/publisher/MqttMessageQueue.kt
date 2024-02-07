@@ -17,7 +17,6 @@ package io.github.crow_misia.aws.iot.publisher
 
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import io.github.crow_misia.aws.iot.publish
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -28,7 +27,7 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.withTimeout
 import java.time.Clock
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration
@@ -53,7 +52,7 @@ interface MqttMessageQueue {
      *
      * @param timeout タイムアウト時間
      */
-    suspend fun close(timeout: Duration)
+    suspend fun close(timeout: Duration): Result<Unit>
 
     companion object {
         fun createMessageQueue(
@@ -89,8 +88,8 @@ internal class FlowMqttMessageQueue(
         throw UnsupportedOperationException()
     }
 
-    override suspend fun close(timeout: Duration) {
-        // nop.
+    override suspend fun close(timeout: Duration): Result<Unit> {
+        return Result.success(Unit)
     }
 }
 
@@ -100,6 +99,7 @@ internal class ChannelMqttMessageQueue(
     capacity: Int = Channel.UNLIMITED,
     onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
 ) : MqttMessageQueue {
+    private var isSending = false
     private var isBinded = false
     private val errorBoundary = CopyOnWriteArrayList<ErrorMqttMessage>()
     private val channel =
@@ -111,6 +111,7 @@ internal class ChannelMqttMessageQueue(
     override suspend fun asFlow(client: AWSIotMqttManager): Flow<MqttMessage> {
         if (!isBinded) {
             isBinded = true
+            isSending = false
             parentFlow = parentFlow.onStart {
                 if (errorBoundary.isNotEmpty()) {
                     val limitTime = clock.millis() - messageExpired.inWholeMilliseconds
@@ -120,18 +121,24 @@ internal class ChannelMqttMessageQueue(
                         .onEach { emit(it) }
                 }
             }.onEach {
-                client.publishWithError(it).getOrThrow()
+                client.publishWithError(it)
             }
         }
         return parentFlow
     }
 
-    private suspend fun AWSIotMqttManager.publishWithError(message: MqttMessage): Result<*> {
-        return runCatching {
+    private suspend fun AWSIotMqttManager.publishWithError(message: MqttMessage) {
+        runCatching {
+            isSending = true
             publish(message)
-        }.onFailure {
-            errorBoundary.add(ErrorMqttMessage.wrap(message) { clock.millis() })
-        }
+        }.fold(
+            onSuccess = { isSending = false },
+            onFailure = {
+                isSending = false
+                errorBoundary.add(ErrorMqttMessage.wrap(message) { clock.millis() })
+                throw it
+            },
+        )
     }
 
     override suspend fun send(message: MqttMessage) {
@@ -142,14 +149,19 @@ internal class ChannelMqttMessageQueue(
         }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
-    override suspend fun close(timeout: Duration) {
-        withTimeoutOrNull(timeout) {
-            while (!channel.isClosedForSend && !channel.isEmpty) {
-                delay(100.milliseconds)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override suspend fun close(timeout: Duration): Result<Unit> {
+        return runCatching {
+            withTimeout(timeout) {
+                while (isSending || !channel.isEmpty) {
+                    delay(100.milliseconds)
+                }
             }
+        }.onSuccess {
+            channel.close()
+        }.onFailure {
+            channel.close(it)
         }
-        channel.close()
     }
 }
 
