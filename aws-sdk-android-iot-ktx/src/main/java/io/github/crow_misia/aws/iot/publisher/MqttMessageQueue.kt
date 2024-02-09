@@ -58,14 +58,10 @@ interface MqttMessageQueue {
         fun createMessageQueue(
             clock: Clock,
             messageExpired: Duration,
-            capacity: Int = Channel.UNLIMITED,
-            onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
         ): MqttMessageQueue {
             return ChannelMqttMessageQueue(
                 clock = clock,
                 messageExpired = messageExpired,
-                capacity = capacity,
-                onBufferOverflow = onBufferOverflow,
             )
         }
 
@@ -96,23 +92,25 @@ internal class FlowMqttMessageQueue(
 internal class ChannelMqttMessageQueue(
     private val clock: Clock,
     private val messageExpired: Duration,
-    capacity: Int = Channel.UNLIMITED,
-    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
 ) : MqttMessageQueue {
     private var isSending = false
-    private var isBinded = false
     private val errorBoundary = CopyOnWriteArrayList<ErrorMqttMessage>()
-    private val channel =
-        Channel<MqttMessage>(capacity = capacity, onBufferOverflow = onBufferOverflow) {
+    private var channel: Channel<MqttMessage> = createChannel()
+
+    private fun createChannel(): Channel<MqttMessage> {
+        return Channel(capacity = Channel.BUFFERED, onBufferOverflow = BufferOverflow.SUSPEND) {
             errorBoundary.add(ErrorMqttMessage.wrap(it) { clock.millis() })
         }
-    private var parentFlow = channel.consumeAsFlow()
+    }
 
     override suspend fun asFlow(client: AWSIotMqttManager): Flow<MqttMessage> {
-        if (!isBinded) {
-            isBinded = true
-            isSending = false
-            parentFlow = parentFlow.onStart {
+        channel.close()
+
+        val channel = createChannel().also {
+            this.channel = it
+        }
+        return channel.consumeAsFlow()
+            .onStart {
                 if (errorBoundary.isNotEmpty()) {
                     val limitTime = clock.millis() - messageExpired.inWholeMilliseconds
                     val copyList = ArrayList(errorBoundary)
@@ -120,11 +118,10 @@ internal class ChannelMqttMessageQueue(
                     copyList.filter { it.timestamp >= limitTime }
                         .onEach { emit(it) }
                 }
-            }.onEach {
+            }
+            .onEach {
                 client.publishWithError(it)
             }
-        }
-        return parentFlow
     }
 
     private suspend fun AWSIotMqttManager.publishWithError(message: MqttMessage) {
@@ -159,8 +156,10 @@ internal class ChannelMqttMessageQueue(
             }
         }.onSuccess {
             channel.close()
+            channel = createChannel()
         }.onFailure {
             channel.close(it)
+            channel = createChannel()
         }
     }
 }
