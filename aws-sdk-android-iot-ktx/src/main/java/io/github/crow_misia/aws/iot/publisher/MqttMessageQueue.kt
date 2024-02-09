@@ -95,11 +95,18 @@ internal class ChannelMqttMessageQueue(
 ) : MqttMessageQueue {
     private var isSending = false
     private val errorBoundary = CopyOnWriteArrayList<ErrorMqttMessage>()
-    private var channel: Channel<MqttMessage> = createChannel()
+    private var channel: Channel<MqttMessage> = createErrorBoundaryChannel()
 
     private fun createChannel(): Channel<MqttMessage> {
         return Channel(capacity = Channel.BUFFERED, onBufferOverflow = BufferOverflow.SUSPEND) {
             errorBoundary.add(ErrorMqttMessage.wrap(it) { clock.millis() })
+        }
+    }
+
+    private fun createErrorBoundaryChannel(): Channel<MqttMessage> {
+        return createChannel().also {
+            // 送信されたメッセージは全てerrorBoundaryに格納するため、チャンネルを閉じる
+            it.close()
         }
     }
 
@@ -141,8 +148,6 @@ internal class ChannelMqttMessageQueue(
     override suspend fun send(message: MqttMessage) {
         runCatching {
             channel.send(message)
-        }.onFailure {
-            errorBoundary.add(ErrorMqttMessage.wrap(message) { clock.millis() })
         }
     }
 
@@ -156,10 +161,10 @@ internal class ChannelMqttMessageQueue(
             }
         }.onSuccess {
             channel.close()
-            channel = createChannel()
+            channel = createErrorBoundaryChannel()
         }.onFailure {
             channel.close(it)
-            channel = createChannel()
+            channel = createErrorBoundaryChannel()
         }
     }
 }

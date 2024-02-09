@@ -156,4 +156,39 @@ class ChannelMqttMessageQueueTest : StringSpec({
         results.map { it.data[0].toInt() } shouldNotContainAll (4..count).toList()
         publishSuccessList shouldNotContainAll (4..count).toList()
     }
+
+    "クライアントに紐づける前に送信されたデータが欠損しないこと" {
+        val clockMock = mockk<Clock>()
+        every { clockMock.millis() } returns 1706886000000L
+        val sut = MqttMessageQueue.createMessageQueue(
+            clock = clockMock,
+            messageExpired = 1.minutes,
+        )
+        val results = mutableListOf<MqttMessage>()
+        // for AWSIotMqttManagerExt mocking
+        mockkStatic("io.github.crow_misia.aws.iot.AWSIotMqttManagerExtKt")
+        val client = mockk<AWSIotMqttManager>()
+        coJustRun { client.publish(capture(results)) }
+
+        sut.send(DummyMqttMessage(99))
+
+        val count = 2
+        val publishSuccessList = mutableListOf<Int>()
+        val job = sut.asFlow(client)
+            .retry()
+            .take(3)
+            .onEach { publishSuccessList.add(it.data[0].toInt()) }
+            .launchIn(this)
+
+        withContext(Dispatchers.Default) {
+            (1..count).forEach {
+                sut.send(DummyMqttMessage(it))
+            }
+            sut.close(100.milliseconds)
+        }
+        job.cancelAndJoin()
+
+        results.map { it.data[0].toInt() } shouldBe listOf(99, 1, 2)
+        publishSuccessList shouldBe listOf(99, 1, 2)
+    }
 })
