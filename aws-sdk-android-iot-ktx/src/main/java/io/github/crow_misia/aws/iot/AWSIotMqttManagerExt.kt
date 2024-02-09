@@ -25,6 +25,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -35,17 +36,11 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 private fun ProducerScope<AWSIotMqttClientStatus>.createConnectCallback(): AWSIotMqttClientStatusCallback {
-    var prevStatus: AWSIotMqttClientStatus? = null
     return AWSIotMqttClientStatusCallback { status, cause ->
         cause?.also {
             close(it)
         } ?: run {
-            if (status == AWSIotMqttClientStatus.ConnectionLost) {
-                close()
-            } else if (prevStatus != status) {
-                prevStatus = status
-                trySend(status)
-            } else null
+            trySend(status)
         }
     }
 }
@@ -84,7 +79,7 @@ fun AWSIotMqttManager.connectUsingALPN(
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
     connectUsingALPN(keyStore, createConnectCallback())
     awaitClose { disconnectQuite() }
-}
+}.distinctUntilChanged()
 
 fun AWSIotMqttManager.connectWithProxy(
     keyStore: KeyStore,
@@ -93,21 +88,21 @@ fun AWSIotMqttManager.connectWithProxy(
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
     connectWithProxy(keyStore, proxyHost, proxyPort, createConnectCallback())
     awaitClose { disconnectQuite() }
-}
+}.distinctUntilChanged()
 
 fun AWSIotMqttManager.connect(
     keyStore: KeyStore,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
     connect(keyStore, createConnectCallback())
     awaitClose { disconnectQuite() }
-}
+}.distinctUntilChanged()
 
 fun AWSIotMqttManager.connect(
     credentialsProvider: AWSCredentialsProvider,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
     connect(credentialsProvider, createConnectCallback())
     awaitClose { disconnectQuite() }
-}
+}.distinctUntilChanged()
 
 fun AWSIotMqttManager.connect(
     tokenKeyName: String,
@@ -117,7 +112,7 @@ fun AWSIotMqttManager.connect(
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
     connect(tokenKeyName, token, tokenSignature, customAuthorizer, createConnectCallback())
     awaitClose { disconnectQuite() }
-}
+}.distinctUntilChanged()
 
 fun AWSIotMqttManager.connect(
     username: String,
@@ -125,9 +120,8 @@ fun AWSIotMqttManager.connect(
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
     connect(username, password, createConnectCallback())
     awaitClose { disconnectQuite() }
-}
+}.distinctUntilChanged()
 
-@Suppress("TooGenericExceptionCaught", "SwallowedException")
 private fun AWSIotMqttManager.disconnectQuite() {
     runCatching {
         disconnect()
