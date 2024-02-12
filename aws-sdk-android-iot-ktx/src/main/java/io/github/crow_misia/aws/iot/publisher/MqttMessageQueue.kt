@@ -17,19 +17,17 @@ package io.github.crow_misia.aws.iot.publisher
 
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import io.github.crow_misia.aws.iot.publish
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
+import io.github.crow_misia.aws.iot.publishDefaultTimeout
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withTimeout
 import java.time.Clock
-import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -40,7 +38,7 @@ interface MqttMessageQueue {
     /**
      * Flowを取得.
      */
-    suspend fun asFlow(client: AWSIotMqttManager): Flow<MqttMessage>
+    suspend fun asFlow(client: AWSIotMqttManager, publishTimeout: Duration = publishDefaultTimeout): Flow<MqttMessage>
 
     /**
      * メッセージ送信.
@@ -48,20 +46,22 @@ interface MqttMessageQueue {
     suspend fun send(message: MqttMessage)
 
     /**
-     * キューを閉じる.
+     * キューが空になるまで待つ.
      *
      * @param timeout タイムアウト時間
      */
-    suspend fun close(timeout: Duration): Result<Unit>
+    suspend fun awaitUntilEmpty(timeout: Duration): Result<Unit>
 
     companion object {
         fun createMessageQueue(
             clock: Clock,
             messageExpired: Duration,
+            pollInterval: Duration = 250.milliseconds,
         ): MqttMessageQueue {
             return ChannelMqttMessageQueue(
                 clock = clock,
                 messageExpired = messageExpired,
+                pollInterval = pollInterval,
             )
         }
 
@@ -74,9 +74,9 @@ interface MqttMessageQueue {
 internal class FlowMqttMessageQueue(
     private val parentFlow: Flow<MqttMessage>,
 ) : MqttMessageQueue {
-    override suspend fun asFlow(client: AWSIotMqttManager): Flow<MqttMessage> {
+    override suspend fun asFlow(client: AWSIotMqttManager, publishTimeout: Duration): Flow<MqttMessage> {
         return parentFlow.onEach {
-            client.publish(it)
+            client.publish(it, publishTimeout)
         }
     }
 
@@ -84,7 +84,7 @@ internal class FlowMqttMessageQueue(
         throw UnsupportedOperationException()
     }
 
-    override suspend fun close(timeout: Duration): Result<Unit> {
+    override suspend fun awaitUntilEmpty(timeout: Duration): Result<Unit> {
         return Result.success(Unit)
     }
 }
@@ -92,97 +92,65 @@ internal class FlowMqttMessageQueue(
 internal class ChannelMqttMessageQueue(
     private val clock: Clock,
     private val messageExpired: Duration,
+    private val pollInterval: Duration,
 ) : MqttMessageQueue {
+    private val messageQueue = ConcurrentLinkedQueue<MqttQueueMessage>()
     private var isSending = false
-    private val errorBoundary = CopyOnWriteArrayList<ErrorMqttMessage>()
-    private var channel: Channel<MqttMessage> = createErrorBoundaryChannel()
 
-    private fun createChannel(): Channel<MqttMessage> {
-        return Channel(capacity = Channel.BUFFERED, onBufferOverflow = BufferOverflow.SUSPEND) {
-            errorBoundary.add(ErrorMqttMessage.wrap(it) { clock.millis() })
-        }
-    }
-
-    private fun createErrorBoundaryChannel(): Channel<MqttMessage> {
-        return createChannel().also {
-            // 送信されたメッセージは全てerrorBoundaryに格納するため、チャンネルを閉じる
-            it.close()
-        }
-    }
-
-    override suspend fun asFlow(client: AWSIotMqttManager): Flow<MqttMessage> {
-        channel.close()
-
-        val channel = createChannel().also {
-            this.channel = it
-        }
-        return channel.consumeAsFlow()
-            .onStart {
-                if (errorBoundary.isNotEmpty()) {
-                    val limitTime = clock.millis() - messageExpired.inWholeMilliseconds
-                    val copyList = ArrayList(errorBoundary)
-                    errorBoundary.clear()
-                    copyList.filter { it.timestamp >= limitTime }
-                        .onEach { emit(it) }
-                }
+    override suspend fun asFlow(client: AWSIotMqttManager, publishTimeout: Duration) = channelFlow {
+        while (true) {
+            if (messageQueue.isNotEmpty()) {
+                val limitTime = clock.millis() - messageExpired.inWholeMilliseconds
+                do {
+                    val message = messageQueue.poll()?.also {
+                        if (it.timestamp >= limitTime) {
+                            send(it)
+                        }
+                    }
+                } while (message != null)
             }
-            .onEach {
-                client.publishWithError(it)
-            }
-    }
-
-    private suspend fun AWSIotMqttManager.publishWithError(message: MqttMessage) {
+            delay(pollInterval)
+        }
+    }.onEach { message ->
+        isSending = true
         runCatching {
-            isSending = true
-            publish(message)
-        }.fold(
-            onSuccess = { isSending = false },
-            onFailure = {
-                isSending = false
-                errorBoundary.add(ErrorMqttMessage.wrap(message) { clock.millis() })
-                throw it
-            },
-        )
-    }
+            client.publish(message, publishTimeout)
+            isSending = false
+        }.onFailure {
+            messageQueue.add(message)
+            isSending = false
+        }.getOrThrow()
+    }.filterIsInstance<MqttMessage>()
 
     override suspend fun send(message: MqttMessage) {
-        runCatching {
-            channel.send(message)
-        }
+        messageQueue.add(MqttQueueMessage.wrap(message) { clock.millis() })
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override suspend fun close(timeout: Duration): Result<Unit> {
+    override suspend fun awaitUntilEmpty(timeout: Duration): Result<Unit> {
         return runCatching {
             withTimeout(timeout) {
-                while (isSending || !channel.isEmpty) {
-                    delay(100.milliseconds)
+                while (isSending || messageQueue.isNotEmpty()) {
+                    delay(pollInterval)
                 }
             }
-        }.onSuccess {
-            channel.close()
-            channel = createErrorBoundaryChannel()
-        }.onFailure {
-            channel.close(it)
-            channel = createErrorBoundaryChannel()
         }
     }
 }
 
 /**
- * エラー発生MQTTメッセージ.
+ * キューイングMQTTメッセージ.
  *
  * @property timestamp 送信タイムスタンプ(ms)
  */
-private class ErrorMqttMessage private constructor(
+private class MqttQueueMessage private constructor(
     private val delegated: MqttMessage,
     val timestamp: Long,
 ) : MqttMessage by delegated {
     companion object {
-        inline fun wrap(message: MqttMessage, getCurrentTime: () -> Long): ErrorMqttMessage {
-            return if (message is ErrorMqttMessage) {
+        inline fun wrap(message: MqttMessage, getCurrentTime: () -> Long): MqttQueueMessage {
+            return if (message is MqttQueueMessage) {
                 message
-            } else ErrorMqttMessage(message, getCurrentTime())
+            } else MqttQueueMessage(message, getCurrentTime())
         }
     }
 }

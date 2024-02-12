@@ -64,7 +64,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         shadowClient?.disconnect()
         shadowClient = null
         viewModelScope.launch {
-            messageQueue.close(1.seconds)
+            messageQueue.awaitUntilEmpty(1.seconds)
         }
 
         provider.allDisconnect()

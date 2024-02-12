@@ -58,6 +58,5 @@ class FlowMqttMessageQueueTest : StringSpec({
             .join()
 
         results.map { it.data[0].toInt() } shouldBe listOf(1, 2, 3, 4, 6, 7, 8, 9, 10)
-
     }
 })

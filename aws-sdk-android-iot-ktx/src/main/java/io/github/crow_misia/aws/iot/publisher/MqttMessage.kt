@@ -18,7 +18,7 @@ package io.github.crow_misia.aws.iot.publisher
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttQos
 
 /**
- * MQTT送信メッセージキュー.
+ * MQTT送信メッセージ.
  */
 interface MqttMessage {
     /**
