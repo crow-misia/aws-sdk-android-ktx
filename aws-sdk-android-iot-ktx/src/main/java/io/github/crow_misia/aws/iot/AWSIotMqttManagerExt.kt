@@ -16,8 +16,12 @@
 package io.github.crow_misia.aws.iot
 
 import com.amazonaws.auth.AWSCredentialsProvider
-import com.amazonaws.mobileconnectors.iot.*
+import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus
+import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
+import com.amazonaws.mobileconnectors.iot.AWSIotMqttMessageDeliveryCallback
+import com.amazonaws.mobileconnectors.iot.AWSIotMqttQos
+import com.amazonaws.mobileconnectors.iot.AWSIotMqttSubscriptionStatusCallback
 import io.github.crow_misia.aws.iot.publisher.MqttMessage
 import io.github.crow_misia.aws.iot.publisher.TopicName
 import kotlinx.coroutines.channels.ProducerScope
@@ -29,11 +33,16 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeout
 import java.security.KeyStore
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+
+internal val publishDefaultTimeout = 15.seconds
 
 private fun ProducerScope<AWSIotMqttClientStatus>.createConnectCallback(): AWSIotMqttClientStatusCallback {
     return AWSIotMqttClientStatusCallback { status, cause ->
@@ -167,20 +176,26 @@ suspend fun AWSIotMqttManager.publish(
     topic: TopicName,
     qos: AWSIotMqttQos,
     isRetained: Boolean = false,
+    timeout: Duration = publishDefaultTimeout,
 ) = publish<Unit>(
     data = data,
     topic = topic,
     qos = qos,
     userData = null,
     isRetained = isRetained,
+    timeout = timeout,
 )
 
-suspend fun AWSIotMqttManager.publish(message: MqttMessage) = publish(
+suspend fun AWSIotMqttManager.publish(
+    message: MqttMessage,
+    timeout: Duration = publishDefaultTimeout,
+) = publish(
     data = message.data,
     topic = message.topicName,
     qos = message.qos,
     userData = message.userData,
     isRetained = message.isRetained,
+    timeout = timeout,
 )
 
 suspend fun <T> AWSIotMqttManager.publish(
@@ -189,8 +204,11 @@ suspend fun <T> AWSIotMqttManager.publish(
     qos: AWSIotMqttQos,
     userData: T? = null,
     isRetained: Boolean = false,
-) = suspendCancellableCoroutine<T?> {
-    publishData(data, topic.value, qos, createMessageDeliveryCallback(it), userData, isRetained)
+    timeout: Duration = publishDefaultTimeout,
+) = withTimeout(timeout) {
+    suspendCancellableCoroutine<T?> {
+        publishData(data, topic.value, qos, createMessageDeliveryCallback(it), userData, isRetained)
+    }
 }
 
 suspend fun AWSIotMqttManager.publishWithReply(
@@ -198,12 +216,14 @@ suspend fun AWSIotMqttManager.publishWithReply(
     topic: TopicName,
     qos: AWSIotMqttQos,
     isRetained: Boolean = false,
+    timeout: Duration = publishDefaultTimeout,
 ) = publishWithReply(
     data = data,
     topic = topic,
     qos = qos,
     userData = null,
     isRetained = isRetained,
+    timeout = timeout,
 )
 
 suspend fun <T> AWSIotMqttManager.publishWithReply(
@@ -212,13 +232,14 @@ suspend fun <T> AWSIotMqttManager.publishWithReply(
     qos: AWSIotMqttQos,
     userData: T? = null,
     isRetained: Boolean = false,
+    timeout: Duration,
 ): SubscribeData {
     val acceptedTopic = TopicName("${topic}/accepted")
     val rejectedTopic = TopicName("${topic}/rejected")
 
     // subscribe accepted/rejected topic
     return subscribe(topics = listOf(acceptedTopic, rejectedTopic), qos = qos) {
-        publish(data, topic, qos, userData, isRetained)
+        publish(data, topic, qos, userData, isRetained, timeout)
     }.map {
         when (TopicName(it.topic)) {
             acceptedTopic -> Result.success(it)
