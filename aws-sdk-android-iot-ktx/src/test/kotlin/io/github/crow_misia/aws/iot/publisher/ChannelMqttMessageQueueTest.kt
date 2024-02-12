@@ -122,7 +122,9 @@ class ChannelMqttMessageQueueTest : StringSpec({
         }
         job.cancelAndJoin()
 
-        results.map { it.data[0].toInt() } shouldBe (1..count).toList()
+        val calledPublishMessages = results.map { it.data[0].toInt() }
+        println(calledPublishMessages)
+        calledPublishMessages shouldBe (1..count).toList()
         publishSuccessList shouldBe (1..count).toList()
     }
 
@@ -159,7 +161,9 @@ class ChannelMqttMessageQueueTest : StringSpec({
         }
         job.cancelAndJoin()
 
-        results.map { it.data[0].toInt() } shouldBe (1..3).toList()
+        val calledPublishMessages = results.map { it.data[0].toInt() }
+        println(calledPublishMessages)
+        calledPublishMessages shouldBe (1..3).toList()
         publishSuccessList shouldBe (1..2).toList()
     }
 
