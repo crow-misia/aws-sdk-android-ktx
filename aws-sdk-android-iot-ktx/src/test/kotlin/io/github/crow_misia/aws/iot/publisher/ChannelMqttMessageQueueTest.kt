@@ -202,4 +202,37 @@ class ChannelMqttMessageQueueTest : StringSpec({
         results.map { it.data[0].toInt() } shouldBe listOf(99, 1, 2)
         publishSuccessList shouldBe listOf(99, 1, 2)
     }
+
+    "クローズ前に送信したメッセージが有効期限切れの場合、空判定がタイムアウトしないこと" {
+        val clockMock = mockk<Clock>()
+        every { clockMock.millis() } returns 1706886000000L andThen 1706886600000L
+        val sut = MqttMessageQueue.createMessageQueue(
+            clock = clockMock,
+            messageExpired = 1.minutes,
+            pollInterval = 100.milliseconds,
+        )
+        val results = mutableListOf<MqttMessage>()
+        // for AWSIotMqttManagerExt mocking
+        mockkStatic("io.github.crow_misia.aws.iot.AWSIotMqttManagerExtKt")
+        val client = mockk<AWSIotMqttManager>()
+        coJustRun { client.publish(capture(results), any()) }
+
+        val count = 1
+        val publishSuccessList = mutableListOf<Int>()
+        val job = sut.asFlow(client, 100.milliseconds)
+            .retry()
+            .take(count)
+            .onEach { publishSuccessList.add(it.data[0].toInt()) }
+            .launchIn(this)
+
+        val awaitResult = withContext(Dispatchers.Default) {
+            sut.send(DummyMqttMessage(1))
+            sut.awaitUntilEmpty(2500.milliseconds)
+        }
+        job.cancelAndJoin()
+
+        results.map { it.data[0].toInt() } shouldBe emptyList()
+        publishSuccessList shouldBe emptyList()
+        awaitResult.exceptionOrNull() shouldBe null
+    }
 })

@@ -100,6 +100,8 @@ internal class ChannelMqttMessageQueue(
     private val sendingCount: AtomicInteger = AtomicInteger(0)
 
     override suspend fun asFlow(client: AWSIotMqttManager, publishTimeout: Duration): Flow<MqttMessage> = channelFlow {
+        sendingCount.set(0)
+
         while (true) {
             if (messageQueue.isNotEmpty()) {
                 val limitTime = clock.millis() - messageExpired.inWholeMilliseconds
@@ -110,9 +112,9 @@ internal class ChannelMqttMessageQueue(
                     message?.let {
                         if (it.timestamp >= limitTime) {
                             send(it)
-                        }
+                        } else null
                     } ?: run {
-                        sendingCount.decrementAndGet()
+                        sendingCount.updateAndGet { maxOf(it - 1, 0) }
                     }
                 } while (message != null)
             }
@@ -121,10 +123,10 @@ internal class ChannelMqttMessageQueue(
     }.onEach { message ->
         runCatching {
             client.publish(message, publishTimeout)
-            sendingCount.decrementAndGet()
+            sendingCount.updateAndGet { maxOf(it - 1, 0) }
         }.onFailure {
             messageQueue.add(message)
-            sendingCount.decrementAndGet()
+            sendingCount.updateAndGet { maxOf(it - 1, 0) }
         }.getOrThrow()
     }
 
