@@ -76,7 +76,7 @@ aws-android-sdk = "2.75.0"
 
 amplifyframework = "2.15.0"
 
-bouncycastle = "1.77"
+bouncycastle = "1.78"
 
 [libraries]
 
