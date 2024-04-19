@@ -64,7 +64,7 @@ truth = "1.4.2"
 
 dokka = "1.9.20"
 
-okhttp3 = "5.0.0-alpha.13"
+okhttp3 = "5.0.0-alpha.14"
 
 okio = "3.9.0"
 
@@ -76,7 +76,7 @@ aws-android-sdk = "2.75.0"
 
 amplifyframework = "2.15.1"
 
-bouncycastle = "1.78"
+bouncycastle = "1.78.1"
 
 [libraries]
 
