@@ -74,7 +74,7 @@ apollographql = "4.0.0-beta.6"
 
 aws-android-sdk = "2.75.0"
 
-amplifyframework = "2.15.1"
+amplifyframework = "2.15.2"
 
 bouncycastle = "1.78.1"
 
