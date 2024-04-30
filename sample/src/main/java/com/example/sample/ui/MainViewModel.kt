@@ -53,7 +53,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
         }
     )
 
-    private var thingNameProvider = ThingNameProvider<Unit> {
+    private val thingNameProvider = ThingNameProvider<Unit> {
         ThingName(sharedPreferences.getString("thingName", null).orEmpty())
     }
 

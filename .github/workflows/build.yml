@@ -26,4 +26,4 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3
     - name: Check
-      run: ./gradlew check
+      run: ./gradlew check detektMain

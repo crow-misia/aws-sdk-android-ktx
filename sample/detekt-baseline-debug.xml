@@ -2,6 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>MatchingDeclarationName:FlowExt.kt$RetryPolicy</ID>
+    <ID>InjectDispatcher:MainViewModel.kt$MainViewModel$IO</ID>
   </CurrentIssues>
 </SmellBaseline>

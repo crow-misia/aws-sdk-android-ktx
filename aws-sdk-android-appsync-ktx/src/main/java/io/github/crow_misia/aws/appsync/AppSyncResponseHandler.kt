@@ -69,7 +69,7 @@ class AppSyncResponseHandler<D : Operation.Data>(
         // DynamoDB) return a checksum with gzip encoding, some do not. We'll also cover the case
         // where a service returns a checksum for non-gzip encoding. The default case (not gzip
         // encoded, no checksum) is already handled: we'll just operate on the raw content stream.
-        val checksumCalculatingInputStream = crc32Checksum?.let {
+        val checksumCalculatingInputStream = crc32Checksum?.let { _ ->
             CRC32ChecksumCalculatingInputStream(content).also { content = it }
         }
 

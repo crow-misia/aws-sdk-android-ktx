@@ -40,7 +40,7 @@ interface MqttMessageQueue {
     /**
      * Flowを取得.
      */
-    suspend fun asFlow(client: AWSIotMqttManager, publishTimeout: Duration = publishDefaultTimeout): Flow<MqttMessage>
+    fun asFlow(client: AWSIotMqttManager, publishTimeout: Duration = publishDefaultTimeout): Flow<MqttMessage>
 
     /**
      * メッセージ送信.
@@ -76,7 +76,7 @@ interface MqttMessageQueue {
 internal class FlowMqttMessageQueue(
     private val parentFlow: Flow<MqttMessage>,
 ) : MqttMessageQueue {
-    override suspend fun asFlow(client: AWSIotMqttManager, publishTimeout: Duration): Flow<MqttMessage> {
+    override fun asFlow(client: AWSIotMqttManager, publishTimeout: Duration): Flow<MqttMessage> {
         return parentFlow.onEach {
             client.publish(it, publishTimeout)
         }
@@ -99,7 +99,7 @@ internal class ChannelMqttMessageQueue(
     private val messageQueue = ConcurrentLinkedQueue<MqttQueueMessage>()
     private val sendingCount: AtomicInteger = AtomicInteger(0)
 
-    override suspend fun asFlow(client: AWSIotMqttManager, publishTimeout: Duration): Flow<MqttMessage> = channelFlow {
+    override fun asFlow(client: AWSIotMqttManager, publishTimeout: Duration): Flow<MqttMessage> = channelFlow {
         sendingCount.set(0)
 
         while (true) {
@@ -124,7 +124,7 @@ internal class ChannelMqttMessageQueue(
         runCatching {
             client.publish(message, publishTimeout)
             sendingCount.updateAndGet { maxOf(it - 1, 0) }
-        }.onFailure {
+        }.onFailure { _ ->
             messageQueue.add(message)
             sendingCount.updateAndGet { maxOf(it - 1, 0) }
         }.getOrThrow()
