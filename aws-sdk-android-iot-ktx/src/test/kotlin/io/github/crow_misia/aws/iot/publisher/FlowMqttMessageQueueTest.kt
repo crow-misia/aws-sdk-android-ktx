@@ -38,8 +38,7 @@ class FlowMqttMessageQueueTest : StringSpec({
         val counter = AtomicInteger()
         val sut = MqttMessageQueue.wrap {
             while (true) {
-                val count = counter.incrementAndGet()
-                when (count) {
+                when (val count = counter.incrementAndGet()) {
                     5 -> error("send error!")
                     else -> emit(DummyMqttMessage(count))
                 }
