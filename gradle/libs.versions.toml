@@ -18,7 +18,7 @@ dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 
 android-gradle-plugin = "8.4.0"
 
-kotlin = "1.9.23"
+kotlin = "1.9.24"
 
 kotlinx-coroutines = "1.8.0"
 
@@ -32,7 +32,7 @@ androidx-activity = "1.9.0"
 
 androidx-appcompat = "1.7.0-beta01"
 
-androidx-compose-compiler = "1.5.13"
+androidx-compose-compiler = "1.5.14-dev-k1.9.24-50022def4af"
 
 androidx-compose-foundation = "1.7.0-alpha08"
 
