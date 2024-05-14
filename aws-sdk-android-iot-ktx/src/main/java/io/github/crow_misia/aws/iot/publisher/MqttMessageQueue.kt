@@ -18,16 +18,21 @@ package io.github.crow_misia.aws.iot.publisher
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import io.github.crow_misia.aws.iot.publish
 import io.github.crow_misia.aws.iot.publishDefaultTimeout
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import java.time.Clock
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -38,7 +43,11 @@ interface MqttMessageQueue {
     /**
      * Flowを取得.
      */
-    fun asFlow(client: AWSIotMqttManager, publishTimeout: Duration = publishDefaultTimeout): Flow<MqttMessage>
+    fun asFlow(
+        client: AWSIotMqttManager,
+        publishTimeout: Duration = publishDefaultTimeout,
+        context: CoroutineContext = Dispatchers.IO,
+    ): Flow<MqttMessage>
 
     /**
      * メッセージ送信.
@@ -74,7 +83,11 @@ interface MqttMessageQueue {
 internal class FlowMqttMessageQueue(
     private val parentFlow: Flow<MqttMessage>,
 ) : MqttMessageQueue {
-    override fun asFlow(client: AWSIotMqttManager, publishTimeout: Duration): Flow<MqttMessage> {
+    override fun asFlow(
+        client: AWSIotMqttManager,
+        publishTimeout: Duration,
+        context: CoroutineContext,
+    ): Flow<MqttMessage> {
         return parentFlow.onEach {
             client.publish(it, publishTimeout)
         }
@@ -95,47 +108,55 @@ internal class ChannelMqttMessageQueue(
     private val pollInterval: Duration,
 ) : MqttMessageQueue {
     private val messageQueue = ConcurrentLinkedQueue<MqttQueueMessage>()
-    private val sendingCount: AtomicInteger = AtomicInteger(0)
+    private val messageCount: AtomicInteger = AtomicInteger(0)
 
-    override fun asFlow(client: AWSIotMqttManager, publishTimeout: Duration): Flow<MqttMessage> = channelFlow {
-        sendingCount.set(0)
-
+    override fun asFlow(
+        client: AWSIotMqttManager,
+        publishTimeout: Duration,
+        context: CoroutineContext,
+    ): Flow<MqttMessage> = channelFlow {
         while (true) {
-            if (messageQueue.isNotEmpty()) {
+            if (messageCount.get() > 0) {
                 val limitTime = clock.millis() - messageExpired.inWholeMilliseconds
                 var message: MqttQueueMessage?
                 do {
-                    sendingCount.incrementAndGet()
                     message = messageQueue.poll()
                     message?.let {
                         if (it.timestamp >= limitTime) {
-                            send(it)
+                            withContext(context) {
+                                sendMessage(client, it, publishTimeout)
+                                send(it)
+                            }
                         } else null
                     } ?: run {
-                        sendingCount.updateAndGet { maxOf(it - 1, 0) }
+                        messageCount.updateAndGet { maxOf(it - 1, 0) }
                     }
                 } while (message != null)
             }
             delay(pollInterval)
         }
-    }.onEach { message ->
-        runCatching {
-            client.publish(message, publishTimeout)
-            sendingCount.updateAndGet { maxOf(it - 1, 0) }
+    }
+
+    private suspend fun sendMessage(client: AWSIotMqttManager, message: MqttQueueMessage, timeout: Duration): Int {
+        return runCatching {
+            client.publish(message, timeout)
+            messageCount.updateAndGet { maxOf(it - 1, 0) }
         }.onFailure { _ ->
             messageQueue.add(message)
-            sendingCount.updateAndGet { maxOf(it - 1, 0) }
         }.getOrThrow()
     }
 
     override suspend fun send(message: MqttMessage) {
-        messageQueue.add(MqttQueueMessage.wrap(message) { clock.millis() })
+        messageCount.updateAndGet {
+            messageQueue.add(MqttQueueMessage.wrap(message) { clock.millis() })
+            it + 1
+        }
     }
 
     override suspend fun awaitUntilEmpty(timeout: Duration): Result<Unit> {
         return runCatching {
             withTimeout(timeout) {
-                while (sendingCount.get() > 0 || messageQueue.isNotEmpty()) {
+                while (messageCount.get() > 0) {
                     delay(pollInterval)
                 }
             }

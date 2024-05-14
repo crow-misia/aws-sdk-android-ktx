@@ -15,6 +15,7 @@ import com.amazonaws.mobileconnectors.iot.loadX509Certificate
 import com.amazonaws.regions.Region
 import com.amazonaws.services.securitytoken.model.ThingName
 import com.example.sample.R
+import io.github.crow_misia.aws.core.retryWithPolicy
 import io.github.crow_misia.aws.iot.*
 import io.github.crow_misia.aws.iot.keystore.BasicKeyStoreProvisioningManager
 import io.github.crow_misia.aws.iot.provisioning.CreateCertificateFromCSRFleetProvisioner
@@ -26,6 +27,7 @@ import timber.log.Timber
 import java.time.Clock
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class MainViewModel(application: Application) : AndroidViewModel(application), DefaultLifecycleObserver {
@@ -58,7 +60,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
     }
 
     private var shadowClient: AWSIoTMqttShadowClient? = null
-    private val messageQueue: MqttMessageQueue = MqttMessageQueue.createMessageQueue(Clock.systemDefaultZone(), 10.seconds)
+    private val messageQueue: MqttMessageQueue = MqttMessageQueue.createMessageQueue(Clock.systemDefaultZone(), 1.minutes)
 
     override fun onCleared() {
         shadowClient?.disconnect()
@@ -141,14 +143,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
                 // waiting until connected.
                 .filter { it == AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus.Connected }
                 .flatMapConcat {
-                    messageQueue.asFlow(manager)
-                        .catch { e -> Timber.e(e) }
-                        .onEach { message -> Timber.i("message queue received. $message") }
-                        .launchIn(viewModelScope)
-                    shadowClient.subscribeDocuments<SampleDeviceData>()
+                    combine(
+                        messageQueue.asFlow(manager)
+                            .onEach { message -> Timber.i("message queue received. $message") },
+                        shadowClient.subscribeDocuments<SampleDeviceData>()
+                    ) { _, _ -> }
                 }
                 .onEach { Timber.i("Received shadow data = %s", it) }
-                .catch { e -> Timber.e(e, "Error subscribe shadow.") }
+                .retryWithPolicy { e, _ ->
+                    Timber.e(e, "error subscribe")
+                    true
+                }
                 .launchIn(this)
         }
     }

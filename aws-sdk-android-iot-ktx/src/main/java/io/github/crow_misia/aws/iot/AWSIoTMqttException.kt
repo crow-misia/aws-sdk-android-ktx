@@ -48,3 +48,5 @@ class AWSIoTProvisioningException(
 class AWSIotDeviceShadowException(
     val response: DeviceShadowErrorResponse,
 ) : AWSIoTMqttException(response.message)
+
+object AWSIoTMqttDisconnectException : AWSIoTMqttException("client disconnected")

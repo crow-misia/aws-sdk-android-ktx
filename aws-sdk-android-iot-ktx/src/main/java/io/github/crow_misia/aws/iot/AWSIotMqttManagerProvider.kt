@@ -36,6 +36,7 @@ interface AWSIotMqttManagerProvider {
             setMetricsIsEnabled(false)
             isAutoReconnect = false
         }
+
         @JvmStatic
         @JvmOverloads
         fun create(
@@ -81,7 +82,9 @@ class AWSIotMqttManagerProviderImpl(
 
     override fun provide(clientId: ClientId): AWSIotMqttManager {
         return cache.getOrPut(clientId.value) {
-            generator(clientId)
+            generator(clientId).also {
+                it.maxAutoReconnectAttempts = -1
+            }
         }.apply(configure)
     }
 

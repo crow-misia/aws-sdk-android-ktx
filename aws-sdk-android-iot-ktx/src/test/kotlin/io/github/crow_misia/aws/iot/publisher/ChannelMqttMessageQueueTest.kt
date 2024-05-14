@@ -40,14 +40,14 @@ class ChannelMqttMessageQueueTest : StringSpec({
         coJustRun { client.publish(capture(results), any()) }
 
         val job = sut.asFlow(client, 100.milliseconds)
-            .take(2)
             .launchIn(this)
 
         withContext(Dispatchers.Default) {
             sut.send(DummyMqttMessage(1))
             sut.send(DummyMqttMessage(2))
+            sut.awaitUntilEmpty(1.seconds)
         }
-        job.join()
+        job.cancelAndJoin()
 
         results.map { it.data[0].toInt() } shouldBe (1..2).map { it }
     }
@@ -75,16 +75,18 @@ class ChannelMqttMessageQueueTest : StringSpec({
         val publishSuccessList = mutableListOf<Int>()
         val job = sut.asFlow(client, 100.milliseconds)
             .retry()
-            .take(2)
-            .onEach { publishSuccessList.add(it.data[0].toInt()) }
+            .onEach {
+                publishSuccessList.add(it.data[0].toInt())
+            }
             .launchIn(this)
 
         withContext(Dispatchers.Default) {
             sut.send(DummyMqttMessage(1))
             sut.send(DummyMqttMessage(2)) // skip
             sut.send(DummyMqttMessage(3)) // 1st error
+            sut.awaitUntilEmpty(1.seconds)
         }
-        job.join()
+        job.cancelAndJoin()
 
         results.map { it.data[0].toInt() } shouldBe listOf(1, 3, 3)
         publishSuccessList shouldBe listOf(1, 3)
@@ -110,7 +112,6 @@ class ChannelMqttMessageQueueTest : StringSpec({
         val publishSuccessList = mutableListOf<Int>()
         val job = sut.asFlow(client, 100.milliseconds)
             .retry()
-            .take(count)
             .onEach { publishSuccessList.add(it.data[0].toInt()) }
             .launchIn(this)
 
@@ -123,7 +124,6 @@ class ChannelMqttMessageQueueTest : StringSpec({
         job.cancelAndJoin()
 
         val calledPublishMessages = results.map { it.data[0].toInt() }
-        println(calledPublishMessages)
         calledPublishMessages shouldBe (1..count).toList()
         publishSuccessList shouldBe (1..count).toList()
     }
@@ -148,7 +148,6 @@ class ChannelMqttMessageQueueTest : StringSpec({
         val publishSuccessList = mutableListOf<Int>()
         val job = sut.asFlow(client, 100.milliseconds)
             .retry()
-            .take(count)
             .onEach { publishSuccessList.add(it.data[0].toInt()) }
             .launchIn(this)
 
@@ -162,7 +161,6 @@ class ChannelMqttMessageQueueTest : StringSpec({
         job.cancelAndJoin()
 
         val calledPublishMessages = results.map { it.data[0].toInt() }
-        println(calledPublishMessages)
         calledPublishMessages shouldBe (1..3).toList()
         publishSuccessList shouldBe (1..2).toList()
     }
@@ -187,7 +185,6 @@ class ChannelMqttMessageQueueTest : StringSpec({
         val publishSuccessList = mutableListOf<Int>()
         val job = sut.asFlow(client, 100.milliseconds)
             .retry()
-            .take(3)
             .onEach { publishSuccessList.add(it.data[0].toInt()) }
             .launchIn(this)
 
@@ -221,7 +218,6 @@ class ChannelMqttMessageQueueTest : StringSpec({
         val publishSuccessList = mutableListOf<Int>()
         val job = sut.asFlow(client, 100.milliseconds)
             .retry()
-            .take(count)
             .onEach { publishSuccessList.add(it.data[0].toInt()) }
             .launchIn(this)
 
