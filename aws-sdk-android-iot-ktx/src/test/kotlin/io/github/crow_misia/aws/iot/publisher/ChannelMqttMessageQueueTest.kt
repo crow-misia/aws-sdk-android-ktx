@@ -62,7 +62,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
         val sut = MqttMessageQueue.createMessageQueue(
             clock = clockMock,
             messageExpired = 1.minutes,
-            pollInterval = 100.milliseconds,
+            pollInterval = 10.milliseconds,
         )
         val results = mutableListOf<MqttMessage>()
         // for AWSIotMqttManagerExt mocking
@@ -73,7 +73,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
         } andThenThrows AWSIoTMqttDeliveryException("error") andThenJust Runs
 
         val publishSuccessList = mutableListOf<Int>()
-        val job = sut.asFlow(client, 100.milliseconds)
+        val job = sut.asFlow(client, 1.minutes)
             .retry()
             .onEach {
                 publishSuccessList.add(it.data[0].toInt())

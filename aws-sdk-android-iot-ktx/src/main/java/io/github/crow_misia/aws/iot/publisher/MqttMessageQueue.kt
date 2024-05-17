@@ -116,22 +116,18 @@ internal class ChannelMqttMessageQueue(
         context: CoroutineContext,
     ): Flow<MqttMessage> = channelFlow {
         while (true) {
-            if (messageCount.get() > 0) {
+            var message: MqttQueueMessage?
+            while (true) {
+                message = messageQueue.poll() ?: break
                 val limitTime = clock.millis() - messageExpired.inWholeMilliseconds
-                var message: MqttQueueMessage?
-                do {
-                    message = messageQueue.poll()
-                    message?.let {
-                        if (it.timestamp >= limitTime) {
-                            withContext(context) {
-                                sendMessage(client, it, publishTimeout)
-                                send(it)
-                            }
-                        } else null
-                    } ?: run {
-                        messageCount.updateAndGet { maxOf(it - 1, 0) }
+                if (message.timestamp >= limitTime) {
+                    withContext(context) {
+                        sendMessage(client, message, publishTimeout)
+                        send(message)
                     }
-                } while (message != null)
+                } else {
+                    messageCount.updateAndGet { maxOf(it - 1, 0) }
+                }
             }
             delay(pollInterval)
         }
