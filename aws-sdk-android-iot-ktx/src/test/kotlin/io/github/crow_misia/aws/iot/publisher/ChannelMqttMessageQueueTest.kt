@@ -13,6 +13,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
@@ -42,11 +43,11 @@ class ChannelMqttMessageQueueTest : StringSpec({
         val job = sut.asFlow(client, 100.milliseconds)
             .launchIn(this)
 
-        withContext(Dispatchers.Default) {
+        async {
             sut.send(DummyMqttMessage(1))
             sut.send(DummyMqttMessage(2))
             sut.awaitUntilEmpty(1.seconds)
-        }
+        }.await()
         job.cancelAndJoin()
 
         results.map { it.data[0].toInt() } shouldBe (1..2).map { it }
@@ -75,17 +76,15 @@ class ChannelMqttMessageQueueTest : StringSpec({
         val publishSuccessList = mutableListOf<Int>()
         val job = sut.asFlow(client, 1.minutes)
             .retry()
-            .onEach {
-                publishSuccessList.add(it.data[0].toInt())
-            }
+            .onEach { publishSuccessList.add(it.data[0].toInt()) }
             .launchIn(this)
 
-        withContext(Dispatchers.Default) {
+        async {
             sut.send(DummyMqttMessage(1))
             sut.send(DummyMqttMessage(2)) // skip
             sut.send(DummyMqttMessage(3)) // 1st error
             sut.awaitUntilEmpty(3.seconds)
-        }
+        }.await()
         job.cancelAndJoin()
 
         results.map { it.data[0].toInt() } shouldBe listOf(1, 3, 3)
@@ -115,12 +114,12 @@ class ChannelMqttMessageQueueTest : StringSpec({
             .onEach { publishSuccessList.add(it.data[0].toInt()) }
             .launchIn(this)
 
-        withContext(Dispatchers.Default) {
+        async {
             (1..count).forEach {
                 sut.send(DummyMqttMessage(it))
             }
             sut.awaitUntilEmpty(2.seconds)
-        }
+        }.await()
         job.cancelAndJoin()
 
         val calledPublishMessages = results.map { it.data[0].toInt() }
@@ -151,13 +150,13 @@ class ChannelMqttMessageQueueTest : StringSpec({
             .onEach { publishSuccessList.add(it.data[0].toInt()) }
             .launchIn(this)
 
-        withContext(Dispatchers.Default) {
+        async {
             (1..count).forEach {
                 sut.send(DummyMqttMessage(it))
             }
             // 3つ目のメッセージ送信中にタイムアウトする
             sut.awaitUntilEmpty(2500.milliseconds)
-        }
+        }.await()
         job.cancelAndJoin()
 
         val calledPublishMessages = results.map { it.data[0].toInt() }
@@ -188,12 +187,12 @@ class ChannelMqttMessageQueueTest : StringSpec({
             .onEach { publishSuccessList.add(it.data[0].toInt()) }
             .launchIn(this)
 
-        withContext(Dispatchers.Default) {
+        async {
             (1..count).forEach {
                 sut.send(DummyMqttMessage(it))
             }
             sut.awaitUntilEmpty(100.milliseconds)
-        }
+        }.await()
         job.cancelAndJoin()
 
         results.map { it.data[0].toInt() } shouldBe listOf(99, 1, 2)
@@ -220,10 +219,10 @@ class ChannelMqttMessageQueueTest : StringSpec({
             .onEach { publishSuccessList.add(it.data[0].toInt()) }
             .launchIn(this)
 
-        val awaitResult = withContext(Dispatchers.Default) {
+        val awaitResult = async {
             sut.send(DummyMqttMessage(1))
             sut.awaitUntilEmpty(2500.milliseconds)
-        }
+        }.await()
         job.cancelAndJoin()
 
         results.map { it.data[0].toInt() } shouldBe emptyList()
