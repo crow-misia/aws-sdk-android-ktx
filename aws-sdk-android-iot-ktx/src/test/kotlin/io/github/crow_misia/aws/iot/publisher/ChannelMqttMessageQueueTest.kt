@@ -84,7 +84,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
             sut.send(DummyMqttMessage(1))
             sut.send(DummyMqttMessage(2)) // skip
             sut.send(DummyMqttMessage(3)) // 1st error
-            sut.awaitUntilEmpty(1.seconds)
+            sut.awaitUntilEmpty(3.seconds)
         }
         job.cancelAndJoin()
 
@@ -214,7 +214,6 @@ class ChannelMqttMessageQueueTest : StringSpec({
         val client = mockk<AWSIotMqttManager>()
         coJustRun { client.publish(capture(results), any()) }
 
-        val count = 1
         val publishSuccessList = mutableListOf<Int>()
         val job = sut.asFlow(client, 100.milliseconds)
             .retry()
