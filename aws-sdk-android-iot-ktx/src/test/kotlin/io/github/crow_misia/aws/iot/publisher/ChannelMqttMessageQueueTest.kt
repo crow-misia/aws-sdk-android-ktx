@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext
 import java.time.Clock
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -50,7 +51,9 @@ class ChannelMqttMessageQueueTest : StringSpec({
         }.await()
         job.cancelAndJoin()
 
-        results.map { it.data[0].toInt() } shouldBe (1..2).map { it }
+        val calledPublishMessages = results.map { it.data[0].toInt() }
+        println(calledPublishMessages)
+        calledPublishMessages shouldBe (1..2).map { it }
     }
 
     "エラー発生時のメッセージがリトライ時に再送されること" {
@@ -73,7 +76,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
             client.publish(capture(results), any())
         } andThenThrows AWSIoTMqttDeliveryException("error") andThenJust Runs
 
-        val publishSuccessList = mutableListOf<Int>()
+        val publishSuccessList = CopyOnWriteArrayList<Int>()
         val job = sut.asFlow(client, 1.minutes)
             .retry()
             .onEach { publishSuccessList.add(it.data[0].toInt()) }
@@ -87,7 +90,10 @@ class ChannelMqttMessageQueueTest : StringSpec({
         }.await()
         job.cancelAndJoin()
 
-        results.map { it.data[0].toInt() } shouldBe listOf(1, 3, 3)
+        val calledPublishMessages = results.map { it.data[0].toInt() }
+        println(calledPublishMessages)
+        println(publishSuccessList)
+        calledPublishMessages shouldBe listOf(1, 3, 3)
         publishSuccessList shouldBe listOf(1, 3)
     }
 
@@ -108,7 +114,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
         }
 
         val count = 5
-        val publishSuccessList = mutableListOf<Int>()
+        val publishSuccessList = CopyOnWriteArrayList<Int>()
         val job = sut.asFlow(client, 100.milliseconds)
             .retry()
             .onEach { publishSuccessList.add(it.data[0].toInt()) }
@@ -123,6 +129,8 @@ class ChannelMqttMessageQueueTest : StringSpec({
         job.cancelAndJoin()
 
         val calledPublishMessages = results.map { it.data[0].toInt() }
+        println(calledPublishMessages)
+        println(publishSuccessList)
         calledPublishMessages shouldBe (1..count).toList()
         publishSuccessList shouldBe (1..count).toList()
     }
@@ -144,7 +152,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
         }
 
         val count = 10
-        val publishSuccessList = mutableListOf<Int>()
+        val publishSuccessList = CopyOnWriteArrayList<Int>()
         val job = sut.asFlow(client, 100.milliseconds)
             .retry()
             .onEach { publishSuccessList.add(it.data[0].toInt()) }
@@ -160,6 +168,8 @@ class ChannelMqttMessageQueueTest : StringSpec({
         job.cancelAndJoin()
 
         val calledPublishMessages = results.map { it.data[0].toInt() }
+        println(calledPublishMessages)
+        println(publishSuccessList)
         calledPublishMessages shouldBe (1..3).toList()
         publishSuccessList shouldBe (1..2).toList()
     }
@@ -181,7 +191,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
         sut.send(DummyMqttMessage(99))
 
         val count = 2
-        val publishSuccessList = mutableListOf<Int>()
+        val publishSuccessList = CopyOnWriteArrayList<Int>()
         val job = sut.asFlow(client, 100.milliseconds)
             .retry()
             .onEach { publishSuccessList.add(it.data[0].toInt()) }
@@ -195,7 +205,10 @@ class ChannelMqttMessageQueueTest : StringSpec({
         }.await()
         job.cancelAndJoin()
 
-        results.map { it.data[0].toInt() } shouldBe listOf(99, 1, 2)
+        val calledPublishMessages = results.map { it.data[0].toInt() }
+        println(calledPublishMessages)
+        println(publishSuccessList)
+        calledPublishMessages shouldBe listOf(99, 1, 2)
         publishSuccessList shouldBe listOf(99, 1, 2)
     }
 
@@ -213,7 +226,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
         val client = mockk<AWSIotMqttManager>()
         coJustRun { client.publish(capture(results), any()) }
 
-        val publishSuccessList = mutableListOf<Int>()
+        val publishSuccessList = CopyOnWriteArrayList<Int>()
         val job = sut.asFlow(client, 100.milliseconds)
             .retry()
             .onEach { publishSuccessList.add(it.data[0].toInt()) }
@@ -225,7 +238,10 @@ class ChannelMqttMessageQueueTest : StringSpec({
         }.await()
         job.cancelAndJoin()
 
-        results.map { it.data[0].toInt() } shouldBe emptyList()
+        val calledPublishMessages = results.map { it.data[0].toInt() }
+        println(calledPublishMessages)
+        println(publishSuccessList)
+        calledPublishMessages shouldBe emptyList()
         publishSuccessList shouldBe emptyList()
         awaitResult.exceptionOrNull() shouldBe null
     }

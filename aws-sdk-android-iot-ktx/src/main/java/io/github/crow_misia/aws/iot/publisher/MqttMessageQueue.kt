@@ -19,7 +19,6 @@ import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import io.github.crow_misia.aws.iot.publish
 import io.github.crow_misia.aws.iot.publishDefaultTimeout
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -115,38 +114,33 @@ internal class ChannelMqttMessageQueue(
         publishTimeout: Duration,
         context: CoroutineContext,
     ): Flow<MqttMessage> = channelFlow {
-        while (true) {
-            var message: MqttQueueMessage?
-            while (true) {
-                message = messageQueue.poll() ?: break
-                val limitTime = clock.millis() - messageExpired.inWholeMilliseconds
-                if (message.timestamp >= limitTime) {
-                    withContext(context) {
-                        sendMessage(client, message, publishTimeout)
-                        send(message)
-                    }
-                } else {
-                    messageCount.updateAndGet { maxOf(it - 1, 0) }
-                }
+        do {
+            val message = messageQueue.poll()
+            if (message == null) {
+                delay(pollInterval)
+                continue
             }
-            delay(pollInterval)
-        }
-    }
-
-    private suspend fun sendMessage(client: AWSIotMqttManager, message: MqttQueueMessage, timeout: Duration): Int {
-        return runCatching {
-            client.publish(message, timeout)
-            messageCount.updateAndGet { maxOf(it - 1, 0) }
-        }.onFailure { _ ->
-            messageQueue.add(message)
-        }.getOrThrow()
+            val limitTime = clock.millis() - messageExpired.inWholeMilliseconds
+            if (message.timestamp >= limitTime) {
+                withContext(context) {
+                    runCatching {
+                        client.publish(message, publishTimeout)
+                    }
+                }.onSuccess {
+                    messageCount.decrementAndGet()
+                    send(message)
+                }.onFailure { _ ->
+                    messageQueue.add(message)
+                }.getOrThrow()
+            } else {
+                messageCount.decrementAndGet()
+            }
+        } while (true)
     }
 
     override suspend fun send(message: MqttMessage) {
-        messageCount.updateAndGet {
-            messageQueue.add(MqttQueueMessage.wrap(message) { clock.millis() })
-            it + 1
-        }
+        messageCount.incrementAndGet()
+        messageQueue.add(MqttQueueMessage.wrap(message) { clock.millis() })
     }
 
     override suspend fun awaitUntilEmpty(timeout: Duration): Result<Unit> {
