@@ -5,16 +5,17 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.detekt)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.plugin.compose)
     alias(libs.plugins.kotlin.plugin.serialization)
 }
 
 android {
     namespace = "com.example.sample"
-    compileSdk = Build.compileSdk
+    compileSdk = Build.COMPILE_SDK
 
     defaultConfig {
         applicationId = "com.example.sample"
-        minSdk = Build.minSdk
+        minSdk = Build.MIN_SDK
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -46,10 +47,6 @@ android {
         compose = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.androidx.compose.compiler.get().version
-    }
-
     packaging {
         resources {
             excludes.add("/META-INF/{AL2.0,LGPL2.1}")
@@ -64,8 +61,8 @@ kotlin {
         freeCompilerArgs.addAll("-Xjsr305=strict")
         javaParameters.set(true)
         jvmTarget.set(JvmTarget.JVM_11)
-        apiVersion.set(KotlinVersion.fromVersion(Build.kotlinApiVersion))
-        languageVersion.set(KotlinVersion.fromVersion(Build.kotlinLanguageVersion))
+        apiVersion.set(KotlinVersion.fromVersion(Build.KOTLIN_API_VERSION))
+        languageVersion.set(KotlinVersion.fromVersion(Build.KOTLIN_LANGUAGE_VERSION))
     }
 }
 

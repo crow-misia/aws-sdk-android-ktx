@@ -19,10 +19,10 @@ version = Maven.version
 
 android {
     namespace = "io.github.crow_misia.aws.core"
-    compileSdk = Build.compileSdk
+    compileSdk = Build.COMPILE_SDK
 
     defaultConfig {
-        minSdk = Build.minSdk
+        minSdk = Build.MIN_SDK
         consumerProguardFiles("consumer-proguard-rules.pro")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -72,8 +72,8 @@ kotlin {
         freeCompilerArgs.addAll("-Xjsr305=strict")
         javaParameters.set(true)
         jvmTarget.set(JvmTarget.JVM_11)
-        apiVersion.set(KotlinVersion.fromVersion(Build.kotlinApiVersion))
-        languageVersion.set(KotlinVersion.fromVersion(Build.kotlinLanguageVersion))
+        apiVersion.set(KotlinVersion.fromVersion(Build.KOTLIN_API_VERSION))
+        languageVersion.set(KotlinVersion.fromVersion(Build.KOTLIN_LANGUAGE_VERSION))
     }
 }
 
