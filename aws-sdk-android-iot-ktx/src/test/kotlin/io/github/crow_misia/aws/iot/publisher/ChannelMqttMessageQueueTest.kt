@@ -12,15 +12,12 @@ import io.mockk.coJustRun
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retry
-import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.withContext
 import java.time.Clock
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration.Companion.milliseconds
@@ -45,8 +42,10 @@ class ChannelMqttMessageQueueTest : StringSpec({
             .launchIn(this)
 
         async {
-            sut.send(DummyMqttMessage(1))
-            sut.send(DummyMqttMessage(2))
+            sut.send(
+                DummyMqttMessage(1),
+                DummyMqttMessage(2),
+            )
             sut.awaitUntilEmpty(1.seconds)
         }.await()
         job.cancelAndJoin()
@@ -83,9 +82,11 @@ class ChannelMqttMessageQueueTest : StringSpec({
             .launchIn(this)
 
         async {
-            sut.send(DummyMqttMessage(1))
-            sut.send(DummyMqttMessage(2)) // skip
-            sut.send(DummyMqttMessage(3)) // 1st error
+            sut.send(
+                DummyMqttMessage(1),
+                DummyMqttMessage(2), // skip
+                DummyMqttMessage(3), // 1st error
+            )
             sut.awaitUntilEmpty(3.seconds)
         }.await()
         job.cancelAndJoin()
@@ -121,9 +122,9 @@ class ChannelMqttMessageQueueTest : StringSpec({
             .launchIn(this)
 
         async {
-            (1..count).forEach {
-                sut.send(DummyMqttMessage(it))
-            }
+            sut.send((1..count).map {
+                DummyMqttMessage(it)
+            })
             sut.awaitUntilEmpty(2.seconds)
         }.await()
         job.cancelAndJoin()
@@ -159,9 +160,9 @@ class ChannelMqttMessageQueueTest : StringSpec({
             .launchIn(this)
 
         async {
-            (1..count).forEach {
-                sut.send(DummyMqttMessage(it))
-            }
+            sut.send((1..count).map {
+                DummyMqttMessage(it)
+            })
             // 3つ目のメッセージ送信中にタイムアウトする
             sut.awaitUntilEmpty(2500.milliseconds)
         }.await()
@@ -198,9 +199,9 @@ class ChannelMqttMessageQueueTest : StringSpec({
             .launchIn(this)
 
         async {
-            (1..count).forEach {
-                sut.send(DummyMqttMessage(it))
-            }
+            sut.send((1..count).map {
+                DummyMqttMessage(it)
+            })
             sut.awaitUntilEmpty(100.milliseconds)
         }.await()
         job.cancelAndJoin()

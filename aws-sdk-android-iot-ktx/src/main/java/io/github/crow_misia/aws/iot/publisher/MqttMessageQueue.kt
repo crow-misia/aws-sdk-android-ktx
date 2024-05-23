@@ -19,7 +19,6 @@ import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import io.github.crow_misia.aws.iot.publish
 import io.github.crow_misia.aws.iot.publishDefaultTimeout
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
@@ -51,7 +50,14 @@ interface MqttMessageQueue {
     /**
      * メッセージ送信.
      */
-    suspend fun send(message: MqttMessage)
+    suspend fun send(messages: List<MqttMessage>)
+
+    /**
+     * メッセージ送信.
+     */
+    suspend fun send(vararg messages: MqttMessage) {
+        send(messages.toList())
+    }
 
     /**
      * キューが空になるまで待つ.
@@ -92,7 +98,7 @@ internal class FlowMqttMessageQueue(
         }
     }
 
-    override suspend fun send(message: MqttMessage) {
+    override suspend fun send(messages: List<MqttMessage>) {
         throw UnsupportedOperationException()
     }
 
@@ -138,9 +144,12 @@ internal class ChannelMqttMessageQueue(
         } while (true)
     }
 
-    override suspend fun send(message: MqttMessage) {
-        messageCount.incrementAndGet()
-        messageQueue.add(MqttQueueMessage.wrap(message) { clock.millis() })
+    override suspend fun send(messages: List<MqttMessage>) {
+        delay(100.milliseconds)
+        messageCount.addAndGet(messages.size)
+        messageQueue.addAll(messages.map {
+            MqttQueueMessage.wrap(it) { clock.millis() }
+        })
     }
 
     override suspend fun awaitUntilEmpty(timeout: Duration): Result<Unit> {
