@@ -12,6 +12,6 @@ push = false
 
 [bumpver.file_patterns]
 "buildSrc/src/main/java/Maven.kt" = [
-    'const val version = "{pep440_version}"',
+    'const val VERSION = "{pep440_version}"',
 ]
 

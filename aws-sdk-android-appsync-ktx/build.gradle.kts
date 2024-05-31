@@ -14,8 +14,8 @@ plugins {
 
 val mavenName = "aws-sdk-android-appsync-ktx"
 
-group = Maven.groupId
-version = Maven.version
+group = Maven.GROUP_ID
+version = Maven.VERSION
 
 android {
     namespace = "io.github.crow_misia.aws.appsync"
@@ -136,7 +136,7 @@ afterEvaluate {
             register<MavenPublication>(mavenName) {
                 from(components["release"])
 
-                groupId = Maven.groupId
+                groupId = Maven.GROUP_ID
                 artifactId = mavenName
 
                 println("""
@@ -150,32 +150,32 @@ afterEvaluate {
 
                     pom {
                         name.set(mavenName)
-                        description.set(Maven.desc)
-                        url.set(Maven.siteUrl)
+                        description.set(Maven.DESC)
+                        url.set(Maven.SITE_URL)
 
                     scm {
-                        val scmUrl = "scm:git:${Maven.gitUrl}"
+                        val scmUrl = "scm:git:${Maven.GIT_URL}"
                         connection.set(scmUrl)
                         developerConnection.set(scmUrl)
-                        url.set(Maven.gitUrl)
+                        url.set(Maven.GIT_URL)
                         tag.set("HEAD")
                     }
 
                     developers {
                         developer {
-                            id.set(Maven.developerId)
-                            name.set(Maven.developerName)
-                            email.set(Maven.developerEmail)
+                            id.set(Maven.DEVELOPER_ID)
+                            name.set(Maven.DEVELOPER_NAME)
+                            email.set(Maven.DEVELOPER_EMAIL)
                             roles.set(Maven.developerRoles)
-                            timezone.set(Maven.developerTimezone)
+                            timezone.set(Maven.DEVELOPER_TIMEZONE)
                         }
                     }
 
                     licenses {
                         license {
-                            name.set(Maven.licenseName)
-                            url.set(Maven.licenseUrl)
-                            distribution.set(Maven.licenseDist)
+                            name.set(Maven.LICENSE_NAME)
+                            url.set(Maven.LICENSE_URL)
+                            distribution.set(Maven.LICENSE_DIST)
                         }
                     }
                 }
@@ -185,7 +185,7 @@ afterEvaluate {
             maven {
                 val releasesRepoUrl = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2")
                 val snapshotsRepoUrl = uri("https://oss.sonatype.org/content/repositories/snapshots")
-                url = if (Maven.version.endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
+                url = if (Maven.VERSION.endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
                 credentials {
                     username = project.findProperty("sona.user") as String? ?: providers.environmentVariable("SONA_USER").orNull
                     password = project.findProperty("sona.password") as String? ?: providers.environmentVariable("SONA_PASSWORD").orNull
