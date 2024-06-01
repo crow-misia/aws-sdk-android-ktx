@@ -58,6 +58,7 @@ class AWSAppSyncClient @JvmOverloads constructor(
     private val credentialsProvider: AWSCredentialsProvider,
     clientConfiguration: ClientConfiguration = ClientConfiguration(),
     httpClient: HttpClient = UrlHttpClient(clientConfiguration),
+    clientBuilder: (ApolloClient.Builder) -> Unit = { }
 ) : AmazonWebServiceClient(clientConfiguration, httpClient), AWSAppSync {
     private val delegated: ApolloClient
 
@@ -81,6 +82,7 @@ class AWSAppSyncClient @JvmOverloads constructor(
 
         delegated = ApolloClient.Builder()
             .networkTransport(HttpClientNetworkTransport(this))
+            .also(clientBuilder)
             .build()
     }
 
