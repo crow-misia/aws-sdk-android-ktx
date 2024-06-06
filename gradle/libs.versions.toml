@@ -74,7 +74,7 @@ okio = "3.9.0"
 
 timber = "5.0.1"
 
-apollographql = "4.0.0-beta.6"
+apollographql = "4.0.0-beta.7"
 
 aws-android-sdk = "2.75.1"
 
