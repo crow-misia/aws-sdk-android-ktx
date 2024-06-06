@@ -18,7 +18,6 @@ package io.github.crow_misia.aws.core
 import okhttp3.OkHttpClient
 import java.security.KeyStore
 import java.security.cert.X509Certificate
-import java.util.Arrays
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
