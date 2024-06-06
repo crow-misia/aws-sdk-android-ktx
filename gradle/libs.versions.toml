@@ -26,7 +26,7 @@ kotlin = "2.0.0"
 
 kotlinx-coroutines = "1.8.1"
 
-kotlinx-serialization = "1.6.3"
+kotlinx-serialization = "1.7.0"
 
 android-tools-desugar_jdk_libs = "2.0.4"
 
@@ -60,7 +60,7 @@ androidx-test-runner = "1.6.0-rc01"
 
 androidx-test-rules = "1.6.0-rc01"
 
-kotest = "5.9.0"
+kotest = "5.9.1"
 
 mockk = "1.13.11"
 
