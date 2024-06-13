@@ -28,8 +28,6 @@ kotlinx-coroutines = "1.8.1"
 
 kotlinx-serialization = "1.7.0"
 
-android-tools-desugar_jdk_libs = "2.0.4"
-
 androidx-core = "1.14.0-alpha01"
 
 androidx-activity = "1.9.0"
@@ -143,8 +141,6 @@ androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espres
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidx-test-runner" }
 
 androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "androidx-test-rules" }
-
-desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "android-tools-desugar_jdk_libs" }
 
 kotest-bom = { group = "io.kotest", name = "kotest-bom", version.ref = "kotest" }
 
