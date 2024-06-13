@@ -23,17 +23,17 @@ import com.amazonaws.services.securitytoken.model.AssumeRoleWithCredentialsReque
 import com.amazonaws.services.securitytoken.model.ThingName
 import io.github.crow_misia.aws.core.AWSTemporaryCredentials
 import io.github.crow_misia.aws.core.asAWSCredentials
+import kotlinx.datetime.Clock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 open class AWSIoTSTSAssumeRoleSessionCredentialsProvider(
+    private val clock: Clock,
     private val thingNameProvider: ThingNameProvider<Unit>,
     private val roleAliasNameProvider: RoleAliasNameProvider<ThingName>,
     private val securityTokenService: AWSIoTSecurityTokenServiceClient,
+    private val expiryTime: Duration = 60.milliseconds,
 ) : AWSCredentialsProvider {
-    companion object {
-        /** Time before expiry within which credentials will be renewed. */
-        const val EXPIRY_TIME_MILLIS = 60 * 1000
-    }
-
     /**
      * The current temporary credentials.
      */
@@ -66,7 +66,7 @@ open class AWSIoTSTSAssumeRoleSessionCredentialsProvider(
         val credentials = temporaryCredentials ?: return true
         val expiration = credentials.expiration
 
-        val timeRemaining = expiration.toEpochMilli() - System.currentTimeMillis()
-        return timeRemaining < EXPIRY_TIME_MILLIS
+        val timeRemaining = expiration - clock.now()
+        return timeRemaining < expiryTime
     }
 }

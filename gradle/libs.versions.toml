@@ -26,6 +26,8 @@ kotlin = "2.0.0"
 
 kotlinx-coroutines = "1.8.1"
 
+kotlinx-datetime = "0.6.0"
+
 kotlinx-serialization = "1.7.0"
 
 androidx-core = "1.14.0-alpha01"
@@ -91,6 +93,8 @@ kotlinx-coroutines-bom = { group = "org.jetbrains.kotlinx", name = "kotlinx-coro
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android" }
 
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test" }
+
+kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
 kotlinx-serialization-bom = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-bom", version.ref = "kotlinx-serialization" }
 

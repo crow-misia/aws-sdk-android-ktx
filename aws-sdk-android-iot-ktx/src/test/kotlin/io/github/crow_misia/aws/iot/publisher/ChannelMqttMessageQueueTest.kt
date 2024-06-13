@@ -18,7 +18,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retry
-import java.time.Clock
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -27,7 +28,7 @@ import kotlin.time.Duration.Companion.seconds
 class ChannelMqttMessageQueueTest : StringSpec({
     "メッセージの受信ができること" {
         val clockMock = mockk<Clock>()
-        every { clockMock.millis() } returns 1706886000000L
+        every { clockMock.now() } returns Instant.fromEpochMilliseconds(1706886000000L)
         val sut = MqttMessageQueue.createMessageQueue(
             clock = clockMock,
             messageExpired = 100.minutes,
@@ -59,8 +60,11 @@ class ChannelMqttMessageQueueTest : StringSpec({
         val clockMock = mockk<Clock>()
         // 2番目の送信データは期限切れで再送されないこと
         // when send 1, 2, 3, send 3 retry
-        every { clockMock.millis() } returnsMany listOf(
-            1706886600000L, 1706886000000L, 1706886600000L, 1706886600000L,
+        every { clockMock.now() } returnsMany listOf(
+            Instant.fromEpochMilliseconds(1706886600000L),
+            Instant.fromEpochMilliseconds(1706886000000L),
+            Instant.fromEpochMilliseconds(1706886600000L),
+            Instant.fromEpochMilliseconds(1706886600000L),
         )
         val sut = MqttMessageQueue.createMessageQueue(
             clock = clockMock,
@@ -100,7 +104,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
 
     "クローズ前に送信したメッセージが送信し終わるで、クローズが待機されること" {
         val clockMock = mockk<Clock>()
-        every { clockMock.millis() } returns 1706886000000L
+        every { clockMock.now() } returns Instant.fromEpochMilliseconds(1706886000000L)
         val sut = MqttMessageQueue.createMessageQueue(
             clock = clockMock,
             messageExpired = 1.minutes,
@@ -138,7 +142,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
 
     "クローズ前に送信したメッセージ送信に時間がかかり、クローズのタイムアウトとなる場合、途中で終了すること" {
         val clockMock = mockk<Clock>()
-        every { clockMock.millis() } returns 1706886000000L
+        every { clockMock.now() } returns Instant.fromEpochMilliseconds(1706886000000L)
         val sut = MqttMessageQueue.createMessageQueue(
             clock = clockMock,
             messageExpired = 1.minutes,
@@ -177,7 +181,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
 
     "クライアントに紐づける前に送信されたデータが欠損しないこと" {
         val clockMock = mockk<Clock>()
-        every { clockMock.millis() } returns 1706886000000L
+        every { clockMock.now() } returns Instant.fromEpochMilliseconds(1706886000000L)
         val sut = MqttMessageQueue.createMessageQueue(
             clock = clockMock,
             messageExpired = 1.minutes,
@@ -215,7 +219,8 @@ class ChannelMqttMessageQueueTest : StringSpec({
 
     "クローズ前に送信したメッセージが有効期限切れの場合、空判定がタイムアウトしないこと" {
         val clockMock = mockk<Clock>()
-        every { clockMock.millis() } returns 1706886000000L andThen 1706886600000L
+        every { clockMock.now() } returns Instant.fromEpochMilliseconds(1706886000000L) andThen
+                Instant.fromEpochMilliseconds(1706886600000L)
         val sut = MqttMessageQueue.createMessageQueue(
             clock = clockMock,
             messageExpired = 1.minutes,

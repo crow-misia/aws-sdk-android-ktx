@@ -17,7 +17,7 @@ package io.github.crow_misia.aws.core
 
 import com.amazonaws.auth.AWSSessionCredentials
 import com.amazonaws.auth.BasicSessionCredentials
-import java.time.Instant
+import kotlinx.datetime.Instant
 
 interface AWSTemporaryCredentials : AWSSessionCredentials {
     val expiration: Instant

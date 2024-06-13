@@ -34,7 +34,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import timber.log.Timber
-import java.time.Clock
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.minutes
@@ -70,7 +69,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application), D
     }
 
     private var shadowClient: AWSIoTMqttShadowClient? = null
-    private val messageQueue: MqttMessageQueue = MqttMessageQueue.createMessageQueue(Clock.systemDefaultZone(), 1.minutes)
+    private val messageQueue: MqttMessageQueue = MqttMessageQueue.createMessageQueue(messageExpired = 1.minutes)
 
     override fun onCleared() {
         shadowClient?.disconnect()

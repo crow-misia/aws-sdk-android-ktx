@@ -87,6 +87,9 @@ dependencies {
     implementation(libs.okhttp3.android)
     implementation(libs.okio)
 
+    // misc
+    api(libs.kotlinx.datetime)
+
     // Unit testing
     testImplementation(platform(libs.kotlinx.coroutines.bom))
     testImplementation(libs.kotlinx.coroutines.test)

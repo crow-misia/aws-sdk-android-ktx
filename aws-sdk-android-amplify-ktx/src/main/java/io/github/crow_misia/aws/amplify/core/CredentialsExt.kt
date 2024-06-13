@@ -20,23 +20,25 @@ import aws.smithy.kotlin.runtime.time.toSdkInstant
 import com.amazonaws.auth.AWSCredentials
 import com.amazonaws.auth.AWSSessionCredentials
 import io.github.crow_misia.aws.core.AWSTemporaryCredentials
-import java.time.Instant
+import kotlinx.datetime.Instant
+import kotlinx.datetime.toJavaInstant
+import java.util.Date
 
-fun AWSCredentials.toAmplifyCredentials(expiration: Instant? = null): com.amplifyframework.auth.AWSCredentials {
+fun AWSCredentials.toAmplifyCredentials(expiration: Date? = null): com.amplifyframework.auth.AWSCredentials {
     val credentials = when (this) {
         is AWSTemporaryCredentials ->
             com.amplifyframework.auth.AWSCredentials.createAWSCredentials(
                 accessKeyId = awsAccessKeyId,
                 secretAccessKey = awsSecretKey,
                 sessionToken = sessionToken,
-                expiration = this.expiration.toEpochMilli(),
+                expiration = this.expiration.toEpochMilliseconds(),
             )
         is AWSSessionCredentials ->
             com.amplifyframework.auth.AWSCredentials.createAWSCredentials(
                 accessKeyId = awsAccessKeyId,
                 secretAccessKey = awsSecretKey,
                 sessionToken = sessionToken,
-                expiration = requireNotNull(expiration) { "needed expiration to convert." }.toEpochMilli(),
+                expiration = requireNotNull(expiration) { "needed expiration to convert." }.time,
             )
         else ->
             com.amplifyframework.auth.AWSCredentials.createAWSCredentials(
@@ -56,14 +58,14 @@ fun AWSCredentials.toSdkCredentials(expiration: Instant? = null): Credentials {
                 accessKeyId = awsAccessKeyId,
                 secretAccessKey = awsSecretKey,
                 sessionToken = sessionToken,
-                expiration = this.expiration.toSdkInstant(),
+                expiration = this.expiration.toJavaInstant().toSdkInstant(),
             )
         is AWSSessionCredentials ->
             Credentials(
                 accessKeyId = awsAccessKeyId,
                 secretAccessKey = awsSecretKey,
                 sessionToken = sessionToken,
-                expiration = requireNotNull(expiration) { "needed expiration to convert." }.toSdkInstant(),
+                expiration = requireNotNull(expiration) { "needed expiration to convert." }.toJavaInstant().toSdkInstant(),
             )
         else ->
             Credentials(
@@ -75,3 +77,4 @@ fun AWSCredentials.toSdkCredentials(expiration: Instant? = null): Credentials {
     }
     return credentials
 }
+

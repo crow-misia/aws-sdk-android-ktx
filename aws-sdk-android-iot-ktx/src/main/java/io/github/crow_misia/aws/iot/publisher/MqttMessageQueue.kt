@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import java.time.Clock
+import kotlinx.datetime.Clock
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
@@ -68,7 +68,7 @@ interface MqttMessageQueue {
 
     companion object {
         fun createMessageQueue(
-            clock: Clock,
+            clock: Clock = Clock.System,
             messageExpired: Duration,
             pollInterval: Duration = 250.milliseconds,
         ): MqttMessageQueue {
@@ -126,8 +126,8 @@ internal class ChannelMqttMessageQueue(
                 delay(pollInterval)
                 continue
             }
-            val limitTime = clock.millis() - messageExpired.inWholeMilliseconds
-            if (message.timestamp >= limitTime) {
+            val limitTime = clock.now() - messageExpired
+            if (message.timestamp >= limitTime.toEpochMilliseconds()) {
                 withContext(context) {
                     runCatching {
                         client.publish(message, publishTimeout)
@@ -148,7 +148,7 @@ internal class ChannelMqttMessageQueue(
         delay(100.milliseconds)
         messageCount.addAndGet(messages.size)
         messageQueue.addAll(messages.map {
-            MqttQueueMessage.wrap(it) { clock.millis() }
+            MqttQueueMessage.wrap(it) { clock.now().toEpochMilliseconds() }
         })
     }
 

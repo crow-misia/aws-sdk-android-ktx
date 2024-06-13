@@ -16,7 +16,13 @@
 package io.github.crow_misia.aws.core
 
 import com.amazonaws.services.securitytoken.model.Credentials
+import kotlinx.datetime.Instant
 
 fun Credentials.asAWSCredentials(): AWSTemporaryCredentials {
-    return BasicTemporaryCredentials(accessKeyId, secretAccessKey, sessionToken, expiration.toInstant())
+    return BasicTemporaryCredentials(
+        awsAccessKey = accessKeyId,
+        awsSecretKey = secretAccessKey,
+        sessionToken = sessionToken,
+        expiration = Instant.fromEpochMilliseconds(expiration.time),
+    )
 }
