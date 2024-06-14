@@ -20,7 +20,7 @@ dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 
 [versions]
 
-android-gradle-plugin = "8.4.2"
+android-gradle-plugin = "8.5.0"
 
 kotlin = "2.0.0"
 
@@ -76,9 +76,9 @@ timber = "5.0.1"
 
 apollographql = "4.0.0-beta.7"
 
-aws-android-sdk = "2.75.1"
+aws-android-sdk = "2.75.2"
 
-amplifyframework = "2.18.0"
+amplifyframework = "2.19.0"
 
 bouncycastle = "1.78.1"
 
