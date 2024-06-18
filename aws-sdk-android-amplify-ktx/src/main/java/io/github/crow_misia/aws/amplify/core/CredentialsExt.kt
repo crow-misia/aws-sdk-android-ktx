@@ -15,30 +15,33 @@
  */
 package io.github.crow_misia.aws.amplify.core
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import aws.smithy.kotlin.runtime.auth.awscredentials.Credentials
+import aws.smithy.kotlin.runtime.time.Instant
+import aws.smithy.kotlin.runtime.time.epochMilliseconds
+import aws.smithy.kotlin.runtime.time.fromEpochMilliseconds
 import aws.smithy.kotlin.runtime.time.toSdkInstant
 import com.amazonaws.auth.AWSCredentials
 import com.amazonaws.auth.AWSSessionCredentials
 import io.github.crow_misia.aws.core.AWSTemporaryCredentials
-import kotlinx.datetime.Instant
-import kotlinx.datetime.toJavaInstant
 import java.util.Date
 
-fun AWSCredentials.toAmplifyCredentials(expiration: Date? = null): com.amplifyframework.auth.AWSCredentials {
+fun AWSCredentials.toAmplifyCredentials(expirationMillis: Long? = null): com.amplifyframework.auth.AWSCredentials {
     val credentials = when (this) {
         is AWSTemporaryCredentials ->
             com.amplifyframework.auth.AWSCredentials.createAWSCredentials(
                 accessKeyId = awsAccessKeyId,
                 secretAccessKey = awsSecretKey,
                 sessionToken = sessionToken,
-                expiration = this.expiration.toEpochMilliseconds(),
+                expiration = expiration.epochMilliseconds,
             )
         is AWSSessionCredentials ->
             com.amplifyframework.auth.AWSCredentials.createAWSCredentials(
                 accessKeyId = awsAccessKeyId,
                 secretAccessKey = awsSecretKey,
                 sessionToken = sessionToken,
-                expiration = requireNotNull(expiration) { "needed expiration to convert." }.time,
+                expiration = requireNotNull(expirationMillis) { "needed expiration to convert." },
             )
         else ->
             com.amplifyframework.auth.AWSCredentials.createAWSCredentials(
@@ -50,6 +53,16 @@ fun AWSCredentials.toAmplifyCredentials(expiration: Date? = null): com.amplifyfr
     }
     return checkNotNull(credentials)
 }
+fun AWSCredentials.toAmplifyCredentials(expiration: Date?): com.amplifyframework.auth.AWSCredentials {
+    return toAmplifyCredentials(expiration?.time)
+}
+fun AWSCredentials.toAmplifyCredentials(expiration: Instant?): com.amplifyframework.auth.AWSCredentials {
+    return toAmplifyCredentials(expiration?.epochMilliseconds)
+}
+@RequiresApi(Build.VERSION_CODES.O)
+fun AWSCredentials.toAmplifyCredentials(expiration: java.time.Instant?): com.amplifyframework.auth.AWSCredentials {
+    return toAmplifyCredentials(expiration?.toEpochMilli())
+}
 
 fun AWSCredentials.toSdkCredentials(expiration: Instant? = null): Credentials {
     val credentials = when (this) {
@@ -58,14 +71,14 @@ fun AWSCredentials.toSdkCredentials(expiration: Instant? = null): Credentials {
                 accessKeyId = awsAccessKeyId,
                 secretAccessKey = awsSecretKey,
                 sessionToken = sessionToken,
-                expiration = this.expiration.toJavaInstant().toSdkInstant(),
+                expiration = this.expiration,
             )
         is AWSSessionCredentials ->
             Credentials(
                 accessKeyId = awsAccessKeyId,
                 secretAccessKey = awsSecretKey,
                 sessionToken = sessionToken,
-                expiration = requireNotNull(expiration) { "needed expiration to convert." }.toJavaInstant().toSdkInstant(),
+                expiration = requireNotNull(expiration) { "needed expiration to convert." },
             )
         else ->
             Credentials(
@@ -77,4 +90,12 @@ fun AWSCredentials.toSdkCredentials(expiration: Instant? = null): Credentials {
     }
     return credentials
 }
-
+fun AWSCredentials.toSdkCredentials(expiration: java.time.Instant?): Credentials {
+    return toSdkCredentials(expiration?.toSdkInstant())
+}
+fun AWSCredentials.toSdkCredentials(expiration: Date?): Credentials {
+    return toSdkCredentials(expiration?.time?.let { Instant.fromEpochMilliseconds(it) })
+}
+fun AWSCredentials.toSdkCredentials(expirationMillis: Long?): Credentials {
+    return toSdkCredentials(expirationMillis?.let { Instant.fromEpochMilliseconds(it) })
+}

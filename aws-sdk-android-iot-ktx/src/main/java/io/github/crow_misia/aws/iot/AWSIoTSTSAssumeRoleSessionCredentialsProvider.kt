@@ -17,18 +17,18 @@
 
 package io.github.crow_misia.aws.iot
 
+import aws.smithy.kotlin.runtime.time.Clock
 import com.amazonaws.auth.AWSCredentials
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithCredentialsRequest
 import com.amazonaws.services.securitytoken.model.ThingName
 import io.github.crow_misia.aws.core.AWSTemporaryCredentials
 import io.github.crow_misia.aws.core.asAWSCredentials
-import kotlinx.datetime.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 open class AWSIoTSTSAssumeRoleSessionCredentialsProvider(
-    private val clock: Clock,
+    private val clock: Clock = Clock.System,
     private val thingNameProvider: ThingNameProvider<Unit>,
     private val roleAliasNameProvider: RoleAliasNameProvider<ThingName>,
     private val securityTokenService: AWSIoTSecurityTokenServiceClient,

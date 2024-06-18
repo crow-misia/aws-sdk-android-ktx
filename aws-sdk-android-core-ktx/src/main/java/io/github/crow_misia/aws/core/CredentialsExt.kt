@@ -15,8 +15,9 @@
  */
 package io.github.crow_misia.aws.core
 
+import aws.smithy.kotlin.runtime.time.Instant
+import aws.smithy.kotlin.runtime.time.fromEpochMilliseconds
 import com.amazonaws.services.securitytoken.model.Credentials
-import kotlinx.datetime.Instant
 
 fun Credentials.asAWSCredentials(): AWSTemporaryCredentials {
     return BasicTemporaryCredentials(

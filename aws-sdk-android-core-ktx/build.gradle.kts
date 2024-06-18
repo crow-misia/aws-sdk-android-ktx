@@ -82,13 +82,12 @@ dependencies {
 
     // aws sdk android
     api(libs.aws.android.sdk.core)
+    api(platform(libs.aws.smithy.bom))
+    api(libs.aws.smithy.runtime)
 
     // okhttp3
     implementation(libs.okhttp3.android)
     implementation(libs.okio)
-
-    // misc
-    api(libs.kotlinx.datetime)
 
     // Unit testing
     testImplementation(platform(libs.kotlinx.coroutines.bom))

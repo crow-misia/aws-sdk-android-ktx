@@ -1,5 +1,8 @@
 package io.github.crow_misia.aws.iot.publisher
 
+import aws.smithy.kotlin.runtime.time.Clock
+import aws.smithy.kotlin.runtime.time.Instant
+import aws.smithy.kotlin.runtime.time.ManualClock
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import io.github.crow_misia.aws.iot.AWSIoTMqttDeliveryException
 import io.github.crow_misia.aws.iot.publish
@@ -18,8 +21,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retry
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -28,7 +29,7 @@ import kotlin.time.Duration.Companion.seconds
 class ChannelMqttMessageQueueTest : StringSpec({
     "メッセージの受信ができること" {
         val clockMock = mockk<Clock>()
-        every { clockMock.now() } returns Instant.fromEpochMilliseconds(1706886000000L)
+        every { clockMock.now() } returns Instant.fromEpochSeconds(1706886000L)
         val sut = MqttMessageQueue.createMessageQueue(
             clock = clockMock,
             messageExpired = 100.minutes,
@@ -61,10 +62,10 @@ class ChannelMqttMessageQueueTest : StringSpec({
         // 2番目の送信データは期限切れで再送されないこと
         // when send 1, 2, 3, send 3 retry
         every { clockMock.now() } returnsMany listOf(
-            Instant.fromEpochMilliseconds(1706886600000L),
-            Instant.fromEpochMilliseconds(1706886000000L),
-            Instant.fromEpochMilliseconds(1706886600000L),
-            Instant.fromEpochMilliseconds(1706886600000L),
+            Instant.fromEpochSeconds(1706886600L),
+            Instant.fromEpochSeconds(1706886000L),
+            Instant.fromEpochSeconds(1706886600L),
+            Instant.fromEpochSeconds(1706886600L),
         )
         val sut = MqttMessageQueue.createMessageQueue(
             clock = clockMock,
@@ -104,7 +105,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
 
     "クローズ前に送信したメッセージが送信し終わるで、クローズが待機されること" {
         val clockMock = mockk<Clock>()
-        every { clockMock.now() } returns Instant.fromEpochMilliseconds(1706886000000L)
+        every { clockMock.now() } returns Instant.fromEpochSeconds(1706886000L)
         val sut = MqttMessageQueue.createMessageQueue(
             clock = clockMock,
             messageExpired = 1.minutes,
@@ -142,7 +143,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
 
     "クローズ前に送信したメッセージ送信に時間がかかり、クローズのタイムアウトとなる場合、途中で終了すること" {
         val clockMock = mockk<Clock>()
-        every { clockMock.now() } returns Instant.fromEpochMilliseconds(1706886000000L)
+        every { clockMock.now() } returns Instant.fromEpochSeconds(1706886000L)
         val sut = MqttMessageQueue.createMessageQueue(
             clock = clockMock,
             messageExpired = 1.minutes,
@@ -181,7 +182,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
 
     "クライアントに紐づける前に送信されたデータが欠損しないこと" {
         val clockMock = mockk<Clock>()
-        every { clockMock.now() } returns Instant.fromEpochMilliseconds(1706886000000L)
+        every { clockMock.now() } returns Instant.fromEpochSeconds(1706886000L)
         val sut = MqttMessageQueue.createMessageQueue(
             clock = clockMock,
             messageExpired = 1.minutes,
@@ -219,8 +220,8 @@ class ChannelMqttMessageQueueTest : StringSpec({
 
     "クローズ前に送信したメッセージが有効期限切れの場合、空判定がタイムアウトしないこと" {
         val clockMock = mockk<Clock>()
-        every { clockMock.now() } returns Instant.fromEpochMilliseconds(1706886000000L) andThen
-                Instant.fromEpochMilliseconds(1706886600000L)
+        every { clockMock.now() } returns Instant.fromEpochSeconds(1706886000L) andThen
+                Instant.fromEpochSeconds(1706886600L)
         val sut = MqttMessageQueue.createMessageQueue(
             clock = clockMock,
             messageExpired = 1.minutes,

@@ -26,8 +26,6 @@ kotlin = "2.0.0"
 
 kotlinx-coroutines = "1.8.1"
 
-kotlinx-datetime = "0.6.0"
-
 kotlinx-serialization = "1.7.0"
 
 androidx-core = "1.14.0-alpha01"
@@ -78,6 +76,8 @@ apollographql = "4.0.0-beta.7"
 
 aws-android-sdk = "2.75.2"
 
+aws-smithy = "1.2.8"
+
 amplifyframework = "2.19.0"
 
 bouncycastle = "1.78.1"
@@ -93,8 +93,6 @@ kotlinx-coroutines-bom = { group = "org.jetbrains.kotlinx", name = "kotlinx-coro
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android" }
 
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test" }
-
-kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
 kotlinx-serialization-bom = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-bom", version.ref = "kotlinx-serialization" }
 
@@ -169,6 +167,10 @@ aws-android-sdk-core = { group = "com.amazonaws", name = "aws-android-sdk-core",
 aws-android-sdk-iot = { group = "com.amazonaws", name = "aws-android-sdk-iot", version.ref = "aws-android-sdk" }
 
 amplifyframework-aws-core = { group = "com.amplifyframework", name = "aws-core", version.ref = "amplifyframework" }
+
+aws-smithy-bom = { group = "aws.smithy.kotlin", name = "bom", version.ref = "aws-smithy" }
+
+aws-smithy-runtime = { group = "aws.smithy.kotlin", name = "runtime-core-jvm" }
 
 bouncycastle-bcpkix = { group = "org.bouncycastle", name = "bcpkix-jdk18on", version.ref = "bouncycastle" }
 

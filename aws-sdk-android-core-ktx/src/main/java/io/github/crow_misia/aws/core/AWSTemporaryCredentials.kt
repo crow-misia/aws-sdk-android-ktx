@@ -15,16 +15,16 @@
  */
 package io.github.crow_misia.aws.core
 
+import aws.smithy.kotlin.runtime.time.Instant
 import com.amazonaws.auth.AWSSessionCredentials
 import com.amazonaws.auth.BasicSessionCredentials
-import kotlinx.datetime.Instant
 
 interface AWSTemporaryCredentials : AWSSessionCredentials {
     val expiration: Instant
 }
 
 /**
- *
+ * TemporaryCredentials.
  * @param awsAccessKey the AWS access key.
  * @param awsSecretKey the AWS secret key.
  * @param sessionToken the session token.

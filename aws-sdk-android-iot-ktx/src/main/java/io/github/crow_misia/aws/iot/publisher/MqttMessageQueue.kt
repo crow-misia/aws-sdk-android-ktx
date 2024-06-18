@@ -15,6 +15,8 @@
  */
 package io.github.crow_misia.aws.iot.publisher
 
+import aws.smithy.kotlin.runtime.time.Clock
+import aws.smithy.kotlin.runtime.time.epochMilliseconds
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import io.github.crow_misia.aws.iot.publish
 import io.github.crow_misia.aws.iot.publishDefaultTimeout
@@ -27,7 +29,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import kotlinx.datetime.Clock
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
@@ -127,7 +128,7 @@ internal class ChannelMqttMessageQueue(
                 continue
             }
             val limitTime = clock.now() - messageExpired
-            if (message.timestamp >= limitTime.toEpochMilliseconds()) {
+            if (message.timestamp >= limitTime.epochMilliseconds) {
                 withContext(context) {
                     runCatching {
                         client.publish(message, publishTimeout)
@@ -148,7 +149,7 @@ internal class ChannelMqttMessageQueue(
         delay(100.milliseconds)
         messageCount.addAndGet(messages.size)
         messageQueue.addAll(messages.map {
-            MqttQueueMessage.wrap(it) { clock.now().toEpochMilliseconds() }
+            MqttQueueMessage.wrap(it) { clock.now().epochMilliseconds }
         })
     }
 
