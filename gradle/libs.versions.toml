@@ -76,7 +76,7 @@ apollographql = "4.0.0-beta.7"
 
 aws-android-sdk = "2.75.2"
 
-aws-smithy = "1.2.9"
+aws-smithy-kotlin = "1.2.10"
 
 amplifyframework = "2.19.1"
 
@@ -168,7 +168,7 @@ aws-android-sdk-iot = { group = "com.amazonaws", name = "aws-android-sdk-iot", v
 
 amplifyframework-aws-core = { group = "com.amplifyframework", name = "aws-core", version.ref = "amplifyframework" }
 
-aws-smithy-bom = { group = "aws.smithy.kotlin", name = "bom", version.ref = "aws-smithy" }
+aws-smithy-bom = { group = "aws.smithy.kotlin", name = "bom", version.ref = "aws-smithy-kotlin" }
 
 aws-smithy-runtime = { group = "aws.smithy.kotlin", name = "runtime-core-jvm" }
 
