@@ -146,7 +146,6 @@ internal class ChannelMqttMessageQueue(
     }
 
     override suspend fun send(messages: List<MqttMessage>) {
-        delay(100.milliseconds)
         messageCount.addAndGet(messages.size)
         messageQueue.addAll(messages.map {
             MqttQueueMessage.wrap(it) { clock.now().epochMilliseconds }
