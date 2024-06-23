@@ -2,11 +2,15 @@ package io.github.crow_misia.aws.iot.publisher
 
 import aws.smithy.kotlin.runtime.time.Clock
 import aws.smithy.kotlin.runtime.time.Instant
-import aws.smithy.kotlin.runtime.time.ManualClock
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import io.github.crow_misia.aws.iot.AWSIoTMqttDeliveryException
 import io.github.crow_misia.aws.iot.publish
+import io.kotest.assertions.asClue
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.nulls.beNull
+import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.mockk.Runs
 import io.mockk.andThenJust
@@ -48,13 +52,14 @@ class ChannelMqttMessageQueueTest : StringSpec({
                 DummyMqttMessage(1),
                 DummyMqttMessage(2),
             )
-            sut.awaitUntilEmpty(1.seconds)
         }.await()
-        job.cancelAndJoin()
 
-        val calledPublishMessages = results.map { it.data[0].toInt() }
-        println(calledPublishMessages)
-        calledPublishMessages shouldBe (1..2).map { it }
+        eventually(5.seconds) {
+            val calledPublishMessages = results.map { it.data[0].toInt() }
+            calledPublishMessages.asClue { it shouldBe listOf(1, 2) }
+        }
+
+        job.cancelAndJoin()
     }
 
     "エラー発生時のメッセージがリトライ時に再送されること" {
@@ -92,18 +97,18 @@ class ChannelMqttMessageQueueTest : StringSpec({
                 DummyMqttMessage(2), // skip
                 DummyMqttMessage(3), // 1st error
             )
-            sut.awaitUntilEmpty(3.seconds)
         }.await()
-        job.cancelAndJoin()
 
-        val calledPublishMessages = results.map { it.data[0].toInt() }
-        println(calledPublishMessages)
-        println(publishSuccessList)
-        calledPublishMessages shouldBe listOf(1, 3, 3)
-        publishSuccessList shouldBe listOf(1, 3)
+        eventually(5.seconds) {
+            val calledPublishMessages = results.map { it.data[0].toInt() }
+            calledPublishMessages.asClue { it shouldBe listOf(1, 3, 3) }
+            publishSuccessList.asClue { it shouldBe listOf(1, 3) }
+        }
+
+        job.cancelAndJoin()
     }
 
-    "クローズ前に送信したメッセージが送信し終わるで、クローズが待機されること" {
+    "クローズ前に送信したメッセージが送信し終わるまで、クローズが待機されること" {
         val clockMock = mockk<Clock>()
         every { clockMock.now() } returns Instant.fromEpochSeconds(1706886000L)
         val sut = MqttMessageQueue.createMessageQueue(
@@ -130,15 +135,15 @@ class ChannelMqttMessageQueueTest : StringSpec({
             sut.send((1..count).map {
                 DummyMqttMessage(it)
             })
-            sut.awaitUntilEmpty(2.seconds)
         }.await()
+
+        // クローズする
+        sut.awaitUntilEmpty(2.seconds)
         job.cancelAndJoin()
 
         val calledPublishMessages = results.map { it.data[0].toInt() }
-        println(calledPublishMessages)
-        println(publishSuccessList)
-        calledPublishMessages shouldBe (1..count).toList()
-        publishSuccessList shouldBe (1..count).toList()
+        calledPublishMessages.asClue { it shouldBe (1..count).toList() }
+        publishSuccessList.asClue { it shouldBe (1..count).toList() }
     }
 
     "クローズ前に送信したメッセージ送信に時間がかかり、クローズのタイムアウトとなる場合、途中で終了すること" {
@@ -168,16 +173,16 @@ class ChannelMqttMessageQueueTest : StringSpec({
             sut.send((1..count).map {
                 DummyMqttMessage(it)
             })
-            // 3つ目のメッセージ送信中にタイムアウトする
-            sut.awaitUntilEmpty(2500.milliseconds)
         }.await()
+
+        // 3つ目のメッセージ送信中にタイムアウトする
+        sut.awaitUntilEmpty(2500.milliseconds)
+        // クローズする
         job.cancelAndJoin()
 
         val calledPublishMessages = results.map { it.data[0].toInt() }
-        println(calledPublishMessages)
-        println(publishSuccessList)
-        calledPublishMessages shouldBe (1..3).toList()
-        publishSuccessList shouldBe (1..2).toList()
+        calledPublishMessages.asClue { it shouldBe listOf(1, 2, 3) }
+        publishSuccessList.asClue { it shouldBe listOf(1, 2) }
     }
 
     "クライアントに紐づける前に送信されたデータが欠損しないこと" {
@@ -207,15 +212,15 @@ class ChannelMqttMessageQueueTest : StringSpec({
             sut.send((1..count).map {
                 DummyMqttMessage(it)
             })
-            sut.awaitUntilEmpty(100.milliseconds)
         }.await()
+
+        // クローズする
+        sut.awaitUntilEmpty(100.milliseconds)
         job.cancelAndJoin()
 
         val calledPublishMessages = results.map { it.data[0].toInt() }
-        println(calledPublishMessages)
-        println(publishSuccessList)
-        calledPublishMessages shouldBe listOf(99, 1, 2)
-        publishSuccessList shouldBe listOf(99, 1, 2)
+        calledPublishMessages.asClue { it shouldBe listOf(99, 1, 2) }
+        publishSuccessList.asClue { it shouldBe listOf(99, 1, 2) }
     }
 
     "クローズ前に送信したメッセージが有効期限切れの場合、空判定がタイムアウトしないこと" {
@@ -239,17 +244,19 @@ class ChannelMqttMessageQueueTest : StringSpec({
             .onEach { publishSuccessList.add(it.data[0].toInt()) }
             .launchIn(this)
 
-        val awaitResult = async {
+        async {
             sut.send(DummyMqttMessage(1))
-            sut.awaitUntilEmpty(2500.milliseconds)
         }.await()
+
+        // クローズする
+        val awaitResult = sut.awaitUntilEmpty(2500.milliseconds)
         job.cancelAndJoin()
 
         val calledPublishMessages = results.map { it.data[0].toInt() }
-        println(calledPublishMessages)
-        println(publishSuccessList)
-        calledPublishMessages shouldBe emptyList()
-        publishSuccessList shouldBe emptyList()
-        awaitResult.exceptionOrNull() shouldBe null
+        listOf(calledPublishMessages, publishSuccessList).asClue {
+            calledPublishMessages.asClue { it shouldHaveSize 0 }
+            publishSuccessList.asClue { it shouldHaveSize 0 }
+            awaitResult.exceptionOrNull().asClue { it should beNull() }
+        }
     }
 })
