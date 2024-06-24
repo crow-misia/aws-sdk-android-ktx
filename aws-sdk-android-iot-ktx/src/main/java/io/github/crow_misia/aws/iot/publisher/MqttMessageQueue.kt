@@ -65,6 +65,7 @@ interface MqttMessageQueue {
      * キューが空になるまで待つ.
      *
      * @param timeout タイムアウト時間
+     * @return キューが空になった場合、true. タイムアウトになった場合、false
      */
     suspend fun awaitUntilEmpty(timeout: Duration): Boolean
 
