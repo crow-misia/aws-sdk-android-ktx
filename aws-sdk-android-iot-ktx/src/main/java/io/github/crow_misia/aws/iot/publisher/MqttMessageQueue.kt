@@ -15,8 +15,9 @@
  */
 package io.github.crow_misia.aws.iot.publisher
 
+import androidx.annotation.VisibleForTesting
 import aws.smithy.kotlin.runtime.time.Clock
-import aws.smithy.kotlin.runtime.time.epochMilliseconds
+import aws.smithy.kotlin.runtime.time.Instant
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import io.github.crow_misia.aws.iot.publish
 import io.github.crow_misia.aws.iot.publishDefaultTimeout
@@ -28,7 +29,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
@@ -65,7 +66,7 @@ interface MqttMessageQueue {
      *
      * @param timeout タイムアウト時間
      */
-    suspend fun awaitUntilEmpty(timeout: Duration): Result<Unit>
+    suspend fun awaitUntilEmpty(timeout: Duration): Boolean
 
     companion object {
         fun createMessageQueue(
@@ -103,8 +104,8 @@ internal class FlowMqttMessageQueue(
         throw UnsupportedOperationException()
     }
 
-    override suspend fun awaitUntilEmpty(timeout: Duration): Result<Unit> {
-        return Result.success(Unit)
+    override suspend fun awaitUntilEmpty(timeout: Duration): Boolean {
+        return true
     }
 }
 
@@ -128,7 +129,7 @@ internal class ChannelMqttMessageQueue(
                 continue
             }
             val limitTime = clock.now() - messageExpired
-            if (message.timestamp >= limitTime.epochMilliseconds) {
+            if (message.timestamp >= limitTime) {
                 withContext(context) {
                     runCatching {
                         client.publish(message, publishTimeout)
@@ -148,18 +149,16 @@ internal class ChannelMqttMessageQueue(
     override suspend fun send(messages: List<MqttMessage>) {
         messageCount.addAndGet(messages.size)
         messageQueue.addAll(messages.map {
-            MqttQueueMessage.wrap(it) { clock.now().epochMilliseconds }
+            MqttQueueMessage.wrap(it) { clock.now() }
         })
     }
 
-    override suspend fun awaitUntilEmpty(timeout: Duration): Result<Unit> {
-        return runCatching {
-            withTimeout(timeout) {
-                while (messageCount.get() > 0) {
-                    delay(pollInterval)
-                }
+    override suspend fun awaitUntilEmpty(timeout: Duration): Boolean {
+        return withTimeoutOrNull(timeout) {
+            while (messageCount.get() > 0) {
+                delay(pollInterval)
             }
-        }
+        } != null
     }
 }
 
@@ -168,15 +167,16 @@ internal class ChannelMqttMessageQueue(
  *
  * @property timestamp 送信タイムスタンプ(ms)
  */
-private class MqttQueueMessage private constructor(
+@VisibleForTesting
+internal class MqttQueueMessage private constructor(
     private val delegated: MqttMessage,
-    val timestamp: Long,
+    val timestamp: Instant,
 ) : MqttMessage by delegated {
     companion object {
-        inline fun wrap(message: MqttMessage, getCurrentTime: () -> Long): MqttQueueMessage {
+        inline fun wrap(message: MqttMessage, block: () -> Instant): MqttQueueMessage {
             return if (message is MqttQueueMessage) {
                 message
-            } else MqttQueueMessage(message, getCurrentTime())
+            } else MqttQueueMessage(message, block())
         }
     }
 }

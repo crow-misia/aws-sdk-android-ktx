@@ -6,11 +6,10 @@ import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import io.github.crow_misia.aws.iot.AWSIoTMqttDeliveryException
 import io.github.crow_misia.aws.iot.publish
 import io.kotest.assertions.asClue
+import io.kotest.assertions.nondeterministic.continually
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.nulls.beNull
-import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.mockk.Runs
 import io.mockk.andThenJust
@@ -64,14 +63,8 @@ class ChannelMqttMessageQueueTest : StringSpec({
 
     "エラー発生時のメッセージがリトライ時に再送されること" {
         val clockMock = mockk<Clock>()
-        // 2番目の送信データは期限切れで再送されないこと
-        // when send 1, 2, 3, send 3 retry
-        every { clockMock.now() } returnsMany listOf(
-            Instant.fromEpochSeconds(1706886600L),
-            Instant.fromEpochSeconds(1706886000L),
-            Instant.fromEpochSeconds(1706886600L),
-            Instant.fromEpochSeconds(1706886600L),
-        )
+        // when send 1, 2 send 2 retry
+        every { clockMock.now() } returns Instant.fromEpochSeconds(1706886600L)
         val sut = MqttMessageQueue.createMessageQueue(
             clock = clockMock,
             messageExpired = 1.minutes,
@@ -92,17 +85,50 @@ class ChannelMqttMessageQueueTest : StringSpec({
             .launchIn(this)
 
         async {
-            sut.send(
-                DummyMqttMessage(1),
-                DummyMqttMessage(2), // skip
-                DummyMqttMessage(3), // 1st error
-            )
+            sut.send(DummyMqttMessage(1))
+            // リトライ時に、上のonEach処理の実行が中断される場合があるため、空になるまで待機する
+            sut.awaitUntilEmpty(1.seconds)
+            sut.send(DummyMqttMessage(2)) // 1st error
         }.await()
 
         eventually(5.seconds) {
             val calledPublishMessages = results.map { it.data[0].toInt() }
-            calledPublishMessages.asClue { it shouldBe listOf(1, 3, 3) }
-            publishSuccessList.asClue { it shouldBe listOf(1, 3) }
+            calledPublishMessages.asClue { it shouldBe listOf(1, 2, 2) }
+            publishSuccessList.asClue { it shouldBe listOf(1, 2) }
+        }
+
+        job.cancelAndJoin()
+    }
+
+    "期限切れデータは送信されないこと" {
+        val clockMock = mockk<Clock>()
+        every { clockMock.now() } returns Instant.fromEpochSeconds(1706886000L)
+
+        val sut = MqttMessageQueue.createMessageQueue(
+            clock = clockMock,
+            messageExpired = 1.minutes,
+            pollInterval = 10.milliseconds,
+        )
+        val results = mutableListOf<MqttMessage>()
+        // for AWSIotMqttManagerExt mocking
+        mockkStatic("io.github.crow_misia.aws.iot.AWSIotMqttManagerExtKt")
+        val client = mockk<AWSIotMqttManager>()
+        coJustRun {
+            client.publish(capture(results), any())
+        }
+        val publishSuccessList = CopyOnWriteArrayList<Int>()
+        val job = sut.asFlow(client, 1.minutes)
+            .retry()
+            .onEach { publishSuccessList.add(it.data[0].toInt()) }
+            .launchIn(this)
+
+        async {
+            sut.send(MqttQueueMessage.wrap(DummyMqttMessage(1)) { Instant.fromEpochSeconds(0) })
+        }.await()
+
+        continually(5.seconds) {
+            results shouldHaveSize 0
+            publishSuccessList shouldHaveSize 0
         }
 
         job.cancelAndJoin()
@@ -256,7 +282,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
         listOf(calledPublishMessages, publishSuccessList).asClue {
             calledPublishMessages.asClue { it shouldHaveSize 0 }
             publishSuccessList.asClue { it shouldHaveSize 0 }
-            awaitResult.exceptionOrNull().asClue { it should beNull() }
+            awaitResult shouldBe true
         }
     }
 })
