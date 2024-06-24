@@ -45,7 +45,7 @@ class AWSIoTMqttShadowClient internal constructor(
         manager: AWSIotMqttManager,
         thinsName: ThingName,
         jsonFormat: Json = defaultJsonFormat,
-    ): this(
+    ) : this(
         manager = manager,
         thingNameProvider = { thinsName },
         jsonFormat = jsonFormat,
@@ -61,6 +61,7 @@ class AWSIoTMqttShadowClient internal constructor(
             shadowName = shadowName,
         )
     }
+
     suspend fun <T> get(
         serializer: KSerializer<T>,
         shadowName: String? = null,

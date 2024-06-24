@@ -50,7 +50,7 @@ class AWSIoTSecurityTokenServiceClient @JvmOverloads constructor(
         stsEndpoint: String,
         okHttpClient: OkHttpClient,
         clientConfiguration: ClientConfiguration = ClientConfiguration(),
-    ): this(
+    ) : this(
         stsEndpoint = stsEndpoint,
         clientConfiguration = clientConfiguration,
         httpClient = Okhttp3HttpClient(okHttpClient, clientConfiguration),
@@ -64,7 +64,7 @@ class AWSIoTSecurityTokenServiceClient @JvmOverloads constructor(
         stsEndpoint: String,
         okHttpClient: OkHttpClient,
         clientConfiguration: ClientConfiguration = ClientConfiguration(),
-    ): this(
+    ) : this(
         keyStore = keyStore,
         password = password.toCharArray(),
         caCertificatesProvider = caCertificatesProvider,
@@ -81,7 +81,7 @@ class AWSIoTSecurityTokenServiceClient @JvmOverloads constructor(
         stsEndpoint: String,
         okHttpClient: OkHttpClient,
         clientConfiguration: ClientConfiguration = ClientConfiguration(),
-    ): this(
+    ) : this(
         stsEndpoint = stsEndpoint,
         clientConfiguration = clientConfiguration,
         okHttpClient = okHttpClient.createNewClient(
