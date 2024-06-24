@@ -202,13 +202,14 @@ class ChannelMqttMessageQueueTest : StringSpec({
         }.await()
 
         // 3つ目のメッセージ送信中にタイムアウトする
-        sut.awaitUntilEmpty(2500.milliseconds)
-        // クローズする
-        job.cancelAndJoin()
+        val awaitResult = sut.awaitUntilEmpty(2500.milliseconds)
 
         val calledPublishMessages = results.map { it.data[0].toInt() }
         calledPublishMessages.asClue { it shouldBe listOf(1, 2, 3) }
         publishSuccessList.asClue { it shouldBe listOf(1, 2) }
+        awaitResult shouldBe false
+
+        job.cancelAndJoin()
     }
 
     "クライアントに紐づける前に送信されたデータが欠損しないこと" {
@@ -227,7 +228,6 @@ class ChannelMqttMessageQueueTest : StringSpec({
 
         sut.send(DummyMqttMessage(99))
 
-        val count = 2
         val publishSuccessList = CopyOnWriteArrayList<Int>()
         val job = sut.asFlow(client, 100.milliseconds)
             .retry()
@@ -235,18 +235,19 @@ class ChannelMqttMessageQueueTest : StringSpec({
             .launchIn(this)
 
         async {
-            sut.send((1..count).map {
-                DummyMqttMessage(it)
-            })
+            sut.send(
+                DummyMqttMessage(1),
+                DummyMqttMessage(2),
+            )
         }.await()
 
-        // クローズする
-        sut.awaitUntilEmpty(100.milliseconds)
-        job.cancelAndJoin()
+        eventually(5.seconds) {
+            val calledPublishMessages = results.map { it.data[0].toInt() }
+            calledPublishMessages.asClue { it shouldBe listOf(99, 1, 2) }
+            publishSuccessList.asClue { it shouldBe listOf(99, 1, 2) }
+        }
 
-        val calledPublishMessages = results.map { it.data[0].toInt() }
-        calledPublishMessages.asClue { it shouldBe listOf(99, 1, 2) }
-        publishSuccessList.asClue { it shouldBe listOf(99, 1, 2) }
+        job.cancelAndJoin()
     }
 
     "クローズ前に送信したメッセージが有効期限切れの場合、空判定がタイムアウトしないこと" {
@@ -276,7 +277,6 @@ class ChannelMqttMessageQueueTest : StringSpec({
 
         // クローズする
         val awaitResult = sut.awaitUntilEmpty(2500.milliseconds)
-        job.cancelAndJoin()
 
         val calledPublishMessages = results.map { it.data[0].toInt() }
         listOf(calledPublishMessages, publishSuccessList).asClue {
@@ -284,5 +284,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
             publishSuccessList.asClue { it shouldHaveSize 0 }
             awaitResult shouldBe true
         }
+
+        job.cancelAndJoin()
     }
 })
