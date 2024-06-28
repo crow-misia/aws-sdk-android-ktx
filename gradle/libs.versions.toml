@@ -12,7 +12,7 @@ kotlin-plugin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.re
 
 kotlin-plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 
-kotlinx-kover = { id = "org.jetbrains.kotlinx.kover", version = "0.8.1" }
+kotlinx-kover = { id = "org.jetbrains.kotlinx.kover", version = "0.8.2" }
 
 detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.23.6" }
 
@@ -62,7 +62,7 @@ kotest = "5.9.1"
 
 mockk = "1.13.11"
 
-truth = "1.4.2"
+truth = "1.4.3"
 
 dokka = "1.9.20"
 
