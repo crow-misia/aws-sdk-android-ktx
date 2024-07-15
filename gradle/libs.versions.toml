@@ -62,7 +62,7 @@ kotest = "5.9.1"
 
 mockk = "1.13.11"
 
-truth = "1.4.3"
+truth = "1.4.4"
 
 dokka = "1.9.20"
 
@@ -76,9 +76,9 @@ apollographql = "4.0.0-beta.7"
 
 aws-android-sdk = "2.75.2"
 
-aws-smithy-kotlin = "1.2.13"
+aws-smithy-kotlin = "1.2.15"
 
-amplifyframework = "2.19.1"
+amplifyframework = "2.20.0"
 
 bouncycastle = "1.78.1"
 
