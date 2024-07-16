@@ -60,7 +60,7 @@ androidx-test-rules = "1.6.1"
 
 kotest = "5.9.1"
 
-mockk = "1.13.11"
+mockk = "1.13.12"
 
 truth = "1.4.4"
 
@@ -76,7 +76,7 @@ apollographql = "4.0.0-beta.7"
 
 aws-android-sdk = "2.75.2"
 
-aws-smithy-kotlin = "1.2.15"
+aws-smithy-kotlin = "1.2.16"
 
 amplifyframework = "2.20.0"
 
