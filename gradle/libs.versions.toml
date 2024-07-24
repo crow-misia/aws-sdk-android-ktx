@@ -76,7 +76,7 @@ apollographql = "4.0.0-beta.7"
 
 aws-android-sdk = "2.76.0"
 
-aws-smithy-kotlin = "1.2.17"
+aws-smithy-kotlin = "1.2.18"
 
 amplifyframework = "2.20.0"
 
