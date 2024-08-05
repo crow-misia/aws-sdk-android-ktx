@@ -201,5 +201,5 @@ detekt {
     buildUponDefaultConfig = true
     allRules = false
     autoCorrect = true
-    config.setFrom(files("$rootDir/config/detekt.yml"))
+    config.setFrom(rootDir.resolve("config/detekt.yml"))
 }
