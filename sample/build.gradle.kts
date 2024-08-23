@@ -37,6 +37,7 @@ android {
     }
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = Build.sourceCompatibility
         targetCompatibility = Build.targetCompatibility
     }
@@ -61,6 +62,8 @@ kotlin {
 }
 
 dependencies {
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
+
     implementation(project(":aws-sdk-android-core-ktx"))
     implementation(project(":aws-sdk-android-iot-ktx"))
 

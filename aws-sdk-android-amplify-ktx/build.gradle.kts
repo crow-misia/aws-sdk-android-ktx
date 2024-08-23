@@ -34,8 +34,9 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = Build.sourceCompatibility
-        targetCompatibility = Build.targetCompatibility
+        isCoreLibraryDesugaringEnabled = true
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     packaging {
@@ -68,11 +69,13 @@ android {
 kotlin {
     compilerOptions {
         javaParameters.set(true)
-        jvmTarget.set(JvmTarget.JVM_1_8)
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
 dependencies {
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
+
     api(project(":aws-sdk-android-core-ktx"))
 
     implementation(platform(libs.kotlin.bom))
