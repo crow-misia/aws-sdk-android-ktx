@@ -26,9 +26,9 @@ kotlin = "2.0.20"
 
 kotlinx-coroutines = "1.8.1"
 
-kotlinx-serialization = "1.7.1"
+kotlinx-serialization = "1.7.2"
 
-android-tools-desugar_jdk_libs = "2.1.0"
+android-tools-desugar_jdk_libs = "2.1.1"
 
 androidx-core = "1.14.0-alpha01"
 
