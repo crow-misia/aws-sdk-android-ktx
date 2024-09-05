@@ -7,15 +7,19 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.sample.R
 
 @Composable
 fun MainScreen(
+    modifier: Modifier = Modifier,
     viewModel: MainViewModel = viewModel(),
 ) {
     Row(
+        modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
@@ -25,7 +29,7 @@ fun MainScreen(
 
 @Composable
 fun MainContent(viewModel: MainViewModel) {
-    Column {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Button(onClick = viewModel::onClickProvisioning) {
             Text(text = stringResource(R.string.provisioning))
         }
