@@ -24,6 +24,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retry
+import java.nio.ByteBuffer
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -47,15 +48,18 @@ class ChannelMqttMessageQueueTest : StringSpec({
             .launchIn(this)
 
         async {
-            sut.send(
-                DummyMqttMessage(1),
-                DummyMqttMessage(2),
-            )
+            for (i in 0 until 1000) {
+                sut.send(
+                    DummyMqttMessage(i * 2),
+                    DummyMqttMessage(i * 2 + 1),
+                )
+            }
         }.await()
 
+        val expected = (0 until 2000).toList()
         eventually(5.seconds) {
-            val calledPublishMessages = results.map { it.data[0].toInt() }
-            calledPublishMessages.asClue { it shouldBe listOf(1, 2) }
+            val calledPublishMessages = results.map { ByteBuffer.wrap(it.data).getInt() }
+            calledPublishMessages.asClue { it shouldBe expected }
         }
 
         job.cancelAndJoin()
@@ -63,7 +67,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
 
     "エラー発生時のメッセージがリトライ時に再送されること" {
         val clockMock = mockk<Clock>()
-        // when send 1, 2 send 2 retry
+        // when send 1, 2 send 2 retry, send 3
         every { clockMock.now() } returns Instant.fromEpochSeconds(1706886600L)
         val sut = MqttMessageQueue.createMessageQueue(
             clock = clockMock,
@@ -76,12 +80,12 @@ class ChannelMqttMessageQueueTest : StringSpec({
         val client = mockk<AWSIotMqttManager>()
         coJustRun {
             client.publish(capture(results), any())
-        } andThenThrows AWSIoTMqttDeliveryException("error") andThenJust Runs
+        } andThenThrows AWSIoTMqttDeliveryException("error") andThenJust Runs andThenJust Runs
 
         val publishSuccessList = CopyOnWriteArrayList<Int>()
         val job = sut.asFlow(client, 1.minutes)
             .retry()
-            .onEach { publishSuccessList.add(it.data[0].toInt()) }
+            .onEach { publishSuccessList.add(ByteBuffer.wrap(it.data).getInt()) }
             .launchIn(this)
 
         async {
@@ -89,12 +93,13 @@ class ChannelMqttMessageQueueTest : StringSpec({
             // リトライ時に、上のonEach処理の実行が中断される場合があるため、空になるまで待機する
             sut.awaitUntilEmpty(1.seconds)
             sut.send(DummyMqttMessage(2)) // 1st error
+            sut.send(DummyMqttMessage(3))
         }.await()
 
         eventually(5.seconds) {
-            val calledPublishMessages = results.map { it.data[0].toInt() }
-            calledPublishMessages.asClue { it shouldBe listOf(1, 2, 2) }
-            publishSuccessList.asClue { it shouldBe listOf(1, 2) }
+            val calledPublishMessages = results.map { ByteBuffer.wrap(it.data).getInt() }
+            calledPublishMessages.asClue { it shouldBe listOf(1, 2, 3, 2) }
+            publishSuccessList.asClue { it shouldBe listOf(1, 3, 2) }
         }
 
         job.cancelAndJoin()
@@ -119,7 +124,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
         val publishSuccessList = CopyOnWriteArrayList<Int>()
         val job = sut.asFlow(client, 1.minutes)
             .retry()
-            .onEach { publishSuccessList.add(it.data[0].toInt()) }
+            .onEach { publishSuccessList.add(ByteBuffer.wrap(it.data).getInt()) }
             .launchIn(this)
 
         async {
@@ -154,7 +159,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
         val publishSuccessList = CopyOnWriteArrayList<Int>()
         val job = sut.asFlow(client, 100.milliseconds)
             .retry()
-            .onEach { publishSuccessList.add(it.data[0].toInt()) }
+            .onEach { publishSuccessList.add(ByteBuffer.wrap(it.data).getInt()) }
             .launchIn(this)
 
         async {
@@ -167,7 +172,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
         sut.awaitUntilEmpty(2.seconds)
         job.cancelAndJoin()
 
-        val calledPublishMessages = results.map { it.data[0].toInt() }
+        val calledPublishMessages = results.map { ByteBuffer.wrap(it.data).getInt() }
         calledPublishMessages.asClue { it shouldBe (1..count).toList() }
         publishSuccessList.asClue { it shouldBe (1..count).toList() }
     }
@@ -192,7 +197,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
         val publishSuccessList = CopyOnWriteArrayList<Int>()
         val job = sut.asFlow(client, 100.milliseconds)
             .retry()
-            .onEach { publishSuccessList.add(it.data[0].toInt()) }
+            .onEach { publishSuccessList.add(ByteBuffer.wrap(it.data).getInt()) }
             .launchIn(this)
 
         async {
@@ -204,7 +209,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
         // 3つ目のメッセージ送信中にタイムアウトする
         val awaitResult = sut.awaitUntilEmpty(2500.milliseconds)
 
-        val calledPublishMessages = results.map { it.data[0].toInt() }
+        val calledPublishMessages = results.map { ByteBuffer.wrap(it.data).getInt() }
         calledPublishMessages.asClue { it shouldBe listOf(1, 2, 3) }
         publishSuccessList.asClue { it shouldBe listOf(1, 2) }
         awaitResult shouldBe false
@@ -231,7 +236,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
         val publishSuccessList = CopyOnWriteArrayList<Int>()
         val job = sut.asFlow(client, 100.milliseconds)
             .retry()
-            .onEach { publishSuccessList.add(it.data[0].toInt()) }
+            .onEach { publishSuccessList.add(ByteBuffer.wrap(it.data).getInt()) }
             .launchIn(this)
 
         async {
@@ -242,7 +247,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
         }.await()
 
         eventually(5.seconds) {
-            val calledPublishMessages = results.map { it.data[0].toInt() }
+            val calledPublishMessages = results.map { ByteBuffer.wrap(it.data).getInt() }
             calledPublishMessages.asClue { it shouldBe listOf(99, 1, 2) }
             publishSuccessList.asClue { it shouldBe listOf(99, 1, 2) }
         }
@@ -268,7 +273,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
         val publishSuccessList = CopyOnWriteArrayList<Int>()
         val job = sut.asFlow(client, 100.milliseconds)
             .retry()
-            .onEach { publishSuccessList.add(it.data[0].toInt()) }
+            .onEach { publishSuccessList.add(ByteBuffer.wrap(it.data).getInt()) }
             .launchIn(this)
 
         async {
@@ -278,7 +283,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
         // クローズする
         val awaitResult = sut.awaitUntilEmpty(2500.milliseconds)
 
-        val calledPublishMessages = results.map { it.data[0].toInt() }
+        val calledPublishMessages = results.map { ByteBuffer.wrap(it.data).getInt() }
         listOf(calledPublishMessages, publishSuccessList).asClue {
             calledPublishMessages.asClue { it shouldHaveSize 0 }
             publishSuccessList.asClue { it shouldHaveSize 0 }

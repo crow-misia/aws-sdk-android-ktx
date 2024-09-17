@@ -28,10 +28,11 @@ import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.LinkedBlockingQueue
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -115,8 +116,9 @@ internal class ChannelMqttMessageQueue(
     private val messageExpired: Duration,
     private val pollInterval: Duration,
 ) : MqttMessageQueue {
-    private val messageQueue = ConcurrentLinkedQueue<MqttQueueMessage>()
-    private val messageCount: AtomicInteger = AtomicInteger(0)
+    private var messageQueue = LinkedBlockingQueue<MqttQueueMessage>()
+    private var messageCount = 0
+    private val mutex = Mutex()
 
     override fun asFlow(
         client: AWSIotMqttManager,
@@ -124,41 +126,60 @@ internal class ChannelMqttMessageQueue(
         context: CoroutineContext,
     ): Flow<MqttMessage> = channelFlow {
         do {
-            val message = messageQueue.poll()
+            val limitTime = clock.now() - messageExpired
+            val message = mutex.withLock {
+                var tmp: MqttQueueMessage?
+                do {
+                    tmp = messageQueue.poll() ?: return@withLock null
+                    // 有効期限切れではないメッセージを取り出す
+                    if (tmp.timestamp >= limitTime) {
+                        break
+                    }
+                    messageCount--
+                } while (true)
+                return@withLock tmp
+            }
             if (message == null) {
                 delay(pollInterval)
                 continue
             }
-            val limitTime = clock.now() - messageExpired
-            if (message.timestamp >= limitTime) {
-                withContext(context) {
-                    runCatching {
-                        client.publish(message, publishTimeout)
-                    }
-                }.onSuccess {
-                    messageCount.decrementAndGet()
-                    send(message)
-                }.onFailure { _ ->
+            withContext(context) {
+                runCatching {
+                    client.publish(message, publishTimeout)
+                }
+            }.onSuccess {
+                mutex.withLock {
+                    messageCount--
+                }
+                send(message)
+            }.onFailure { _ ->
+                mutex.withLock {
                     messageQueue.add(message)
-                }.getOrThrow()
-            } else {
-                messageCount.decrementAndGet()
-            }
+                }
+            }.getOrThrow()
         } while (true)
     }
 
     override suspend fun send(messages: List<MqttMessage>) {
-        messageCount.addAndGet(messages.size)
-        messageQueue.addAll(messages.map {
-            MqttQueueMessage.wrap(it) { clock.now() }
-        })
+        mutex.withLock {
+            messageCount += messages.size
+            messageQueue.addAll(messages.map {
+                MqttQueueMessage.wrap(it) { clock.now() }
+            })
+        }
     }
 
     override suspend fun awaitUntilEmpty(timeout: Duration): Boolean {
         return withTimeoutOrNull(timeout) {
-            while (messageCount.get() > 0) {
+            do {
+                val isEmpty = mutex.withLock {
+                    messageCount == 0
+                }
+                if (isEmpty) {
+                    break
+                }
                 delay(pollInterval)
-            }
+            } while (true)
         } != null
     }
 }
