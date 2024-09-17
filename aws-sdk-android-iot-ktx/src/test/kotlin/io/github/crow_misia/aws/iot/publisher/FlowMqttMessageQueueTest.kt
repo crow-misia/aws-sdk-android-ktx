@@ -10,6 +10,7 @@ import io.mockk.mockkStatic
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.flow.take
+import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicInteger
 
 class FlowMqttMessageQueueTest : StringSpec({
@@ -31,7 +32,7 @@ class FlowMqttMessageQueueTest : StringSpec({
             .launchIn(this)
             .join()
 
-        results.map { it.data[0].toInt() } shouldBe (1..10).map { it }
+        results.map { ByteBuffer.wrap(it.data).getInt() } shouldBe (1..10).map { it }
     }
 
     "送信途中にエラーが発生した場合、フローが中断しないこと" {
@@ -56,6 +57,6 @@ class FlowMqttMessageQueueTest : StringSpec({
             .launchIn(this)
             .join()
 
-        results.map { it.data[0].toInt() } shouldBe listOf(1, 2, 3, 4, 6, 7, 8, 9, 10)
+        results.map { ByteBuffer.wrap(it.data).getInt() } shouldBe listOf(1, 2, 3, 4, 6, 7, 8, 9, 10)
     }
 })
