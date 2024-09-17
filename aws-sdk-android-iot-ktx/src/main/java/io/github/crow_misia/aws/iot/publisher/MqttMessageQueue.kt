@@ -116,7 +116,7 @@ internal class ChannelMqttMessageQueue(
     private val messageExpired: Duration,
     private val pollInterval: Duration,
 ) : MqttMessageQueue {
-    private var messageQueue = LinkedBlockingQueue<MqttQueueMessage>()
+    private val messageQueue = LinkedBlockingQueue<MqttQueueMessage>()
     private var messageCount = 0
     private val mutex = Mutex()
 
