@@ -366,7 +366,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
         listOf(calledPublishMessages, publishSuccessList).asClue {
             calledPublishMessages.asClue { it shouldBe listOf(3) }
             publishSuccessList.asClue { it shouldBe listOf(3) }
-            awaitResult shouldBe false
+            awaitResult shouldBe true
         }
 
         job.cancelAndJoin()
