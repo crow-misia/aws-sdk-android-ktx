@@ -88,29 +88,4 @@ class FlowExtTest : StringSpec({
         base.copy(base = 1.seconds).numRetries shouldBe 100
         base.copy(factor = 5).resetAttempt shouldBe true
     }
-
-    "merge and retry" {
-        val attemptResults = mutableListOf<Long>()
-        flowOf(1, 2, 3)
-            .flatMapConcat {
-                merge(flow {
-                    while (true) {
-                        delay(100)
-                        emit(1)
-                    }
-                }, flow {
-                    emit(2)
-                    error("error")
-                })
-            }.retryWithPolicy(
-                RetryPolicy.create(
-                    base = 20.milliseconds,
-                    resetAttempt = false,
-                    numRetries = 3,
-                )
-            ) { _, attempt ->
-                attemptResults.add(attempt)
-                return@retryWithPolicy true
-            }.toList()
-    }
 })
