@@ -98,8 +98,8 @@ class ChannelMqttMessageQueueTest : StringSpec({
 
         eventually(5.seconds) {
             val calledPublishMessages = results.map { ByteBuffer.wrap(it.data).getInt() }
-            calledPublishMessages.asClue { it shouldBe listOf(1, 2, 3, 2) }
-            publishSuccessList.asClue { it shouldBe listOf(1, 3, 2) }
+            calledPublishMessages.asClue { it shouldBe listOf(1, 2, 2, 3) }
+            publishSuccessList.asClue { it shouldBe listOf(1, 2, 3) }
         }
 
         job.cancelAndJoin()
@@ -288,6 +288,85 @@ class ChannelMqttMessageQueueTest : StringSpec({
             calledPublishMessages.asClue { it shouldHaveSize 0 }
             publishSuccessList.asClue { it shouldHaveSize 0 }
             awaitResult shouldBe true
+        }
+
+        job.cancelAndJoin()
+    }
+
+    "RETAINメッセージは一定時間経過しないと送信されないこと" {
+        val clockMock = mockk<Clock>()
+        every { clockMock.now() } returns Instant.fromEpochSeconds(1706886000L)
+        val sut = MqttMessageQueue.createMessageQueue(
+            clock = clockMock,
+            messageExpired = 1.minutes,
+            pollInterval = 100.milliseconds,
+        )
+        val results = mutableListOf<MqttMessage>()
+        // for AWSIotMqttManagerExt mocking
+        mockkStatic("io.github.crow_misia.aws.iot.AWSIotMqttManagerExtKt")
+        val client = mockk<AWSIotMqttManager>()
+        coJustRun { client.publish(capture(results), any()) }
+
+        val publishSuccessList = CopyOnWriteArrayList<Int>()
+        val job = sut.asFlow(client, 100.milliseconds)
+            .retry()
+            .onEach { publishSuccessList.add(ByteBuffer.wrap(it.data).getInt()) }
+            .launchIn(this)
+
+        async {
+            sut.send(DummyMqttMessage(1, retainMode = RetainMode.ALWAYS))
+            sut.send(DummyMqttMessage(2, retainMode = RetainMode.ALWAYS))
+            sut.send(DummyMqttMessage(3, retainMode = RetainMode.ALWAYS))
+        }.await()
+
+        // クローズする
+        val awaitResult = sut.awaitUntilEmpty(2500.milliseconds)
+
+        val calledPublishMessages = results.map { ByteBuffer.wrap(it.data).getInt() }
+        listOf(calledPublishMessages, publishSuccessList).asClue {
+            calledPublishMessages.asClue { it shouldBe listOf(1) }
+            publishSuccessList.asClue { it shouldBe listOf(1) }
+            awaitResult shouldBe false
+        }
+
+        job.cancelAndJoin()
+    }
+
+
+    "上書きモードのRETAINメッセージ送信時は、最後のメッセージのみが送信されること" {
+        val clockMock = mockk<Clock>()
+        every { clockMock.now() } returns Instant.fromEpochSeconds(1706886000L)
+        val sut = MqttMessageQueue.createMessageQueue(
+            clock = clockMock,
+            messageExpired = 1.minutes,
+            pollInterval = 100.milliseconds,
+        )
+        val results = mutableListOf<MqttMessage>()
+        // for AWSIotMqttManagerExt mocking
+        mockkStatic("io.github.crow_misia.aws.iot.AWSIotMqttManagerExtKt")
+        val client = mockk<AWSIotMqttManager>()
+        coJustRun { client.publish(capture(results), any()) }
+
+        val publishSuccessList = CopyOnWriteArrayList<Int>()
+        val job = sut.asFlow(client, 100.milliseconds)
+            .retry()
+            .onEach { publishSuccessList.add(ByteBuffer.wrap(it.data).getInt()) }
+            .launchIn(this)
+
+        async {
+            sut.send(DummyMqttMessage(1, retainMode = RetainMode.OVERWRITE))
+            sut.send(DummyMqttMessage(2, retainMode = RetainMode.OVERWRITE))
+            sut.send(DummyMqttMessage(3, retainMode = RetainMode.OVERWRITE))
+        }.await()
+
+        // クローズする
+        val awaitResult = sut.awaitUntilEmpty(2500.milliseconds)
+
+        val calledPublishMessages = results.map { ByteBuffer.wrap(it.data).getInt() }
+        listOf(calledPublishMessages, publishSuccessList).asClue {
+            calledPublishMessages.asClue { it shouldBe listOf(3) }
+            publishSuccessList.asClue { it shouldBe listOf(3) }
+            awaitResult shouldBe false
         }
 
         job.cancelAndJoin()

@@ -2,13 +2,20 @@ package io.github.crow_misia.aws.core
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.toList
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class FlowExtTest : StringSpec({
     suspend fun test(
         retryPolicy: RetryPolicy,
@@ -80,5 +87,30 @@ class FlowExtTest : StringSpec({
         base.copy(numRetries = 123).base shouldBe 123.seconds
         base.copy(base = 1.seconds).numRetries shouldBe 100
         base.copy(factor = 5).resetAttempt shouldBe true
+    }
+
+    "merge and retry" {
+        val attemptResults = mutableListOf<Long>()
+        flowOf(1, 2, 3)
+            .flatMapConcat {
+                merge(flow {
+                    while (true) {
+                        delay(100)
+                        emit(1)
+                    }
+                }, flow {
+                    emit(2)
+                    error("error")
+                })
+            }.retryWithPolicy(
+                RetryPolicy.create(
+                    base = 20.milliseconds,
+                    resetAttempt = false,
+                    numRetries = 3,
+                )
+            ) { _, attempt ->
+                attemptResults.add(attempt)
+                return@retryWithPolicy true
+            }.toList()
     }
 })

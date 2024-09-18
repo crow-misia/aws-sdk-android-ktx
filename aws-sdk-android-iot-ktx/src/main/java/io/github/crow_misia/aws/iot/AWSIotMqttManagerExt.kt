@@ -29,11 +29,8 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 import java.security.KeyStore
 import kotlin.coroutines.Continuation
@@ -59,9 +56,7 @@ private fun ProducerScope<AWSIotMqttClientStatus>.createConnectCallback(manager:
         if (!isAutoReconnect && status == AWSIotMqttClientStatus.ConnectionLost) {
             close(AWSIoTMqttDisconnectException)
         } else {
-            launch {
-                send(status)
-            }
+            trySend(status)
         }
     }
 }
@@ -100,7 +95,7 @@ fun AWSIotMqttManager.connectUsingALPN(
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
     connectUsingALPN(keyStore, createConnectCallback(this@connectUsingALPN))
     awaitClose { disconnectQuite() }
-}.distinctUntilChanged()
+}
 
 fun AWSIotMqttManager.connectWithProxy(
     keyStore: KeyStore,
@@ -109,21 +104,21 @@ fun AWSIotMqttManager.connectWithProxy(
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
     connectWithProxy(keyStore, proxyHost, proxyPort, createConnectCallback(this@connectWithProxy))
     awaitClose { disconnectQuite() }
-}.distinctUntilChanged()
+}
 
 fun AWSIotMqttManager.connect(
     keyStore: KeyStore,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
     connect(keyStore, createConnectCallback(this@connect))
     awaitClose { disconnectQuite() }
-}.distinctUntilChanged()
+}
 
 fun AWSIotMqttManager.connect(
     credentialsProvider: AWSCredentialsProvider,
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
     connect(credentialsProvider, createConnectCallback(this@connect))
     awaitClose { disconnectQuite() }
-}.distinctUntilChanged()
+}
 
 fun AWSIotMqttManager.connect(
     tokenKeyName: String,
@@ -133,7 +128,7 @@ fun AWSIotMqttManager.connect(
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
     connect(tokenKeyName, token, tokenSignature, customAuthorizer, createConnectCallback(this@connect))
     awaitClose { disconnectQuite() }
-}.distinctUntilChanged()
+}
 
 fun AWSIotMqttManager.connect(
     username: String,
@@ -141,7 +136,7 @@ fun AWSIotMqttManager.connect(
 ): Flow<AWSIotMqttClientStatus> = callbackFlow {
     connect(username, password, createConnectCallback(this@connect))
     awaitClose { disconnectQuite() }
-}.distinctUntilChanged()
+}
 
 private fun AWSIotMqttManager.disconnectQuite() {
     runCatching {
@@ -206,7 +201,7 @@ suspend fun AWSIotMqttManager.publish(
     topic = message.topicName,
     qos = message.qos,
     userData = message.userData,
-    isRetained = message.isRetained,
+    isRetained = message.retainMode.isRetained,
     timeout = timeout,
 )
 
@@ -218,7 +213,7 @@ suspend fun <T> AWSIotMqttManager.publish(
     isRetained: Boolean = false,
     timeout: Duration = publishDefaultTimeout,
 ) = withTimeout(timeout) {
-    suspendCancellableCoroutine<T?> {
+    suspendCoroutine<T?> {
         publishData(data, topic.value, qos, createMessageDeliveryCallback(it), userData, isRetained)
     }
 }

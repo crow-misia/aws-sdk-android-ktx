@@ -18,6 +18,7 @@ package io.github.crow_misia.aws.iot.publisher
 import androidx.annotation.VisibleForTesting
 import aws.smithy.kotlin.runtime.time.Clock
 import aws.smithy.kotlin.runtime.time.Instant
+import aws.smithy.kotlin.runtime.time.until
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager
 import io.github.crow_misia.aws.iot.publish
 import io.github.crow_misia.aws.iot.publishDefaultTimeout
@@ -32,10 +33,11 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import java.util.concurrent.LinkedBlockingQueue
+import java.util.LinkedList
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * MQTT送信メッセージキュー.
@@ -75,11 +77,13 @@ interface MqttMessageQueue {
             clock: Clock = Clock.System,
             messageExpired: Duration,
             pollInterval: Duration = 250.milliseconds,
+            retainedPendingPeriod: Duration = 1.seconds
         ): MqttMessageQueue {
             return ChannelMqttMessageQueue(
                 clock = clock,
                 messageExpired = messageExpired,
                 pollInterval = pollInterval,
+                retainedPendingPeriod = retainedPendingPeriod,
             )
         }
 
@@ -115,8 +119,10 @@ internal class ChannelMqttMessageQueue(
     private val clock: Clock,
     private val messageExpired: Duration,
     private val pollInterval: Duration,
+    private val retainedPendingPeriod: Duration,
 ) : MqttMessageQueue {
-    private val messageQueue = LinkedBlockingQueue<MqttQueueMessage>()
+    private val retainedTopicLastTime = mutableMapOf<TopicName, Instant>()
+    private val messageQueue = LinkedList<MqttQueueMessage>()
     private var messageCount = 0
     private val mutex = Mutex()
 
@@ -126,18 +132,35 @@ internal class ChannelMqttMessageQueue(
         context: CoroutineContext,
     ): Flow<MqttMessage> = channelFlow {
         do {
-            val limitTime = clock.now() - messageExpired
+            val currentTime = clock.now()
+            val limitTime = currentTime - messageExpired
             val message = mutex.withLock {
-                var tmp: MqttQueueMessage?
-                do {
-                    tmp = messageQueue.poll() ?: return@withLock null
+                var index = 0
+                var targetMessage: MqttQueueMessage? = null
+
+                while (targetMessage == null && index < messageQueue.size) {
                     // 有効期限切れではないメッセージを取り出す
-                    if (tmp.timestamp >= limitTime) {
-                        break
+                    val tmp = messageQueue.removeAt(index)
+                    if (tmp.timestamp < limitTime) {
+                        messageCount--
+                    } else if (tmp.retainMode.isRetained) {
+                        // RETAINメッセージの場合、前回送信時間から経過していない場合、保留する
+                        val topicName = tmp.topicName
+                        val canSend = retainedTopicLastTime[topicName]?.let { lastSendTime ->
+                            lastSendTime.until(currentTime) >= retainedPendingPeriod
+                        } ?: true
+                        if (canSend) {
+                            retainedTopicLastTime[topicName] = currentTime
+                            targetMessage = tmp
+                        } else {
+                            index++
+                            messageQueue.addFirst(tmp)
+                        }
+                    } else {
+                        targetMessage = tmp
                     }
-                    messageCount--
-                } while (true)
-                return@withLock tmp
+                }
+                return@withLock targetMessage
             }
             if (message == null) {
                 delay(pollInterval)
@@ -154,7 +177,7 @@ internal class ChannelMqttMessageQueue(
                 send(message)
             }.onFailure { _ ->
                 mutex.withLock {
-                    messageQueue.add(message)
+                    messageQueue.push(message)
                 }
             }.getOrThrow()
         } while (true)
@@ -162,10 +185,23 @@ internal class ChannelMqttMessageQueue(
 
     override suspend fun send(messages: List<MqttMessage>) {
         mutex.withLock {
-            messageCount += messages.size
-            messageQueue.addAll(messages.map {
-                MqttQueueMessage.wrap(it) { clock.now() }
-            })
+            messages.forEach {
+                val topicName = it.topicName
+                if (it.retainMode == RetainMode.OVERWRITE) {
+                    // 同じトピックへ送信するメッセージを削除する
+                    val each = messageQueue.iterator()
+                    while (each.hasNext()) {
+                        val tmp = each.next()
+                        if (tmp.topicName == topicName) {
+                            each.remove()
+                            messageCount--
+                        }
+                    }
+                }
+                val wrapMessage = MqttQueueMessage.wrap(it) { clock.now() }
+                messageCount++
+                messageQueue.add(wrapMessage)
+            }
         }
     }
 

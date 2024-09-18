@@ -44,5 +44,14 @@ interface MqttMessage {
     /**
      * メッセージを永続化するか.
      */
-    val isRetained: Boolean
+    val retainMode: RetainMode
+}
+
+enum class RetainMode(val isRetained: Boolean) {
+    /** 永続化しない */
+    NONE(false),
+    /** 未送信データを上書き */
+    OVERWRITE(true),
+    /** 常に永続化 */
+    ALWAYS(true),
 }
