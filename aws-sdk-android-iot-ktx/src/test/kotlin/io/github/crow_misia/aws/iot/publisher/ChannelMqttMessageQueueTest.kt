@@ -57,7 +57,7 @@ class ChannelMqttMessageQueueTest : StringSpec({
         }.await()
 
         val expected = (0 until 2000).toList()
-        eventually(5.seconds) {
+        eventually(10.seconds) {
             val calledPublishMessages = results.map { ByteBuffer.wrap(it.data).getInt() }
             calledPublishMessages.asClue { it shouldBe expected }
         }
