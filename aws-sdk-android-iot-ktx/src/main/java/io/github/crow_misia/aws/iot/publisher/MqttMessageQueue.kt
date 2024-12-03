@@ -136,9 +136,8 @@ internal class ChannelMqttMessageQueue(
             val limitTime = currentTime - messageExpired
             val message = mutex.withLock {
                 var index = 0
-                var targetMessage: MqttQueueMessage? = null
 
-                while (targetMessage == null && index < messageQueue.size) {
+                while (index < messageQueue.size) {
                     // 有効期限切れではないメッセージを取り出す
                     val tmp = messageQueue.removeAt(index)
                     if (tmp.timestamp < limitTime) {
@@ -151,16 +150,15 @@ internal class ChannelMqttMessageQueue(
                         } != false
                         if (canSend) {
                             retainedTopicLastTime[topicName] = currentTime
-                            targetMessage = tmp
-                        } else {
-                            index++
-                            messageQueue.addFirst(tmp)
+                            return@withLock tmp
                         }
+                        index++
+                        messageQueue.addFirst(tmp)
                     } else {
-                        targetMessage = tmp
+                        return@withLock tmp
                     }
                 }
-                return@withLock targetMessage
+                return@withLock null
             }
             if (message == null) {
                 delay(pollInterval)
