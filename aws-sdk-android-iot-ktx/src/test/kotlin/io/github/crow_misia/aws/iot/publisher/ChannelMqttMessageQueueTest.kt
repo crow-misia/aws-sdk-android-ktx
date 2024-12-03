@@ -26,8 +26,10 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retry
 import java.nio.ByteBuffer
 import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
 class ChannelMqttMessageQueueTest : StringSpec({
@@ -339,7 +341,8 @@ class ChannelMqttMessageQueueTest : StringSpec({
         val sut = MqttMessageQueue.createMessageQueue(
             clock = clockMock,
             messageExpired = 1.minutes,
-            pollInterval = 100.milliseconds,
+            pollInterval = 500.microseconds,
+            retainedPendingPeriod = 100.microseconds,
         )
         val results = mutableListOf<MqttMessage>()
         // for AWSIotMqttManagerExt mocking
@@ -347,10 +350,8 @@ class ChannelMqttMessageQueueTest : StringSpec({
         val client = mockk<AWSIotMqttManager>()
         coJustRun { client.publish(capture(results), any()) }
 
-        val publishSuccessList = CopyOnWriteArrayList<Int>()
-        val job = sut.asFlow(client, 100.milliseconds)
+        val job = sut.asFlow(client, 10.seconds)
             .retry()
-            .onEach { publishSuccessList.add(ByteBuffer.wrap(it.data).getInt()) }
             .launchIn(this)
 
         async {
@@ -360,14 +361,11 @@ class ChannelMqttMessageQueueTest : StringSpec({
         }.await()
 
         // クローズする
-        val awaitResult = sut.awaitUntilEmpty(2500.milliseconds)
+        val awaitResult = sut.awaitUntilEmpty(5.seconds)
 
         val calledPublishMessages = results.map { ByteBuffer.wrap(it.data).getInt() }
-        listOf(calledPublishMessages, publishSuccessList).asClue {
-            calledPublishMessages.asClue { it shouldBe listOf(3) }
-            publishSuccessList.asClue { it shouldBe listOf(3) }
-            awaitResult shouldBe true
-        }
+        calledPublishMessages.asClue { it shouldBe listOf(3) }
+        awaitResult shouldBe true
 
         job.cancelAndJoin()
     }

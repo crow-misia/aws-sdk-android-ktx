@@ -148,7 +148,7 @@ internal class ChannelMqttMessageQueue(
                         val topicName = tmp.topicName
                         val canSend = retainedTopicLastTime[topicName]?.let { lastSendTime ->
                             lastSendTime.until(currentTime) >= retainedPendingPeriod
-                        } ?: true
+                        } != false
                         if (canSend) {
                             retainedTopicLastTime[topicName] = currentTime
                             targetMessage = tmp
