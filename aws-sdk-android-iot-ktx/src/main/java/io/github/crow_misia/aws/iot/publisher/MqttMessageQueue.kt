@@ -34,6 +34,8 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.LinkedList
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.concurrent.Volatile
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -70,7 +72,7 @@ interface MqttMessageQueue {
      * @param timeout タイムアウト時間
      * @return キューが空になった場合、true. タイムアウトになった場合、false
      */
-    suspend fun awaitUntilEmpty(timeout: Duration): Boolean
+    suspend fun awaitUntilEmpty(timeout: Duration, context: CoroutineContext = Dispatchers.Default): Boolean
 
     companion object {
         fun createMessageQueue(
@@ -110,7 +112,7 @@ internal class FlowMqttMessageQueue(
         throw UnsupportedOperationException()
     }
 
-    override suspend fun awaitUntilEmpty(timeout: Duration): Boolean {
+    override suspend fun awaitUntilEmpty(timeout: Duration, context: CoroutineContext): Boolean {
         return true
     }
 }
@@ -123,7 +125,7 @@ internal class ChannelMqttMessageQueue(
 ) : MqttMessageQueue {
     private val retainedTopicLastTime = mutableMapOf<TopicName, Instant>()
     private val messageQueue = LinkedList<MqttQueueMessage>()
-    private var messageCount = 0
+    @Volatile private var messageCount = 0
     private val mutex = Mutex()
 
     override fun asFlow(
@@ -136,9 +138,8 @@ internal class ChannelMqttMessageQueue(
             val limitTime = currentTime - messageExpired
             val message = mutex.withLock {
                 var index = 0
-                var targetMessage: MqttQueueMessage? = null
 
-                while (targetMessage == null && index < messageQueue.size) {
+                while (index < messageQueue.size) {
                     // 有効期限切れではないメッセージを取り出す
                     val tmp = messageQueue.removeAt(index)
                     if (tmp.timestamp < limitTime) {
@@ -148,19 +149,18 @@ internal class ChannelMqttMessageQueue(
                         val topicName = tmp.topicName
                         val canSend = retainedTopicLastTime[topicName]?.let { lastSendTime ->
                             lastSendTime.until(currentTime) >= retainedPendingPeriod
-                        } ?: true
+                        } != false
                         if (canSend) {
                             retainedTopicLastTime[topicName] = currentTime
-                            targetMessage = tmp
-                        } else {
-                            index++
-                            messageQueue.addFirst(tmp)
+                            return@withLock tmp
                         }
+                        index++
+                        messageQueue.addFirst(tmp)
                     } else {
-                        targetMessage = tmp
+                        return@withLock tmp
                     }
                 }
-                return@withLock targetMessage
+                return@withLock null
             }
             if (message == null) {
                 delay(pollInterval)
@@ -205,18 +205,20 @@ internal class ChannelMqttMessageQueue(
         }
     }
 
-    override suspend fun awaitUntilEmpty(timeout: Duration): Boolean {
-        return withTimeoutOrNull(timeout) {
-            do {
-                val isEmpty = mutex.withLock {
-                    messageCount == 0
-                }
-                if (isEmpty) {
-                    break
-                }
-                delay(pollInterval)
-            } while (true)
-        } != null
+    override suspend fun awaitUntilEmpty(timeout: Duration, context: CoroutineContext): Boolean {
+        return withContext(context) {
+            withTimeoutOrNull(timeout) {
+                do {
+                    val isEmpty = mutex.withLock {
+                        messageCount == 0
+                    }
+                    if (isEmpty) {
+                        break
+                    }
+                    delay(pollInterval)
+                } while (true)
+            } != null
+        }
     }
 }
 
