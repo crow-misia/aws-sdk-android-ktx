@@ -67,8 +67,8 @@ android {
 
 kotlin {
     compilerOptions {
-        javaParameters.set(true)
-        jvmTarget.set(JvmTarget.JVM_1_8)
+        javaParameters = true
+        jvmTarget = JvmTarget.JVM_1_8
     }
 }
 
@@ -110,93 +110,92 @@ dependencies {
     androidTestImplementation(libs.truth)
 }
 
-val customDokkaTask by tasks.creating(DokkaTask::class) {
-    dokkaSourceSets.getByName("main") {
-        noAndroidSdkLink.set(false)
+val dokkaJavadoc by tasks.getting(DokkaTask::class) {
+    dokkaSourceSets.named("main") {
+        noAndroidSdkLink = false
     }
     dependencies {
         plugins(libs.dokka.javadoc.plugin)
     }
     inputs.dir("src/main/java")
-    outputDirectory.set(layout.buildDirectory.dir("javadoc"))
+    outputDirectory = layout.buildDirectory.dir("javadoc").get().asFile
 }
 
-val javadocJar by tasks.creating(Jar::class) {
-    dependsOn(customDokkaTask)
+val javadocJar by tasks.registering(Jar::class) {
     group = JavaBasePlugin.DOCUMENTATION_GROUP
     description = "Assembles JavaDoc JAR"
-    archiveClassifier.set("javadoc")
-    from(customDokkaTask.outputDirectory)
+    archiveClassifier = "javadoc"
+    from(dokkaJavadoc.outputDirectory)
 }
 
-afterEvaluate {
-    publishing {
-        publications {
-            register<MavenPublication>(mavenName) {
-                from(components["release"])
+publishing {
+    publications {
+        register<MavenPublication>(mavenName) {
+            afterEvaluate {
+                from(components.named("release").get())
+            }
 
-                groupId = Maven.GROUP_ID
-                artifactId = mavenName
+            groupId = Maven.GROUP_ID
+            artifactId = mavenName
 
-                println("""
-                    |Creating maven publication
-                    |    Group: $groupId
-                    |    Artifact: $mavenName
-                    |    Version: $version
-                """.trimMargin())
+            println("""
+                |Creating maven publication
+                |    Group: $groupId
+                |    Artifact: $mavenName
+                |    Version: $version
+            """.trimMargin())
 
-                artifact(javadocJar)
+            artifact(javadocJar)
 
-                pom {
-                    name.set(mavenName)
-                    description.set(Maven.DESC)
-                    url.set(Maven.SITE_URL)
+            pom {
+                name = mavenName
+                description = Maven.DESCRIPTION
+                url = Maven.SITE_URL
 
-                    scm {
-                        val scmUrl = "scm:git:${Maven.GIT_URL}"
-                        connection.set(scmUrl)
-                        developerConnection.set(scmUrl)
-                        url.set(Maven.GIT_URL)
-                        tag.set("HEAD")
+                scm {
+                    val scmUrl = "scm:git:${Maven.GIT_URL}"
+                    connection = scmUrl
+                    developerConnection = scmUrl
+                    url = Maven.GIT_URL
+                    tag = "HEAD"
+                }
+
+                developers {
+                    developer {
+                        id = Maven.DEVELOPER_ID
+                        name = Maven.DEVELOPER_NAME
+                        email = Maven.DEVELOPER_EMAIL
+                        roles = Maven.developerRoles
+                        timezone = Maven.DEVELOPER_TIMEZONE
                     }
+                }
 
-                    developers {
-                        developer {
-                            id.set(Maven.DEVELOPER_ID)
-                            name.set(Maven.DEVELOPER_NAME)
-                            email.set(Maven.DEVELOPER_EMAIL)
-                            roles.set(Maven.developerRoles)
-                            timezone.set(Maven.DEVELOPER_TIMEZONE)
-                        }
-                    }
-
-                    licenses {
-                        license {
-                            name.set(Maven.LICENSE_NAME)
-                            url.set(Maven.LICENSE_URL)
-                            distribution.set(Maven.LICENSE_DIST)
-                        }
+                licenses {
+                    license {
+                        name = Maven.LICENSE_NAME
+                        url = Maven.LICENSE_URL
+                        distribution = Maven.LICENSE_DIST
                     }
                 }
             }
         }
-        repositories {
-            maven {
-                val releasesRepoUrl = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2")
-                val snapshotsRepoUrl = uri("https://oss.sonatype.org/content/repositories/snapshots")
-                url = if (Maven.VERSION.endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
-                credentials {
-                    username = project.findProperty("sona.user") as String? ?: providers.environmentVariable("SONA_USER").orNull
-                    password = project.findProperty("sona.password") as String? ?: providers.environmentVariable("SONA_PASSWORD").orNull
-                }
+    }
+    repositories {
+        maven {
+            val releasesRepoUrl = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2")
+            val snapshotsRepoUrl = uri("https://oss.sonatype.org/content/repositories/snapshots")
+            url = if (Maven.VERSION.endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
+            credentials {
+                username = project.findProperty("sona.user") as String? ?: providers.environmentVariable("SONA_USER").orNull
+                password = project.findProperty("sona.password") as String? ?: providers.environmentVariable("SONA_PASSWORD").orNull
             }
         }
     }
+}
 
-    signing {
-        useGpgCmd()
-        sign(publishing.publications.getByName(mavenName))
-    }
+signing {
+    useGpgCmd()
+    sign(publishing.publications.named(mavenName).get())
 }
 
 detekt {
