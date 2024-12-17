@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.kotlinx.kover)
     alias(libs.plugins.detekt)
     alias(libs.plugins.dokka)
+    alias(libs.plugins.dokka.javadoc)
     id("signing")
     id("maven-publish")
 }
@@ -118,23 +119,10 @@ dependencies {
     androidTestImplementation(libs.truth)
 }
 
-val dokkaJavadoc by tasks.getting(DokkaTask::class) {
-    dokkaSourceSets.named("main") {
-        noAndroidSdkLink = false
-    }
-    dependencies {
-        plugins(libs.dokka.javadoc.plugin)
-    }
-    inputs.dir("src/main/java")
-    outputDirectory = layout.buildDirectory.dir("javadoc").get().asFile
-}
-
-val javadocJar by tasks.registering(Jar::class) {
-    dependsOn(dokkaJavadoc)
-    group = JavaBasePlugin.DOCUMENTATION_GROUP
-    description = "Assembles JavaDoc JAR"
-    archiveClassifier = "javadoc"
-    from(dokkaJavadoc.outputDirectory)
+val dokkaJavadocJar by tasks.registering(Jar::class) {
+    description = "A Javadoc JAR containing Dokka Javadoc"
+    from(tasks.dokkaGeneratePublicationJavadoc.flatMap { it.outputDirectory })
+    archiveClassifier.set("javadoc")
 }
 
 publishing {
@@ -154,12 +142,12 @@ publishing {
                 |    Version: $version
             """.trimMargin())
 
-                artifact(javadocJar)
+            artifact(dokkaJavadocJar)
 
-                pom {
-                    name = mavenName
-                    description = Maven.DESCRIPTION
-                    url = Maven.SITE_URL
+            pom {
+                name = mavenName
+                description = Maven.DESCRIPTION
+                url = Maven.SITE_URL
 
                 scm {
                     val scmUrl = "scm:git:${Maven.GIT_URL}"
@@ -204,7 +192,7 @@ publishing {
 
 signing {
     useGpgCmd()
-    sign(publishing.publications.named(mavenName).get())
+    sign(publishing.publications)
 }
 
 detekt {
@@ -212,5 +200,5 @@ detekt {
     buildUponDefaultConfig = true
     allRules = false
     autoCorrect = true
-    config.setFrom(rootDir.resolve("config/detekt.yml"))
+    config.from(rootDir.resolve("config/detekt.yml"))
 }
