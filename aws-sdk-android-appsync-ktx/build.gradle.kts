@@ -1,4 +1,5 @@
-import org.jetbrains.dokka.gradle.DokkaTask
+import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
+import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -8,11 +9,11 @@ plugins {
     alias(libs.plugins.detekt)
     alias(libs.plugins.dokka)
     alias(libs.plugins.dokka.javadoc)
+    alias(libs.plugins.maven.publish)
     id("signing")
-    id("maven-publish")
 }
 
-val mavenName = "aws-sdk-android-appsync-ktx"
+val artifactId = "aws-sdk-android-appsync-ktx"
 
 group = Maven.GROUP_ID
 version = Maven.VERSION
@@ -43,12 +44,6 @@ android {
         resources {
             excludes.add("/META-INF/{AL2.0,LGPL2.1}")
             excludes.add("/META-INF/LICENSE*")
-        }
-    }
-
-    publishing {
-        singleVariant("release") {
-            withSourcesJar()
         }
     }
 
@@ -105,80 +100,46 @@ dependencies {
     androidTestImplementation(libs.truth)
 }
 
-val dokkaJavadocJar by tasks.registering(Jar::class) {
-    description = "A Javadoc JAR containing Dokka Javadoc"
-    from(tasks.dokkaGeneratePublicationJavadoc.flatMap { it.outputDirectory })
-    archiveClassifier.set("javadoc")
-}
-
-publishing {
-    publications {
-        register<MavenPublication>(mavenName) {
-            afterEvaluate {
-                from(components.named("release").get())
-            }
-
-            groupId = Maven.GROUP_ID
-            artifactId = mavenName
-
-            println("""
-                |Creating maven publication
-                |    Group: $groupId
-                |    Artifact: $mavenName
-                |    Version: $version
-            """.trimMargin())
-
-            artifact(dokkaJavadocJar)
-
-            pom {
-                name = mavenName
-                description = Maven.DESCRIPTION
-                url = Maven.SITE_URL
-
-                scm {
-                    val scmUrl = "scm:git:${Maven.GIT_URL}"
-                    connection = scmUrl
-                    developerConnection = scmUrl
-                    url = Maven.GIT_URL
-                    tag = "HEAD"
-                }
-
-                developers {
-                    developer {
-                        id = Maven.DEVELOPER_ID
-                        name = Maven.DEVELOPER_NAME
-                        email = Maven.DEVELOPER_EMAIL
-                        roles = Maven.developerRoles
-                        timezone = Maven.DEVELOPER_TIMEZONE
-                    }
-                }
-
-                licenses {
-                    license {
-                        name = Maven.LICENSE_NAME
-                        url = Maven.LICENSE_URL
-                        distribution = Maven.LICENSE_DIST
-                    }
-                }
-            }
-        }
-    }
-    repositories {
-        maven {
-            val releasesRepoUrl = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2")
-            val snapshotsRepoUrl = uri("https://oss.sonatype.org/content/repositories/snapshots")
-            url = if (Maven.VERSION.endsWith("-SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
-            credentials {
-                username = project.findProperty("sona.user") as String? ?: providers.environmentVariable("SONA_USER").orNull
-                password = project.findProperty("sona.password") as String? ?: providers.environmentVariable("SONA_PASSWORD").orNull
-            }
-        }
-    }
-}
-
 signing {
     useGpgCmd()
-    sign(publishing.publications.named(mavenName).get())
+    sign(publishing.publications)
+}
+
+mavenPublishing {
+    configure(AndroidSingleVariantLibrary(
+        variant = "release",
+        publishJavadocJar = true,
+        sourcesJar = true,
+    ))
+
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+
+    coordinates(Maven.GROUP_ID, artifactId, Maven.VERSION)
+
+    pom {
+        name = artifactId
+        description = Maven.DESCRIPTION
+        url = "https://github.com/${Maven.GITHUB_REPOSITORY}/"
+        licenses {
+            license {
+                name = Maven.LICENSE_NAME
+                url = Maven.LICENSE_URL
+                distribution = Maven.LICENSE_DIST
+            }
+        }
+        developers {
+            developer {
+                id = Maven.DEVELOPER_ID
+                name = Maven.DEVELOPER_NAME
+                email = Maven.DEVELOPER_EMAIL
+            }
+        }
+        scm {
+            url = "https://github.com/${Maven.GITHUB_REPOSITORY}/"
+            connection = "scm:git:git://github.com/${Maven.GITHUB_REPOSITORY}.git"
+            developerConnection = "scm:git:ssh://git@github.com/${Maven.GITHUB_REPOSITORY}.git"
+        }
+    }
 }
 
 detekt {

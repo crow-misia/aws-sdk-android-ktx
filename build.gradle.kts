@@ -9,4 +9,5 @@ plugins {
     alias(libs.plugins.kotlin.plugin.compose) apply false
     alias(libs.plugins.kotlin.plugin.serialization) apply false
     alias(libs.plugins.kotlinx.kover) apply false
+    alias(libs.plugins.maven.publish) apply false
 }
