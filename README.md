@@ -1,8 +1,8 @@
 # aws-sdk-android-ktx
 
-[![Build](https://github.com/crow-misia/aws-sdk-android-ktx/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/crow-misia/aws-sdk-android-ktx/actions/workflows/build.yml)
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.crow-misia.aws-sdk-android-ktx/aws-sdk-android-iot-ktx.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:io.github.crow-misia.aws-sdk-android-ktx%20a:aws-sdk-android-iot-ktx)
-[![License](https://img.shields.io/github/license/crow-misia/aws-sdk-android-ktx)](LICENSE)
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/crow-misia/aws-sdk-android-ktx/build.yml)](https://github.com/crow-misia/aws-sdk-android-ktx/actions/workflows/build.yml)
+[![Maven Central Version](https://img.shields.io/maven-central/v/io.github.crow-misia.aws-sdk-android-ktx/aws-sdk-android-core-ktx)](https://central.sonatype.com/namespace/io.github.crow-misia.aws-sdk-android-ktx)
+[![GitHub License](https://img.shields.io/github/license/crow-misia/aws-sdk-android-ktx)](LICENSE)
 
 AWS SDK for Android with Kotlin.
 
@@ -12,10 +12,13 @@ AWS SDK for Android with Kotlin.
 
 Add dependencies (you can also add other modules that you need):
 
-`${latest.version}` is [![Download](https://img.shields.io/maven-central/v/io.github.crow-misia.aws-sdk-android-ktx/aws-sdk-android-iot-ktx.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:io.github.crow-misia.aws-sdk-android-ktx%20a:aws-sdk-android-iot-ktx)
+`${latest.version}` is [![Maven Central Version](https://img.shields.io/maven-central/v/io.github.crow-misia.aws-sdk-android-ktx/aws-sdk-android-core-ktx)](https://central.sonatype.com/namespace/io.github.crow-misia.aws-sdk-android-ktx)
 
 ```groovy
 dependencies {
+    implementation "io.github.crow-misia.aws-sdk-android-ktx:aws-sdk-android-amplify-ktx:${latest.version}"
+    implementation "io.github.crow-misia.aws-sdk-android-ktx:aws-sdk-android-appsync-ktx:${latest.version}"
+    implementation "io.github.crow-misia.aws-sdk-android-ktx:aws-sdk-android-core-ktx:${latest.version}"
     implementation "io.github.crow-misia.aws-sdk-android-ktx:aws-sdk-android-iot-ktx:${latest.version}"
 }
 ```
