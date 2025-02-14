@@ -26,11 +26,11 @@ import com.amazonaws.internal.CRC32MismatchException
 import com.amazonaws.logging.LogFactory
 import com.amazonaws.util.CRC32ChecksumCalculatingInputStream
 import com.amazonaws.util.StringUtils
-import com.apollographql.apollo3.api.ApolloResponse
-import com.apollographql.apollo3.api.CustomScalarAdapters
-import com.apollographql.apollo3.api.Operation
-import com.apollographql.apollo3.api.json.jsonReader
-import com.apollographql.apollo3.api.parseResponse
+import com.apollographql.apollo.api.ApolloResponse
+import com.apollographql.apollo.api.CustomScalarAdapters
+import com.apollographql.apollo.api.Operation
+import com.apollographql.apollo.api.json.jsonReader
+import com.apollographql.apollo.api.parseResponse
 import okio.buffer
 import okio.source
 import java.io.ByteArrayInputStream

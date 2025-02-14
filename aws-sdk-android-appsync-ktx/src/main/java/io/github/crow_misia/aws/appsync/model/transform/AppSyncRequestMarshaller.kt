@@ -19,11 +19,11 @@ import com.amazonaws.DefaultRequest
 import com.amazonaws.Request
 import com.amazonaws.http.HttpMethodName
 import com.amazonaws.transform.Marshaller
-import com.apollographql.apollo3.api.CustomScalarAdapters
-import com.apollographql.apollo3.api.Operation
-import com.apollographql.apollo3.api.composeJsonRequest
-import com.apollographql.apollo3.api.http.HttpMethod
-import com.apollographql.apollo3.api.json.BufferedSinkJsonWriter
+import com.apollographql.apollo.api.CustomScalarAdapters
+import com.apollographql.apollo.api.Operation
+import com.apollographql.apollo.api.composeJsonRequest
+import com.apollographql.apollo.api.http.HttpMethod
+import com.apollographql.apollo.api.json.BufferedSinkJsonWriter
 import io.github.crow_misia.aws.appsync.AppSyncRequest
 import io.github.crow_misia.aws.core.asInputStream
 import okio.Buffer

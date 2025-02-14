@@ -16,8 +16,8 @@
 package io.github.crow_misia.aws.appsync
 
 import com.amazonaws.AmazonWebServiceRequest
-import com.apollographql.apollo3.api.ApolloRequest
-import com.apollographql.apollo3.api.Operation
+import com.apollographql.apollo.api.ApolloRequest
+import com.apollographql.apollo.api.Operation
 
 /**
  * AppSync Request.

@@ -16,9 +16,9 @@
 package io.github.crow_misia.aws.appsync
 
 import com.amazonaws.regions.Region
-import com.apollographql.apollo3.ApolloCall
-import com.apollographql.apollo3.api.Mutation
-import com.apollographql.apollo3.api.Query
+import com.apollographql.apollo.ApolloCall
+import com.apollographql.apollo.api.Mutation
+import com.apollographql.apollo.api.Query
 
 /**
  * Interface of Amazon AppSync Service.
