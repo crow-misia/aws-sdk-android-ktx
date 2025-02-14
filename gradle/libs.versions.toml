@@ -26,7 +26,7 @@ maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publ
 
 amplifyframework = "2.26.0"
 
-android-gradle-plugin = "8.8.0"
+android-gradle-plugin = "8.8.1"
 
 android-tools-desugar_jdk_libs = "2.1.4"
 
@@ -64,7 +64,7 @@ apollographql = "4.0.0-beta.7"
 
 aws-android-sdk = "2.79.0"
 
-aws-smithy-kotlin = "1.4.2"
+aws-smithy-kotlin = "1.4.3"
 
 bouncycastle = "1.80"
 
