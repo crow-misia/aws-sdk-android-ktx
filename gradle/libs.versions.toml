@@ -68,7 +68,7 @@ aws-smithy-kotlin = "1.4.4"
 
 bouncycastle = "1.80"
 
-detekt = "1.23.7"
+detekt = "1.23.8"
 
 dokka = "2.0.0"
 
