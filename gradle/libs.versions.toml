@@ -26,13 +26,13 @@ maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publ
 
 amplifyframework = "2.27.0"
 
-android-gradle-plugin = "8.8.1"
+android-gradle-plugin = "8.8.2"
 
 android-tools-desugar_jdk_libs = "2.1.5"
 
 androidx-core = "1.15.0"
 
-androidx-activity = "1.10.0"
+androidx-activity = "1.10.1"
 
 androidx-appcompat = "1.7.0"
 
