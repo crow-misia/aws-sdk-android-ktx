@@ -25,7 +25,7 @@ class FlowMqttMessageQueueTest : StringSpec({
         // for AWSIotMqttManagerExt mocking
         mockkStatic("io.github.crow_misia.aws.iot.AWSIotMqttManagerExtKt")
         val client = mockk<AWSIotMqttManager>()
-        coJustRun { client.publish(capture(results)) }
+        coJustRun { client.publish(capture(results), any()) }
 
         sut.asFlow(client)
             .take(10)
@@ -49,7 +49,7 @@ class FlowMqttMessageQueueTest : StringSpec({
         // for AWSIotMqttManagerExt mocking
         mockkStatic("io.github.crow_misia.aws.iot.AWSIotMqttManagerExtKt")
         val client = mockk<AWSIotMqttManager>()
-        coJustRun { client.publish(capture(results)) }
+        coJustRun { client.publish(capture(results), any()) }
 
         sut.asFlow(client)
             .retry()
