@@ -42,7 +42,7 @@ apollographql = "4.1.1"
 
 aws-android-sdk = "2.79.0"
 
-aws-smithy-kotlin = "1.4.13"
+aws-smithy-kotlin = "1.4.14"
 
 bouncycastle = "1.80"
 
