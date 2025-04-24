@@ -78,6 +78,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
 
+    implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.foundation.layout)
@@ -106,6 +107,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit.ktx)
     androidTestImplementation(libs.androidx.test.ext.truth)
     androidTestImplementation(libs.androidx.test.espresso.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.mockk.android)
     androidTestImplementation(libs.truth)
