@@ -58,7 +58,7 @@ maven-publish = "0.32.0"
 
 mockk = "1.14.2"
 
-okhttp3 = "5.0.0-alpha.14"
+okhttp3 = "5.0.0-alpha.16"
 
 okio = "3.12.0"
 
@@ -160,9 +160,7 @@ aws-smithy-runtime = { group = "aws.smithy.kotlin", name = "runtime-core-jvm" }
 
 bouncycastle-bcpkix = { group = "org.bouncycastle", name = "bcpkix-jdk18on", version.ref = "bouncycastle" }
 
-okhttp3-bom = { group = "com.squareup.okhttp3", name = "okhttp-bom", version.ref = "okhttp3" }
-
-okhttp3-android = { group = "com.squareup.okhttp3", name = "okhttp-android" }
+okhttp3 = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp3" }
 
 okio = { group = "com.squareup.okio", name = "okio", version.ref = "okio" }
 
