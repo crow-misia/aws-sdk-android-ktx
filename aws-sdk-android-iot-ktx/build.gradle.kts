@@ -85,7 +85,7 @@ dependencies {
     implementation(libs.bouncycastle.bcpkix)
 
     // okhttp3
-    implementation(libs.okhttp3)
+    implementation(libs.okhttp3.android)
     implementation(libs.okio)
 
     // serialization

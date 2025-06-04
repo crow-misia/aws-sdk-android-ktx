@@ -77,7 +77,10 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
 
     // GraphQL
-    implementation(libs.apollographql.runtime)
+    implementation(libs.apollographql.runtime) {
+        exclude(group = "com.squareup.okhttp3")
+    }
+    implementation(libs.okhttp3.android)
 
     // Unit testing
     testImplementation(platform(libs.kotlinx.coroutines.bom))
@@ -98,6 +101,12 @@ dependencies {
     androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.mockk.android)
     androidTestImplementation(libs.truth)
+
+    modules {
+        module("com.squareup.okhttp3:okhttp") {
+            replacedBy("com.squareup.okhttp3:okhttp-android")
+        }
+    }
 }
 
 signing {

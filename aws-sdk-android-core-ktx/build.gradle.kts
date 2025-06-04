@@ -82,7 +82,7 @@ dependencies {
     api(libs.aws.smithy.runtime)
 
     // okhttp3
-    implementation(libs.okhttp3)
+    implementation(libs.okhttp3.android)
     implementation(libs.okio)
 
     // Unit testing
