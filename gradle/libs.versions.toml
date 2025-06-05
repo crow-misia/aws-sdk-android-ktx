@@ -12,11 +12,11 @@ androidx-core = "1.16.0"
 
 androidx-activity = "1.10.1"
 
-androidx-appcompat = "1.7.0"
+androidx-appcompat = "1.7.1"
 
-androidx-compose-bom = "2025.05.01"
+androidx-compose-bom = "2025.06.00"
 
-androidx-lifecycle = "2.9.0"
+androidx-lifecycle = "2.9.1"
 
 androidx-navigation = "2.9.0"
 
@@ -38,7 +38,7 @@ aws-android-sdk = "2.79.0"
 
 aws-smithy-kotlin = "1.4.16"
 
-bouncycastle = "1.80"
+bouncycastle = "1.81"
 
 detekt = "1.23.8"
 
