@@ -34,7 +34,7 @@ androidx-test-rules = "1.6.1"
 
 apollographql = "4.3.0"
 
-aws-android-sdk = "2.79.0"
+aws-android-sdk = "2.80.0"
 
 aws-smithy-kotlin = "1.4.16"
 
