@@ -36,7 +36,7 @@ apollographql = "4.3.0"
 
 aws-android-sdk = "2.80.0"
 
-aws-smithy-kotlin = "1.4.17"
+aws-smithy-kotlin = "1.4.18"
 
 bouncycastle = "1.81"
 
@@ -60,7 +60,7 @@ mockk = "1.14.2"
 
 okhttp3 = "5.0.0-alpha.16"
 
-okio = "3.12.0"
+okio = "3.13.0"
 
 timber = "5.0.1"
 
