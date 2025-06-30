@@ -36,7 +36,7 @@ apollographql = "4.3.1"
 
 aws-android-sdk = "2.81.0"
 
-aws-smithy-kotlin = "1.4.20"
+aws-smithy-kotlin = "1.4.21"
 
 bouncycastle = "1.81"
 
@@ -50,7 +50,7 @@ kotlin = "2.2.0"
 
 kotlinx-coroutines = "1.10.2"
 
-kotlinx-serialization = "1.8.1"
+kotlinx-serialization = "1.9.0"
 
 kover = "0.9.1"
 
@@ -58,9 +58,9 @@ maven-publish = "0.33.0"
 
 mockk = "1.14.4"
 
-okhttp3 = "5.0.0-alpha.16"
+okhttp3 = "5.0.0-alpha.17"
 
-okio = "3.13.0"
+okio = "3.14.0"
 
 timber = "5.0.1"
 
