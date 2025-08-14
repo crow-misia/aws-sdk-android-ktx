@@ -38,8 +38,8 @@ android {
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = Build.sourceCompatibility
-        targetCompatibility = Build.targetCompatibility
+        sourceCompatibility = Build.jvmTarget
+        targetCompatibility = Build.jvmTarget
     }
 
     buildFeatures {
@@ -57,7 +57,7 @@ android {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_1_8)
+        jvmTarget = JvmTarget.fromTarget(Build.jvmTarget.toString())
     }
 }
 
