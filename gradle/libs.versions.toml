@@ -16,7 +16,7 @@ androidx-appcompat = "1.7.1"
 
 androidx-compose-bom = "2025.09.00"
 
-androidx-lifecycle = "2.9.3"
+androidx-lifecycle = "2.9.4"
 
 androidx-navigation = "2.9.4"
 
