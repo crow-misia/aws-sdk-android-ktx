@@ -58,7 +58,7 @@ maven-publish = "0.34.0"
 
 mockk = "1.14.6"
 
-okhttp3 = "5.1.0"
+okhttp3 = "5.2.0"
 
 okio = "3.16.0"
 
