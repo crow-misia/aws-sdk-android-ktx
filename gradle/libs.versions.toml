@@ -4,7 +4,7 @@
 
 amplifyframework = "2.30.2"
 
-android-gradle-plugin = "8.13.0"
+android-gradle-plugin = "8.13.1"
 
 android-tools-desugar_jdk_libs = "2.1.5"
 
