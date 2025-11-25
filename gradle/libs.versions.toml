@@ -2,7 +2,7 @@
 
 [versions]
 
-amplifyframework = "2.30.3"
+amplifyframework = "2.30.4"
 
 android-gradle-plugin = "8.13.1"
 
@@ -60,7 +60,7 @@ mockk = "1.14.6"
 
 okhttp3 = "5.3.1"
 
-okio = "3.16.3"
+okio = "3.16.4"
 
 timber = "5.0.1"
 
