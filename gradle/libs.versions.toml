@@ -10,11 +10,11 @@ android-tools-desugar_jdk_libs = "2.1.5"
 
 androidx-core = "1.17.0"
 
-androidx-activity = "1.12.0"
+androidx-activity = "1.12.1"
 
 androidx-appcompat = "1.7.1"
 
-androidx-compose-bom = "2025.11.01"
+androidx-compose-bom = "2025.12.00"
 
 androidx-lifecycle = "2.10.0"
 
@@ -38,7 +38,7 @@ aws-android-sdk = "2.81.1"
 
 aws-smithy-kotlin = "1.5.20"
 
-bouncycastle = "1.82"
+bouncycastle = "1.83"
 
 detekt = "1.23.8"
 
