@@ -1,5 +1,15 @@
 # aws-sdk-android-ktx
 
+# ⚠️ Deprecation Notice
+
+This repository is **deprecated** and is no longer being actively maintained. 
+Please migrate to and use the following official SDKs:
+
+- [Amplify for Android](https://github.com/aws-amplify/amplify-android)
+- [AWS IoT Device SDK for Java v2](https://github.com/aws/aws-iot-device-sdk-java-v2)
+
+---
+
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/crow-misia/aws-sdk-android-ktx/build.yml)](https://github.com/crow-misia/aws-sdk-android-ktx/actions/workflows/build.yml)
 [![Maven Central Version](https://img.shields.io/maven-central/v/io.github.crow-misia.aws-sdk-android-ktx/aws-sdk-android-core-ktx)](https://central.sonatype.com/namespace/io.github.crow-misia.aws-sdk-android-ktx)
 [![GitHub License](https://img.shields.io/github/license/crow-misia/aws-sdk-android-ktx)](LICENSE)
