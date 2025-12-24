@@ -2,7 +2,7 @@
 
 [versions]
 
-amplifyframework = "2.30.4"
+amplifyframework = "2.31.0"
 
 android-gradle-plugin = "8.13.2"
 
@@ -36,7 +36,7 @@ apollographql = "4.3.3"
 
 aws-android-sdk = "2.81.1"
 
-aws-smithy-kotlin = "1.5.23"
+aws-smithy-kotlin = "1.5.24"
 
 bouncycastle = "1.83"
 
