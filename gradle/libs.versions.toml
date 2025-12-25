@@ -10,11 +10,11 @@ android-tools-desugar_jdk_libs = "2.1.5"
 
 androidx-core = "1.17.0"
 
-androidx-activity = "1.12.1"
+androidx-activity = "1.12.2"
 
 androidx-appcompat = "1.7.1"
 
-androidx-compose-bom = "2025.12.00"
+androidx-compose-bom = "2025.12.01"
 
 androidx-lifecycle = "2.10.0"
 
