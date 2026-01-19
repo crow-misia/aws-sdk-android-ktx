@@ -2,7 +2,7 @@
 
 [versions]
 
-amplifyframework = "2.31.0"
+amplifyframework = "2.32.0"
 
 android-gradle-plugin = "8.13.2"
 
