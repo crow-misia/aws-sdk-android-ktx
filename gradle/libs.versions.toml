@@ -32,11 +32,11 @@ androidx-test-runner = "1.7.0"
 
 androidx-test-rules = "1.7.0"
 
-apollographql = "4.3.3"
+apollographql = "4.4.0"
 
 aws-android-sdk = "2.81.1"
 
-aws-smithy-kotlin = "1.5.28"
+aws-smithy-kotlin = "1.6.0"
 
 bouncycastle = "1.83"
 
@@ -50,7 +50,7 @@ kotlin = "2.3.0"
 
 kotlinx-coroutines = "1.10.2"
 
-kotlinx-serialization = "1.9.0"
+kotlinx-serialization = "1.10.0"
 
 kover = "0.9.4"
 
