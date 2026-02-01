@@ -2,7 +2,7 @@
 
 [versions]
 
-amplifyframework = "2.32.0"
+amplifyframework = "2.33.0"
 
 android-gradle-plugin = "8.13.2"
 
@@ -44,7 +44,7 @@ detekt = "1.23.8"
 
 dokka = "2.1.0"
 
-kotest = "6.1.0"
+kotest = "6.1.1"
 
 kotlin = "2.3.0"
 
