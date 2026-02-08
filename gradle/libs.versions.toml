@@ -32,7 +32,7 @@ androidx-test-runner = "1.7.0"
 
 androidx-test-rules = "1.7.0"
 
-apollographql = "4.4.0"
+apollographql = "4.4.1"
 
 aws-android-sdk = "2.81.1"
 
@@ -52,7 +52,7 @@ kotlinx-coroutines = "1.10.2"
 
 kotlinx-serialization = "1.10.0"
 
-kover = "0.9.4"
+kover = "0.9.5"
 
 maven-publish = "0.36.0"
 
